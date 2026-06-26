@@ -617,6 +617,20 @@ th { background: var(--color-bg); font-weight: 600; color: var(--color-primary);
 .feature-card {
   cursor: pointer;
   transition: box-shadow 0.2s;
+  background: #ffffff;
+  color: #1a1a1a;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.feature-card h3 {
+  color: #1a1a1a !important;
+  margin-bottom: 0.5rem;
+}
+
+.feature-card p {
+  color: #444 !important;
 }
 
 .feature-card:hover {
@@ -628,7 +642,7 @@ th { background: var(--color-bg); font-weight: 600; color: var(--color-primary);
   margin-top: 0.75rem;
   padding-top: 0.75rem;
   border-top: 1px solid var(--color-border);
-  color: var(--color-muted);
+  color: var(--color-muted) !important;
   font-size: 0.9rem;
   line-height: 1.6;
   text-align: left;
