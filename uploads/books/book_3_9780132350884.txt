@@ -1,0 +1,15 @@
+CLEAN CODE - SAMPLE DIGITAL BOOK
+============================================
+
+This is a sample digital book for demonstration purposes.
+In production, upload PDF or HTML files for each book.
+
+Chapter 1: Introduction
+-----------------------
+Welcome to the Sankofa Library online reading portal.
+Your library card verification ensures secure access to digital resources.
+
+Chapter 2: Reading Online
+-------------------------
+After verifying your library card, you can read books directly in your browser.
+All reading sessions are logged for audit purposes.

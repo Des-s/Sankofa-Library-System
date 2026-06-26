@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Student Lookup{% endblock %}
+{% block content %}
+<div class="page-header"><h1>Student Lookup</h1></div>
+<form method="GET" class="search-bar card">
+    <div class="form-group"><input type="text" name="q" class="form-control" value="{{ q }}" placeholder="Student ID, name, or email..."></div>
+    <button type="submit" class="btn btn-primary">Search</button>
+</form>
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Name</th><th>Student ID</th><th>Email</th><th>Department</th><th>Card</th><th></th></tr></thead>
+            <tbody>
+            {% for s in students %}
+            <tr>
+                <td>{{ s.full_name }}</td>
+                <td>{{ s.student_id }}</td>
+                <td>{{ s.email }}</td>
+                <td>{{ s.department }}</td>
+                <td>{{ s.library_card.card_number if s.library_card else '—' }}</td>
+                <td><a href="{{ url_for('librarian.student_detail', user_id=s.user_id) }}" class="btn btn-sm btn-outline">View</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="empty-state">No students found.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

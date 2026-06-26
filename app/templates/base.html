@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sankofa Library{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <header class="site-header">
+        <div class="header-inner">
+            <a href="{{ url_for('auth.index') }}" class="logo">Sankofa <span>Library</span></a>
+            <nav class="main-nav">
+                {% if current_user.is_student %}
+                    <a href="{{ url_for('student.dashboard') }}">Dashboard</a>
+                    <a href="{{ url_for('catalog.catalog') }}">Catalog</a>
+                    <a href="{{ url_for('student.borrowings') }}">My Borrowings</a>
+                    <a href="{{ url_for('student.fines') }}">My Fines</a>
+                    <a href="{{ url_for('student.profile') }}">Profile</a>
+                {% elif current_user.is_librarian and not current_user.is_admin %}
+                    <a href="{{ url_for('librarian.dashboard') }}">Dashboard</a>
+                    <a href="{{ url_for('librarian.checkout') }}">Checkout</a>
+                    <a href="{{ url_for('librarian.fines') }}">Fines</a>
+                    <a href="{{ url_for('librarian.books') }}">Books</a>
+                    <a href="{{ url_for('librarian.students') }}">Students</a>
+                    <a href="{{ url_for('catalog.catalog') }}">Catalog</a>
+                    <a href="{{ url_for('librarian.reports') }}">Reports</a>
+                {% elif current_user.is_admin %}
+                    <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+                    <a href="{{ url_for('librarian.checkout') }}">Checkout</a>
+                    <a href="{{ url_for('librarian.books') }}">Books</a>
+                    <a href="{{ url_for('catalog.catalog') }}">Catalog</a>
+                {% endif %}
+                <a href="{{ url_for('auth.logout') }}">Logout</a>
+            </nav>
+            <span class="user-badge">{{ current_user.full_name }} ({{ current_user.role }})</span>
+        </div>
+    </header>
+    {% endif %}
+
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        &copy; 2026 Sankofa Library System &mdash; Academic Library Management
+    </footer>
+</body>
+</html>

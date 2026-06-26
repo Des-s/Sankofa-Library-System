@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}{{ student.full_name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>{{ student.full_name }}</h1>
+    <p>{{ student.student_id }} &mdash; {{ student.department }}, Year {{ student.year_of_study }}</p>
+</div>
+<div class="grid-2">
+    <div class="card">
+        <h2>Library Card</h2>
+        {% if student.library_card %}
+        <div class="library-card-display">
+            <div class="card-number">{{ student.library_card.card_number }}</div>
+            <div class="card-holder">{{ student.full_name }}</div>
+        </div>
+        {% endif %}
+        <div class="btn-group" style="margin-top:1rem;">
+            <a href="{{ url_for('librarian.checkout', q=student.student_id) }}" class="btn btn-primary btn-sm">Check Out Book</a>
+        </div>
+    </div>
+    <div class="card">
+        <h2>Fines</h2>
+        {% if fines %}
+        <div class="table-wrap"><table>
+            <thead><tr><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+            <tbody>{% for f in fines %}<tr><td>GHS {{ '%.2f'|format(f.total_amount) }}</td><td><span class="badge badge-{{ f.status }}">{{ f.status }}</span></td><td>{{ f.created_at.strftime('%Y-%m-%d') }}</td></tr>{% endfor %}</tbody>
+        </table></div>
+        {% else %}<p>No fines.</p>{% endif %}
+    </div>
+</div>
+<div class="card">
+    <h2>Borrowing History</h2>
+    <div class="table-wrap"><table>
+        <thead><tr><th>Book</th><th>Checked Out</th><th>Due</th><th>Returned</th><th>Status</th></tr></thead>
+        <tbody>{% for c in checkouts %}<tr><td>{{ c.book.title }}</td><td>{{ c.checkout_date }}</td><td>{{ c.expected_return_date }}</td><td>{{ c.actual_return_date or '—' }}</td><td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td></tr>{% endfor %}</tbody>
+    </table></div>
+</div>
+<a href="{{ url_for('librarian.students') }}" class="btn btn-outline">Back to Students</a>
+{% endblock %}

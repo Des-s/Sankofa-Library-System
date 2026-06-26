@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Book Management{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Book Management</h1>
+    <div class="btn-group"><a href="{{ url_for('librarian.book_form') }}" class="btn btn-primary">Add New Book</a></div>
+</div>
+<form method="GET" class="search-bar card">
+    <div class="form-group"><input type="text" name="q" class="form-control" value="{{ q }}" placeholder="Search books..."></div>
+    <button type="submit" class="btn btn-primary">Search</button>
+</form>
+<div class="card">
+    <div class="table-wrap"><table>
+        <thead><tr><th>Title</th><th>Author</th><th>ISBN</th><th>Physical</th><th>Digital</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+        {% for b in books %}
+        <tr>
+            <td>{{ b.title }}</td>
+            <td>{{ b.author }}</td>
+            <td>{{ b.isbn }}</td>
+            <td>{{ b.available_physical_copies }}/{{ b.total_physical_copies }}</td>
+            <td>{% if b.has_digital %}Yes{% else %}No{% endif %}</td>
+            <td>{% if b.is_active %}Active{% else %}Inactive{% endif %}</td>
+            <td>
+                <a href="{{ url_for('librarian.book_form', book_id=b.book_id) }}" class="btn btn-sm btn-outline">Edit</a>
+                {% if b.is_active %}
+                <form method="POST" action="{{ url_for('librarian.deactivate_book', book_id=b.book_id) }}" class="inline-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-danger">Deactivate</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+</div>
+{% endblock %}

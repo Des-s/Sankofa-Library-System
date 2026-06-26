@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<div class="page-header"><h1>Library Reports</h1></div>
+<div class="grid-4">
+    <div class="stat-card"><div class="stat-value">{{ active_checkouts }}</div><div class="stat-label">Active Checkouts</div></div>
+    <div class="stat-card"><div class="stat-value">{{ overdue_count }}</div><div class="stat-label">Overdue</div></div>
+    <div class="stat-card"><div class="stat-value">GHS {{ '%.2f'|format(total_fines) }}</div><div class="stat-label">Fines Collected</div></div>
+</div>
+<div class="card">
+    <h2>Most Borrowed Books</h2>
+    {% if popular %}
+    <div class="table-wrap"><table>
+        <thead><tr><th>Title</th><th>Checkouts</th></tr></thead>
+        <tbody>{% for title, count in popular %}<tr><td>{{ title }}</td><td>{{ count }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% else %}<div class="empty-state">No checkout data yet.</div>{% endif %}
+</div>
+{% endblock %}

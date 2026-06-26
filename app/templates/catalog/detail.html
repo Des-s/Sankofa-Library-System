@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}{{ book.title }} — Sankofa Library{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>{{ book.title }}</h1>
+    <p>by {{ book.author }}</p>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <h2>Book Details</h2>
+        <table>
+            <tr><th>ISBN</th><td>{{ book.isbn }}</td></tr>
+            <tr><th>Publisher</th><td>{{ book.publisher or '—' }}</td></tr>
+            <tr><th>Year</th><td>{{ book.year_published or '—' }}</td></tr>
+            <tr><th>Category</th><td>{{ book.category or '—' }}</td></tr>
+            <tr><th>Physical Copies</th><td>{{ book.available_physical_copies }} of {{ book.total_physical_copies }} available</td></tr>
+            <tr><th>Digital</th><td>{% if book.has_digital %}Available{% else %}Not available{% endif %}</td></tr>
+        </table>
+    </div>
+    <div class="card">
+        <h2>Actions</h2>
+        {% if book.has_digital and current_user.is_student %}
+        <a href="{{ url_for('student.read_book', book_id=book.book_id) }}" class="btn btn-primary" style="width:100%;text-align:center;margin-bottom:0.75rem;">Read Online</a>
+        <p style="font-size:0.85rem;color:var(--color-muted);">Library card verification required before reading.</p>
+        {% elif book.has_digital %}
+        <p style="color:var(--color-muted);">Digital version available for students.</p>
+        {% endif %}
+        {% if book.available_physical_copies > 0 %}
+        <p style="margin-top:1rem;font-size:0.9rem;">Physical copies available. Visit the library to borrow in person.</p>
+        {% else %}
+        <p style="margin-top:1rem;color:var(--color-danger);">No physical copies currently available.</p>
+        {% endif %}
+        <a href="{{ url_for('catalog.catalog') }}" class="btn btn-outline" style="margin-top:1rem;">Back to Catalog</a>
+    </div>
+</div>
+{% endblock %}

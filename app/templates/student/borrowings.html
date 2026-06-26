@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}My Borrowings — Sankofa Library{% endblock %}
+{% block content %}
+<div class="page-header"><h1>My Borrowings</h1><p>History of all hard-copy checkouts</p></div>
+<div class="card">
+    {% if checkouts %}
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Book</th><th>Author</th><th>Checked Out</th><th>Due Date</th><th>Returned</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for c in checkouts %}
+            <tr>
+                <td>{{ c.book.title }}</td>
+                <td>{{ c.book.author }}</td>
+                <td>{{ c.checkout_date }}</td>
+                <td>{{ c.expected_return_date }}</td>
+                <td>{{ c.actual_return_date or '—' }}</td>
+                <td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">No borrowing history yet. Visit the library to borrow a book!</div>
+    {% endif %}
+</div>
+{% endblock %}

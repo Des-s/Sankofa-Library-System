@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Read — {{ book.title }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>{{ book.title }}</h1>
+    <p>by {{ book.author }}</p>
+</div>
+
+{% if session %}
+<div class="card">
+    <div class="btn-group" style="margin-bottom:1rem;">
+        <a href="{{ url_for('catalog.book_detail', book_id=book.book_id) }}" class="btn btn-outline btn-sm">Back to Book</a>
+        <form method="POST" action="{{ url_for('student.end_reading', book_id=book.book_id, session_id=session.session_id) }}" class="inline-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-danger btn-sm">End Reading Session</button>
+        </form>
+    </div>
+    <iframe class="reader-frame" src="{{ url_for('student.read_content', book_id=book.book_id, session_id=session.session_id) }}"></iframe>
+</div>
+{% else %}
+<div class="card" style="max-width:500px;margin:0 auto;">
+    <h2>Library Card Verification Required</h2>
+    <p style="margin-bottom:1rem;color:var(--color-muted);">Enter your library card number to access this digital book.</p>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            {{ form.card_number.label }}
+            {{ form.card_number(class='form-control', placeholder='e.g. LIB-2026-STU2024001') }}
+            {% for error in form.card_number.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+        {{ form.submit(class='btn btn-primary', style='width:100%;') }}
+    </form>
+</div>
+{% endif %}
+{% endblock %}

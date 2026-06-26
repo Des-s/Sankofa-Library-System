@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — Sankofa Library{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Welcome, {{ current_user.full_name }}</h1>
+    <p>Your library dashboard</p>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <h2>Your Library Card</h2>
+        {% if card %}
+        <div class="library-card-display">
+            <div class="card-label">Sankofa Library Card</div>
+            <div class="card-number">{{ card.card_number }}</div>
+            <div class="card-holder">{{ current_user.full_name }}</div>
+            <div style="font-size:0.8rem;opacity:0.7;margin-top:0.5rem;">Issued: {{ card.issued_date }}</div>
+        </div>
+        {% else %}
+        <p>No library card found. Contact the library.</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Quick Summary</h2>
+        <div class="grid-2">
+            <div class="stat-card">
+                <div class="stat-value">{{ active_checkouts|length }}</div>
+                <div class="stat-label">Active Borrowings</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ outstanding_fines|length }}</div>
+                <div class="stat-label">Outstanding Fines</div>
+            </div>
+        </div>
+        <div class="btn-group" style="margin-top:1rem;">
+            <a href="{{ url_for('catalog.catalog') }}" class="btn btn-primary">Browse Catalog</a>
+            <a href="{{ url_for('student.borrowings') }}" class="btn btn-outline">My Borrowings</a>
+        </div>
+    </div>
+</div>
+
+{% if active_checkouts %}
+<div class="card">
+    <h2>Active Borrowings</h2>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Book</th><th>Checked Out</th><th>Due Date</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for c in active_checkouts %}
+            <tr>
+                <td>{{ c.book.title }}</td>
+                <td>{{ c.checkout_date }}</td>
+                <td>{{ c.expected_return_date }}</td>
+                <td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if outstanding_fines %}
+<div class="card">
+    <h2>Outstanding Fines</h2>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Book</th><th>Days Overdue</th><th>Amount</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for f in outstanding_fines %}
+            <tr>
+                <td>{{ f.checkout.book.title if f.checkout else 'N/A' }}</td>
+                <td>{{ f.days_overdue }}</td>
+                <td>GHS {{ '%.2f'|format(f.total_amount) }}</td>
+                <td><span class="badge badge-{{ f.status }}">{{ f.status }}</span></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if recent_sessions %}
+<div class="card">
+    <h2>Recent Reading Activity</h2>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Book</th><th>Started</th><th>Verified</th></tr></thead>
+            <tbody>
+            {% for s in recent_sessions %}
+            <tr>
+                <td>{{ s.book.title }}</td>
+                <td>{{ s.session_start.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>{% if s.card_verified %}Yes{% else %}No{% endif %}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

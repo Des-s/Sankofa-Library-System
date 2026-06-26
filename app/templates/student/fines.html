@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}My Fines — Sankofa Library{% endblock %}
+{% block content %}
+<div class="page-header"><h1>My Fines</h1></div>
+<div class="card">
+    {% if fines %}
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Book</th><th>Days Overdue</th><th>Rate/Day</th><th>Total</th><th>Status</th><th>Date</th></tr></thead>
+            <tbody>
+            {% for f in fines %}
+            <tr>
+                <td>{{ f.checkout.book.title if f.checkout else 'N/A' }}</td>
+                <td>{{ f.days_overdue }}</td>
+                <td>GHS {{ '%.2f'|format(f.amount_per_day) }}</td>
+                <td>GHS {{ '%.2f'|format(f.total_amount) }}</td>
+                <td><span class="badge badge-{{ f.status }}">{{ f.status }}</span></td>
+                <td>{{ f.created_at.strftime('%Y-%m-%d') }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">No fines on your account. Keep returning books on time!</div>
+    {% endif %}
+</div>
+{% endblock %}

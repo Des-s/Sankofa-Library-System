@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Analytics{% endblock %}
+{% block content %}
+<div class="page-header"><h1>Analytics</h1><p>Last 30 days overview</p></div>
+<div class="grid-3">
+    <div class="stat-card"><div class="stat-value">{{ monthly_checkouts }}</div><div class="stat-label">Checkouts (30d)</div></div>
+    <div class="stat-card"><div class="stat-value">{{ monthly_reading }}</div><div class="stat-label">Reading Sessions (30d)</div></div>
+    <div class="stat-card"><div class="stat-value">GHS {{ '%.2f'|format(fine_revenue) }}</div><div class="stat-label">Fine Revenue (Total Paid)</div></div>
+</div>
+<div class="grid-2">
+    <div class="card">
+        <h2>Most Borrowed Books</h2>
+        <div class="table-wrap"><table>
+            <thead><tr><th>Title</th><th>Borrows</th></tr></thead>
+            <tbody>{% for title, count in popular_books %}<tr><td>{{ title }}</td><td>{{ count }}</td></tr>{% else %}<tr><td colspan="2">No data</td></tr>{% endfor %}</tbody>
+        </table></div>
+    </div>
+    <div class="card">
+        <h2>Most Read Online</h2>
+        <div class="table-wrap"><table>
+            <thead><tr><th>Title</th><th>Sessions</th></tr></thead>
+            <tbody>{% for title, count in popular_reads %}<tr><td>{{ title }}</td><td>{{ count }}</td></tr>{% else %}<tr><td colspan="2">No data</td></tr>{% endfor %}</tbody>
+        </table></div>
+    </div>
+</div>
+{% endblock %}

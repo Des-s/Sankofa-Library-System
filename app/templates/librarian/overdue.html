@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Overdue Items{% endblock %}
+{% block content %}
+<div class="page-header"><h1>Overdue Items</h1></div>
+<div class="card">
+    {% if checkouts %}
+    <div class="table-wrap"><table>
+        <thead><tr><th>Student</th><th>Book</th><th>Due Date</th><th>Days Overdue</th><th>Accrued Fine</th></tr></thead>
+        <tbody>
+        {% for c in checkouts %}
+        <tr>
+            <td>{{ c.student.full_name }} ({{ c.student.student_id }})</td>
+            <td>{{ c.book.title }}</td>
+            <td>{{ c.expected_return_date }}</td>
+            <td>{{ c.days_overdue }}</td>
+            <td>GHS {{ '%.2f'|format(accrued[c.checkout_id]) }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+    {% else %}<div class="empty-state">No overdue items.</div>{% endif %}
+</div>
+{% endblock %}

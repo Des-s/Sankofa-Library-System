@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<div class="page-header"><h1>Administrator Dashboard</h1></div>
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-text">
+            <div class="stat-value">{{ stats.total_users }}</div>
+            <div class="stat-label">Total Users</div>
+        </div>
+        <i class="fa-solid fa-people-group stat-icon"></i>  <!-- Members icon -->
+    </div>
+    <div class="stat-card">
+        <div class="stat-text">
+            <div class="stat-value">{{ stats.total_students }}</div>
+            <div class="stat-label">Students</div>
+        </div>
+        <i class="fa-solid fa-user-graduate stat-icon"></i>  <!-- Student icon -->
+    </div>
+    <div class="stat-card">
+        <div class="stat-text">
+            <div class="stat-value">{{ stats.active_books }}</div>
+            <div class="stat-label">Active Books</div>
+        </div>
+        <i class="fa-solid fa-book stat-icon"></i>  <!-- Book icon -->
+    </div>
+    <div class="stat-card">
+        <div class="stat-text">
+            <div class="stat-value">{{ stats.active_checkouts }}</div>
+            <div class="stat-label">Active Checkouts</div>
+        </div>
+        <i class="fa-solid fa-rocket stat-icon"></i>  <!-- Rocket icon -->
+    </div>
+    <div class="stat-card">
+        <div class="stat-text">
+            <div class="stat-value">GHS {{ stats.outstanding_fines }}</div>
+            <div class="stat-label">Outstanding Fines</div>
+        </div>
+        <span class="stat-icon cedis-icon">₵</span>  <!-- Cedis icon -->
+    </div>
+    <div class="stat-card">
+        <div class="stat-text">
+            <div class="stat-value">{{ stats.reading_sessions }}</div>
+            <div class="stat-label">Reading Sessions Today</div>
+        </div>
+        <i class="fa-solid fa-book-open stat-icon"></i>  <!-- Book/reading icon -->
+    </div>
+</div>
+<div class="btn-group">
+    <a href="{{ url_for('admin.users') }}" class="btn btn-primary">Manage Users</a>
+    <a href="{{ url_for('admin.settings') }}" class="btn btn-accent">System Settings</a>
+    <a href="{{ url_for('admin.audit') }}" class="btn btn-outline">Audit Log</a>
+    <a href="{{ url_for('admin.analytics') }}" class="btn btn-outline">Analytics</a>
+</div>
+{% endblock %}

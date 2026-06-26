@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Librarian Dashboard{% endblock %}
+{% block content %}
+<div class="page-header"><h1>Librarian Dashboard</h1></div>
+<div class="grid-3">
+    <div class="stat-card"><div class="stat-value">{{ checked_out_today }}</div><div class="stat-label">Checked Out Today</div></div>
+    <div class="stat-card"><div class="stat-value">{{ overdue_count }}</div><div class="stat-label">Overdue Items</div></div>
+    <div class="stat-card"><div class="stat-value">{{ recent_checkouts|length }}</div><div class="stat-label">Recent Activity</div></div>
+</div>
+<div class="btn-group" style="margin-bottom:1.5rem;">
+    <a href="{{ url_for('librarian.checkout') }}" class="btn btn-primary">Check Out Book</a>
+    <a href="{{ url_for('librarian.return_book') }}" class="btn btn-accent">Return Book</a>
+    <a href="{{ url_for('librarian.overdue') }}" class="btn btn-outline">View Overdue</a>
+</div>
+<div class="card">
+    <h2>Recent Checkouts</h2>
+    {% if recent_checkouts %}
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Student</th><th>Book</th><th>Date</th><th>Due</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for c in recent_checkouts %}
+            <tr>
+                <td>{{ c.student.full_name }}</td>
+                <td>{{ c.book.title }}</td>
+                <td>{{ c.checkout_date }}</td>
+                <td>{{ c.expected_return_date }}</td>
+                <td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}<div class="empty-state">No recent activity.</div>{% endif %}
+</div>
+{% endblock %}

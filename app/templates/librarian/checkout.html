@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Check Out Book{% endblock %}
+{% block content %}
+<div class="page-header"><h1>Check Out Book</h1><p>In-person checkout only</p></div>
+<div class="card" style="max-width:600px;">
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            {{ form.student_search.label }}
+            {{ form.student_search(class='form-control', placeholder='Enter student ID or name') }}
+        </div>
+        {% if student %}
+        <div class="alert alert-info">Selected: <strong>{{ student.full_name }}</strong> ({{ student.student_id }})</div>
+        {% endif %}
+        <div class="form-group">
+            {{ form.book_id.label }}
+            {{ form.book_id(class='form-control') }}
+        </div>
+        {{ form.submit(class='btn btn-primary') }}
+    </form>
+</div>
+{% endblock %}

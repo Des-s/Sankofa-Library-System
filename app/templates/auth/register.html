@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="auth-wrapper">
+  <div class="auth-card">
+
+    <!-- LEFT: Book photo panel -->
+    <div class="auth-image-side">
+      <div class="image-overlay">
+        <h2>Welcome Back!</h2>
+        <p>Already have an account? Sign in and continue your journey.</p>
+        <a href="{{ url_for('auth.login') }}" class="btn-outline">SIGN IN</a>
+      </div>
+    </div>
+
+    <!-- RIGHT: Register Form -->
+    <div class="auth-form-side">
+      <h2>Create Account</h2>
+
+      <!-- Social buttons -->
+      <div class="social-buttons">
+        <button class="social-btn" title="Google">G</button>
+        <button class="social-btn" title="Facebook">f</button>
+        <button class="social-btn" title="Twitter">𝕏</button>
+        <button class="social-btn" title="LinkedIn">in</button>
+      </div>
+
+      <p class="divider-text">or register with e-mail</p>
+
+      <form method="POST" action="{{ url_for('auth.register') }}">
+        {{ form.hidden_tag() }}
+
+        <div class="form-group">
+          {{ form.name(placeholder="Full name", class="form-input") }}
+          {% for error in form.name.errors %}
+            <span class="form-error">{{ error }}</span>
+          {% endfor %}
+        </div>
+
+        <div class="form-group">
+          {{ form.email(placeholder="Enter e-mail", class="form-input") }}
+          {% for error in form.email.errors %}
+            <span class="form-error">{{ error }}</span>
+          {% endfor %}
+        </div>
+
+        <div class="form-group">
+          {{ form.password(placeholder="Enter password", class="form-input") }}
+          {% for error in form.password.errors %}
+            <span class="form-error">{{ error }}</span>
+          {% endfor %}
+        </div>
+
+        <button type="submit" class="btn-primary">SIGN UP</button>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

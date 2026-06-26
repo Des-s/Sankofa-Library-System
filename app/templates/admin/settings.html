@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}System Settings{% endblock %}
+{% block content %}
+<div class="page-header"><h1>System Settings</h1></div>
+<div class="card" style="max-width:500px;">
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="form-group">{{ form.fine_rate_per_day.label }}{{ form.fine_rate_per_day(class='form-control') }}</div>
+        <div class="form-group">{{ form.loan_period_days.label }}{{ form.loan_period_days(class='form-control') }}</div>
+        <div class="form-group">{{ form.library_card_format.label }}{{ form.library_card_format(class='form-control') }}
+            <small style="color:var(--color-muted);">Use {year} and {student_id} placeholders</small>
+        </div>
+        {{ form.submit(class='btn btn-primary') }}
+    </form>
+</div>
+{% endblock %}

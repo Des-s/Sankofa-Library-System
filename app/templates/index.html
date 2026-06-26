@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Sankofa Library System{% endblock %}
+{% block content %}
+<section class="hero">
+    <h1>Sankofa <span>Library</span> System</h1>
+    <p>Digitizing academic library operations — browse catalogs, read online, and manage borrowings with ease.</p>
+    <div class="hero-actions">
+        <a href="{{ url_for('auth.login') }}" class="btn btn-accent">Log In</a>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-outline" style="border-color:white;color:white;">Register as Student</a>
+    </div>
+</section>
+
+<div class="features">
+    <div class="feature-card">
+        <h3>Online Reading</h3>
+        <p>Access digital books securely with your library card verification.</p>
+    </div>
+    <div class="feature-card">
+        <h3>Hard-Copy Borrowing</h3>
+        <p>Visit the library in person to borrow physical books from our catalog.</p>
+    </div>
+    <div class="feature-card">
+        <h3>Automated Fines</h3>
+        <p>Transparent overdue fine tracking with configurable rates and waiver support.</p>
+    </div>
+</div>
+{% endblock %}
