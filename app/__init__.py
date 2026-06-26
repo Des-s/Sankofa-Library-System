@@ -1,6 +1,8 @@
 import os
 
 from dotenv import load_dotenv
+from flask_migrate import Migrate
+
 
 load_dotenv()
 
@@ -19,6 +21,8 @@ def create_app(config_class='app.config.Config'):
     login_manager.init_app(app)
     mail.init_app(app)
     csrf.init_app(app)
+    Migrate(app, db)
+  
 
     from app.models import User
 
@@ -47,7 +51,10 @@ def create_app(config_class='app.config.Config'):
         return render_template('errors/404.html'), 404
 
     with app.app_context():
-        db.create_all()
+        from sqlalchemy import inspect
+        inspector = inspect(db.engine)
+        if not inspector.has_table('users'):
+            db.create_all()
         from app.utils.helpers import init_default_settings
         init_default_settings()
 

@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import (
-    BooleanField, DecimalField, FileField, HiddenField, IntegerField,
+    BooleanField, DecimalField, HiddenField, IntegerField,
     PasswordField, SelectField, StringField, SubmitField, TextAreaField,
 )
 from wtforms.validators import DataRequired, Email, EqualTo, Length, NumberRange, Optional, ValidationError
@@ -19,11 +20,13 @@ class RegistrationForm(FlaskForm):
     submit = SubmitField('Register')
 
     def validate_student_id(self, field):
-        if User.query.filter_by(student_id=field.data).first():
+        student_id = field.data.strip().upper()
+        if User.query.filter_by(student_id=student_id).first():
             raise ValidationError('This student ID is already registered.')
 
     def validate_email(self, field):
-        if User.query.filter_by(email=field.data).first():
+        email = field.data.strip().lower()
+        if User.query.filter_by(email=email).first():
             raise ValidationError('This email is already registered.')
 
 
@@ -38,6 +41,7 @@ class ProfileForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email(), Length(max=150)])
     department = StringField('Department', validators=[DataRequired(), Length(max=100)])
     year_of_study = IntegerField('Year of Study', validators=[DataRequired(), NumberRange(min=1, max=6)])
+    profile_photo = FileField('Profile Photo', validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Images only')])
     submit = SubmitField('Update Profile')
 
 
@@ -55,6 +59,7 @@ class BookForm(FlaskForm):
     category = StringField('Category', validators=[Optional(), Length(max=100)])
     total_physical_copies = IntegerField('Physical Copies', validators=[DataRequired(), NumberRange(min=0)])
     digital_file = FileField('Digital File (PDF/TXT/HTML)')
+    cover_image = FileField('Cover Image', validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Images only')])
     is_active = BooleanField('Active in Catalog', default=True)
     submit = SubmitField('Save Book')
 

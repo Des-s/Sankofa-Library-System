@@ -24,8 +24,8 @@ class Config:
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@sankofa-library.edu')
+    MAIL_SUPPRESS_SEND = True
 
-    # Default system settings (overridden by database)
     DEFAULT_FINE_RATE = 1.00
     DEFAULT_LOAN_PERIOD_DAYS = 14
     DEFAULT_CARD_FORMAT = 'LIB-{year}-{student_id}'

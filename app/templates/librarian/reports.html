@@ -1,19 +1,77 @@
 {% extends 'base.html' %}
 {% block title %}Reports{% endblock %}
 {% block content %}
+
 <div class="page-header"><h1>Library Reports</h1></div>
+
 <div class="grid-4">
-    <div class="stat-card"><div class="stat-value">{{ active_checkouts }}</div><div class="stat-label">Active Checkouts</div></div>
-    <div class="stat-card"><div class="stat-value">{{ overdue_count }}</div><div class="stat-label">Overdue</div></div>
-    <div class="stat-card"><div class="stat-value">GHS {{ '%.2f'|format(total_fines) }}</div><div class="stat-label">Fines Collected</div></div>
+  <div class="stat-card"><div class="stat-value">{{ active_checkouts }}</div><div class="stat-label">Active Checkouts</div></div>
+  <div class="stat-card"><div class="stat-value">{{ overdue_count }}</div><div class="stat-label">Overdue</div></div>
+  <div class="stat-card"><div class="stat-value">GHS {{ '%.2f'|format(total_fines) }}</div><div class="stat-label">Fines Collected</div></div>
 </div>
+
 <div class="card">
-    <h2>Most Borrowed Books</h2>
-    {% if popular %}
-    <div class="table-wrap"><table>
-        <thead><tr><th>Title</th><th>Checkouts</th></tr></thead>
-        <tbody>{% for title, count in popular %}<tr><td>{{ title }}</td><td>{{ count }}</td></tr>{% endfor %}</tbody>
-    </table></div>
-    {% else %}<div class="empty-state">No checkout data yet.</div>{% endif %}
+  <h2>Most Borrowed Books</h2>
+  {% if popular %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>Title</th><th>Checkouts</th></tr></thead>
+    <tbody>{% for title, count in popular %}<tr><td>{{ title }}</td><td>{{ count }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="empty-state">No checkout data yet.</div>{% endif %}
 </div>
+
+<!-- File a Report -->
+<div class="card" style="margin-top: 2rem;">
+  <h2>File a Report</h2>
+  <form method="POST" action="{{ url_for('librarian.reports') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+    <div style="margin-bottom:1rem;">
+      <label style="color:#fff; display:block; margin-bottom:0.4rem;">Report Type</label>
+      <select name="report_type" required style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff;">
+        <option value="">-- Select Report Type --</option>
+        <option value="lost_damaged">Lost / Damaged Book</option>
+        <option value="student_incident">Student Incident / Complaint</option>
+        <option value="inventory">Inventory / Stock Issue</option>
+        <option value="general">General Custom Report</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:1rem;">
+      <label style="color:#fff; display:block; margin-bottom:0.4rem;">Title / Subject</label>
+      <input type="text" name="title" required placeholder="Brief title of the report"
+        style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff;"/>
+    </div>
+
+    <div style="margin-bottom:1rem;">
+      <label style="color:#fff; display:block; margin-bottom:0.4rem;">Student Involved (if any)</label>
+      <input type="text" name="student_name" placeholder="Student name or ID (optional)"
+        style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff;"/>
+    </div>
+
+    <div style="margin-bottom:1rem;">
+      <label style="color:#fff; display:block; margin-bottom:0.4rem;">Book Title (if applicable)</label>
+      <input type="text" name="book_title" placeholder="Book title or ISBN (optional)"
+        style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff;"/>
+    </div>
+
+    <div style="margin-bottom:1rem;">
+      <label style="color:#fff; display:block; margin-bottom:0.4rem;">Description</label>
+      <textarea name="description" required rows="5" placeholder="Describe the issue in detail..."
+        style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff; resize:vertical;"></textarea>
+    </div>
+
+    <div style="margin-bottom:1.5rem;">
+      <label style="color:#fff; display:block; margin-bottom:0.4rem;">Severity</label>
+      <select name="severity" style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff;">
+        <option value="low">Low</option>
+        <option value="medium" selected>Medium</option>
+        <option value="high">High</option>
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit Report</button>
+  </form>
+</div>
+
 {% endblock %}

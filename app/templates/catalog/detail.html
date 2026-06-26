@@ -7,6 +7,21 @@
 </div>
 
 <div class="grid-2">
+    <div class="grid-2">
+    <!-- Cover image card -->
+    <div class="card" style="text-align:center; padding: 1.5rem;">
+        {% if book.cover_image %}
+        <img src="{{ url_for('static', filename='covers/' + book.cover_image) }}"
+             alt="{{ book.title }}" class="book-cover-large">
+        {% else %}
+        <div class="book-cover-placeholder large">
+            <i class="fa-solid fa-book-open"></i>
+        </div>
+        {% endif %}
+        <h2 style="margin-top:1rem;">{{ book.title }}</h2>
+        <p style="color:var(--color-muted);">by {{ book.author }}</p>
+    </div>
+</div>
     <div class="card">
         <h2>Book Details</h2>
         <table>

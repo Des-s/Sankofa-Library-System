@@ -1,8 +1,10 @@
+import os
 from datetime import date
 
-from flask import Blueprint, flash, redirect, render_template, request, send_file, url_for, abort
+from flask import Blueprint, current_app, flash, redirect, render_template, request, send_file, url_for, abort
 from flask_login import current_user, login_required
 from sqlalchemy import or_
+from werkzeug.utils import secure_filename
 
 from app.extensions import db
 from app.forms import CardVerificationForm, ProfileForm
@@ -46,10 +48,20 @@ def profile():
         if existing:
             flash('That email is already in use.', 'danger')
         else:
-            current_user.full_name = form.full_name.data.strip()
+            current_user.full_name = form.name.data.strip()
             current_user.email = form.email.data.strip().lower()
             current_user.department = form.department.data.strip()
             current_user.year_of_study = form.year_of_study.data
+
+            photo = form.profile_photo.data
+            if photo and photo.filename:
+                ext = photo.filename.rsplit('.', 1)[1].lower()
+                filename = secure_filename(f'user_{current_user.user_id}.{ext}')
+                photos_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'profile_photos')
+                os.makedirs(photos_folder, exist_ok=True)
+                photo.save(os.path.join(photos_folder, filename))
+                current_user.profile_photo = filename
+
             db.session.commit()
             log_action('PROFILE_UPDATE', f'Student updated profile: {current_user.email}')
             flash('Profile updated successfully.', 'success')

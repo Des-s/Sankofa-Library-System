@@ -1,10 +1,15 @@
-from flask import Blueprint, flash, redirect, render_template, url_for
-from flask_login import current_user, login_required, login_user, logout_user
+import secrets
+import string
 
-from app.extensions import db
+from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask_login import current_user, login_required, login_user, logout_user
+from flask_mail import Message
+
+from app.extensions import db, mail
 from app.forms import LoginForm, RegistrationForm
 from app.models import LibraryCard, User
 from app.utils.helpers import generate_library_card_number, log_action
+
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -29,7 +34,7 @@ def register():
     if form.validate_on_submit():
         user = User(
             student_id=form.student_id.data.strip().upper(),
-            full_name=form.full_name.data.strip(),
+            full_name=form.name.data.strip(),
             email=form.email.data.strip().lower(),
             role='student',
             department=form.department.data.strip(),
@@ -90,6 +95,48 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('auth.login'))
 
-@auth_bp.route('/forgot-password')
+def generate_temp_password(length=10):
+    alphabet = string.ascii_letters + string.digits
+    return ''.join(secrets.choice(alphabet) for _ in range(length))
+
+
+@auth_bp.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
+    if current_user.is_authenticated:
+        return redirect(url_for('auth.index'))
+
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        user = User.query.filter(User.email.ilike(email)).first()
+
+        if user:
+            temp_password = generate_temp_password()
+            user.set_password(temp_password)
+            db.session.commit()
+
+            print(f'[DEV] Temp password for {user.email}: {temp_password}')
+
+            msg = Message(
+                subject='Your ULMS Temporary Password',
+                recipients=[user.email],
+                body=(
+                    f'Hello {user.full_name},\n\n'
+                    f'A password reset was requested for your account.\n'
+                    f'Your temporary password is: {temp_password}\n\n'
+                    f'Please log in and change your password as soon as possible.\n\n'
+                    f'If you did not request this, please contact a librarian immediately.'
+                ),
+            )
+            mail.send(msg)
+
+            log_action(
+                'PASSWORD_RESET',
+                f'Temporary password issued for {user.email}',
+                target_table='users',
+                target_id=user.user_id,
+            )
+
+        flash('If that email is registered, a temporary password has been sent.', 'info')
+        return redirect(url_for('auth.login'))
+
     return render_template('auth/forgot_password.html')

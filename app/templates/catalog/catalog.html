@@ -26,6 +26,27 @@
     </div>
     <button type="submit" class="btn btn-primary">Search</button>
 </form>
+{% for book in books %}
+<div class="book-card">
+    <a href="{{ url_for('catalog.book_detail', book_id=book.book_id) }}">
+        {% if book.cover_image %}
+        <img src="{{ url_for('static', filename='covers/' + book.cover_image) }}"
+             alt="{{ book.title }}" class="book-cover">
+        {% else %}
+        <div class="book-cover-placeholder">
+            <i class="fa-solid fa-book-open"></i>
+        </div>
+        {% endif %}
+    </a>
+    <h3><a href="{{ url_for('catalog.book_detail', book_id=book.book_id) }}">{{ book.title }}</a></h3>
+    <div class="author">{{ book.author }}</div>
+    <div class="book-meta">
+        {% if book.category %}<span class="tag">{{ book.category }}</span>{% endif %}
+        {% if book.available_physical_copies > 0 %}<span class="tag">{{ book.available_physical_copies }} physical</span>{% endif %}
+        {% if book.has_digital %}<span class="tag">Digital</span>{% endif %}
+    </div>
+</div>
+{% endfor %}
 
 {% if books %}
 <div class="book-grid">

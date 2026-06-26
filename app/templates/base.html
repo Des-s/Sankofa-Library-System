@@ -5,14 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Sankofa Library{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
     {% if current_user.is_authenticated %}
     <header class="site-header">
         <div class="header-inner">
-            <a href="{{ url_for('auth.index') }}" class="logo">Sankofa <span>Library</span></a>
+            <a href="{{ url_for('auth.index') }}" class="logo">
+                 <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo-img">
+                  Sankofa <span>Library</span></a>
             <nav class="main-nav">
                 {% if current_user.is_student %}
                     <a href="{{ url_for('student.dashboard') }}">Dashboard</a>
@@ -58,5 +59,24 @@
     <footer class="site-footer">
         &copy; 2026 Sankofa Library System &mdash; Academic Library Management
     </footer>
+    <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.feature-card').forEach(function(card) {
+      card.addEventListener('click', function() {
+        const isOpen = this.classList.contains('open');
+
+        // Close all cards
+        document.querySelectorAll('.feature-card').forEach(function(c) {
+          c.classList.remove('open');
+        });
+
+        // If it wasn't open, open it; if it was open, leave it closed
+        if (!isOpen) {
+          this.classList.add('open');
+        }
+      });
+    });
+  });
+</script>
 </body>
 </html>

@@ -8,7 +8,7 @@ import os
 
 from app.extensions import db
 from app.forms import BookForm, CheckoutForm, FineActionForm, ReturnForm
-from app.models import Book, Checkout, Fine, User
+from app.models import Book, Checkout, Fine, Report, User
 from app.utils.decorators import librarian_required
 from app.utils.fines import get_accrued_fine_amount, process_return, update_overdue_statuses
 from app.utils.helpers import get_loan_period_days, log_action
@@ -237,6 +237,15 @@ def book_form(book_id=None):
             book.total_physical_copies = new_total
             book.available_physical_copies = max(0, book.available_physical_copies + diff)
             book.is_active = form.is_active.data
+         
+         # Save cover image
+        cover = form.cover_image.data
+        if cover and cover.filename:
+            cover_filename = secure_filename(f'cover_{form.isbn.data}.{cover.filename.rsplit(".", 1)[1].lower()}')
+            covers_folder = os.path.join(current_app.root_path, 'static', 'covers')
+            os.makedirs(covers_folder, exist_ok=True)
+            cover.save(os.path.join(covers_folder, cover_filename))
+            book.cover_image = cover_filename
 
         file = form.digital_file.data
         if file and file.filename:
@@ -248,11 +257,12 @@ def book_form(book_id=None):
                 file.save(filepath)
                 book.digital_file_path = filepath
                 book.has_digital = True
+            
             else:
                 flash('Invalid file type. Allowed: PDF, TXT, HTML.', 'danger')
                 return render_template('librarian/book_form.html', form=form, book=book)
-
-        db.session.commit()
+            db.session.commit()
+        
         if not book_id:
             log_action('BOOK_CREATE', f'Book added: {book.title}', target_table='books', target_id=book.book_id)
             flash('Book added successfully.', 'success')
@@ -274,20 +284,52 @@ def deactivate_book(book_id):
     return redirect(url_for('librarian.books'))
 
 
-@librarian_bp.route('/reports')
+@librarian_bp.route('/reports', methods=['GET', 'POST'])
+@login_required
 def reports():
-    popular = db.session.query(
-        Book.title, func.count(Checkout.checkout_id).label('count')
-    ).join(Checkout).group_by(Book.book_id).order_by(func.count(Checkout.checkout_id).desc()).limit(10).all()
+    if request.method == 'POST':
+        report_type  = request.form.get('report_type')
+        title        = request.form.get('title')
+        student_name = request.form.get('student_name')
+        book_title   = request.form.get('book_title')
+        description  = request.form.get('description')
+        severity     = request.form.get('severity')
 
-    total_fines = db.session.query(func.sum(Fine.total_amount)).filter(Fine.status == 'paid').scalar() or 0
+        new_report = Report(
+            report_type=report_type,
+            title=title,
+            student_name=student_name,
+            book_title=book_title,
+            description=description,
+            severity=severity,
+            filed_by=current_user.user_id
+        )
+        db.session.add(new_report)
+        db.session.commit()
+        flash('Report submitted successfully.', 'success')
+        return redirect(url_for('librarian.reports'))
+    # GET: build the reports dashboard
     active_checkouts = Checkout.query.filter(Checkout.status.in_(['active', 'overdue'])).count()
     overdue_count = Checkout.query.filter_by(status='overdue').count()
 
+    total_fines = db.session.query(func.sum(Fine.total_amount)).filter(
+        Fine.status == 'paid'
+    ).scalar() or 0
+
+    popular = (
+        db.session.query(Book.title, func.count(Checkout.checkout_id).label('checkout_count'))
+        .join(Checkout, Checkout.book_id == Book.book_id)
+        .group_by(Book.title)
+        .order_by(func.count(Checkout.checkout_id).desc())
+        .limit(10)
+        .all()
+    )
+
     return render_template(
         'librarian/reports.html',
-        popular=popular,
-        total_fines=total_fines,
         active_checkouts=active_checkouts,
         overdue_count=overdue_count,
+        total_fines=total_fines,
+        popular=popular,
     )
+     

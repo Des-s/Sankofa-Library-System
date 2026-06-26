@@ -2,7 +2,8 @@
 {% block title %}Sankofa Library System{% endblock %}
 {% block content %}
 <section class="hero">
-    <h1>Sankofa <span>Library</span> System</h1>
+    <img src="{{ url_for('static', filename='images/logo.png' )}}" class="hero-logo">
+     <h1>Sankofa <span>Library</span> System</h1>
     <p>Digitizing academic library operations — browse catalogs, read online, and manage borrowings with ease.</p>
     <div class="hero-actions">
         <a href="{{ url_for('auth.login') }}" class="btn btn-accent">Log In</a>
@@ -11,17 +12,31 @@
 </section>
 
 <div class="features">
-    <div class="feature-card">
-        <h3>Online Reading</h3>
-        <p>Access digital books securely with your library card verification.</p>
+
+  <div class="feature-card" >
+    <h3><i class="fa-solid fa-book-open"></i> Online Reading</h3>
+    <p class="feature-preview">Access digital books securely with your library card verification.</p>
+    <div class="feature-detail">
+      <p>With your registered library card, you can access hundreds of digital books directly in your browser — no downloads needed. Simply browse the catalog, verify your card, and start reading instantly. Your reading progress is saved automatically, and you can return to any book at any time during your borrowing period.</p>
     </div>
-    <div class="feature-card">
-        <h3>Hard-Copy Borrowing</h3>
-        <p>Visit the library in person to borrow physical books from our catalog.</p>
+  </div>
+
+  <div class="feature-card" >
+    <h3><i class="fa-solid fa-book"></i> Hard-Copy Borrowing</h3>
+    <p class="feature-preview">Visit the library in person to borrow physical books from our catalog.</p>
+    <div class="feature-detail">
+      <p>Browse our full physical catalog online and reserve a book before you arrive. Present your library card at the desk to collect your reservation. Each member can borrow up to 3 books at a time for a 14-day period. Renewals can be requested online if no other member has reserved the same title.</p>
     </div>
-    <div class="feature-card">
-        <h3>Automated Fines</h3>
-        <p>Transparent overdue fine tracking with configurable rates and waiver support.</p>
+  </div>
+
+  <div class="feature-card">
+    <h3><i class="fa-solid fa-exclamation-triangle"></i> Automated Fines</h3>
+    <p class="feature-preview">Transparent overdue fine tracking with configurable rates and waiver support.</p>
+    <div class="feature-detail">
+      <p>Fines are calculated automatically based on the number of days a book is overdue. You can view your current fine balance anytime from your dashboard. Librarians can apply waivers for exceptional circumstances. All fine history is logged transparently so you always know what you owe and why.</p>
     </div>
+  </div>
+
 </div>
+
 {% endblock %}

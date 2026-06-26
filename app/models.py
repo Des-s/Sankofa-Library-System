@@ -5,6 +5,7 @@ from flask_login import UserMixin
 from app.extensions import db, bcrypt
 
 
+
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
@@ -19,6 +20,7 @@ class User(UserMixin, db.Model):
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    profile_photo = db.Column(db.String(255), nullable=True)
 
     library_card = db.relationship('LibraryCard', backref='user', uselist=False, cascade='all, delete-orphan')
     checkouts = db.relationship('Checkout', foreign_keys='Checkout.user_id', backref='student', lazy='dynamic')
@@ -73,6 +75,7 @@ class Book(db.Model):
     available_physical_copies = db.Column(db.Integer, default=0, nullable=False)
     has_digital = db.Column(db.Boolean, default=False, nullable=False)
     digital_file_path = db.Column(db.String(500), nullable=True)
+    cover_image = db.Column(db.String(255), nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -173,3 +176,17 @@ class SystemSetting(db.Model):
     setting_value = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+class Report(db.Model):
+    __tablename__ = 'reports'
+    id           = db.Column(db.Integer, primary_key=True)
+    report_type  = db.Column(db.String(50), nullable=False)
+    title        = db.Column(db.String(200), nullable=False)
+    student_name = db.Column(db.String(100))
+    book_title   = db.Column(db.String(200))
+    description  = db.Column(db.Text, nullable=False)
+    severity     = db.Column(db.String(20), default='medium')
+    filed_by     = db.Column(db.Integer, db.ForeignKey('users.user_id'))  # change 'users' to match yours
+    date_filed   = db.Column(db.DateTime, default=datetime.utcnow)
+
+    filer = db.relationship('User', foreign_keys=[filed_by])
