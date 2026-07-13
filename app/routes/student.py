@@ -7,12 +7,18 @@ from sqlalchemy import or_
 from werkzeug.utils import secure_filename
 
 from app.extensions import db
-from app.forms import CardVerificationForm, ProfileForm
+from app.forms import CardVerificationForm, ChangePasswordForm, NotificationSettingsForm, ProfileForm
 from app.models import Book, Checkout, Fine, ReadingSession, User
 from app.utils.decorators import student_required
+from app.utils.fines import update_overdue_statuses
 from app.utils.helpers import log_action
 
 student_bp = Blueprint('student', __name__, url_prefix='/student')
+
+
+@student_bp.before_request
+def before_request():
+    update_overdue_statuses()
 
 
 @student_bp.route('/dashboard')
@@ -67,6 +73,47 @@ def profile():
             flash('Profile updated successfully.', 'success')
             return redirect(url_for('student.profile'))
     return render_template('student/profile.html', form=form, card=current_user.library_card)
+
+
+@student_bp.route('/settings')
+@login_required
+@student_required
+def settings():
+    password_form = ChangePasswordForm()
+    notification_form = NotificationSettingsForm(email_notifications=current_user.email_notifications)
+    return render_template('student/settings.html', password_form=password_form, notification_form=notification_form)
+
+
+@student_bp.route('/settings/password', methods=['POST'])
+@login_required
+@student_required
+def change_password():
+    password_form = ChangePasswordForm()
+    if password_form.validate_on_submit():
+        if not current_user.check_password(password_form.current_password.data):
+            flash('Current password is incorrect.', 'danger')
+        else:
+            current_user.set_password(password_form.new_password.data)
+            db.session.commit()
+            log_action('PASSWORD_CHANGE', f'Student changed their own password: {current_user.email}')
+            flash('Password updated successfully.', 'success')
+    else:
+        for errors in password_form.errors.values():
+            for error in errors:
+                flash(error, 'danger')
+    return redirect(url_for('student.settings'))
+
+
+@student_bp.route('/settings/notifications', methods=['POST'])
+@login_required
+@student_required
+def update_notifications():
+    notification_form = NotificationSettingsForm()
+    if notification_form.validate_on_submit():
+        current_user.email_notifications = notification_form.email_notifications.data
+        db.session.commit()
+        flash('Notification preferences saved.', 'success')
+    return redirect(url_for('student.settings'))
 
 
 @student_bp.route('/borrowings')

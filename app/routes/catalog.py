@@ -34,8 +34,17 @@ def catalog():
     elif availability == 'digital':
         query = query.filter_by(has_digital=True)
 
-    books = query.order_by(Book.title).all()
-    return render_template('catalog/catalog.html', books=books, form=form, q=q, category=category, availability=availability)
+    page = request.args.get('page', 1, type=int)
+    pagination = query.order_by(Book.title).paginate(page=page, per_page=24, error_out=False)
+    return render_template(
+        'catalog/catalog.html',
+        books=pagination.items,
+        pagination=pagination,
+        form=form,
+        q=q,
+        category=category,
+        availability=availability,
+    )
 
 
 @catalog_bp.route('/catalog/<int:book_id>')

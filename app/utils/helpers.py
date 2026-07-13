@@ -46,6 +46,13 @@ def get_card_format():
     return get_setting('library_card_format', current_app.config.get('DEFAULT_CARD_FORMAT', 'LIB-{year}-{student_id}'))
 
 
+def get_max_active_checkouts():
+    val = get_setting('max_active_checkouts')
+    if val is not None:
+        return int(val)
+    return int(current_app.config.get('DEFAULT_MAX_ACTIVE_CHECKOUTS', 5))
+
+
 def generate_library_card_number(student_id):
     card_format = get_card_format()
     year = date.today().year
@@ -57,6 +64,7 @@ def init_default_settings():
         ('fine_rate_per_day', str(current_app.config.get('DEFAULT_FINE_RATE', 1.00)), 'Daily fine rate in GHS'),
         ('loan_period_days', str(current_app.config.get('DEFAULT_LOAN_PERIOD_DAYS', 14)), 'Maximum loan period in days'),
         ('library_card_format', current_app.config.get('DEFAULT_CARD_FORMAT', 'LIB-{year}-{student_id}'), 'Library card number format'),
+        ('max_active_checkouts', str(current_app.config.get('DEFAULT_MAX_ACTIVE_CHECKOUTS', 5)), 'Maximum active checkouts allowed per student'),
     ]
     for key, value, desc in defaults:
         if not SystemSetting.query.filter_by(setting_key=key).first():

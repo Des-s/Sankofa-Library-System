@@ -29,3 +29,4 @@ class Config:
     DEFAULT_FINE_RATE = 1.00
     DEFAULT_LOAN_PERIOD_DAYS = 14
     DEFAULT_CARD_FORMAT = 'LIB-{year}-{student_id}'
+    DEFAULT_MAX_ACTIVE_CHECKOUTS = 5

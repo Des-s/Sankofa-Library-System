@@ -7,11 +7,11 @@ from werkzeug.utils import secure_filename
 import os
 
 from app.extensions import db
-from app.forms import BookForm, CheckoutForm, FineActionForm, ReturnForm
+from app.forms import BookForm, ChangePasswordForm, CheckoutForm, FineActionForm, ReturnForm
 from app.models import Book, Checkout, Fine, Report, User
 from app.utils.decorators import librarian_required
 from app.utils.fines import get_accrued_fine_amount, process_return, update_overdue_statuses
-from app.utils.helpers import get_loan_period_days, log_action
+from app.utils.helpers import get_loan_period_days, get_max_active_checkouts, log_action
 from flask import current_app
 
 librarian_bp = Blueprint('librarian', __name__, url_prefix='/librarian')
@@ -29,11 +29,13 @@ def dashboard():
     today = date.today()
     checked_out_today = Checkout.query.filter(Checkout.checkout_date == today).count()
     overdue_count = Checkout.query.filter(Checkout.status == 'overdue').count()
+    active_loans_count = Checkout.query.filter(Checkout.status == 'active').count()
     recent_checkouts = Checkout.query.order_by(Checkout.created_at.desc()).limit(10).all()
     return render_template(
         'librarian/dashboard.html',
         checked_out_today=checked_out_today,
         overdue_count=overdue_count,
+        active_loans_count=active_loans_count,
         recent_checkouts=recent_checkouts,
     )
 
@@ -48,8 +50,9 @@ def students():
             User.full_name.ilike(f'%{q}%'),
             User.email.ilike(f'%{q}%'),
         ))
-    students_list = query.order_by(User.full_name).all()
-    return render_template('librarian/students.html', students=students_list, q=q)
+    page = request.args.get('page', 1, type=int)
+    pagination = query.order_by(User.full_name).paginate(page=page, per_page=20, error_out=False)
+    return render_template('librarian/students.html', students=pagination.items, pagination=pagination, q=q)
 
 
 @librarian_bp.route('/students/<int:user_id>')
@@ -75,14 +78,14 @@ def checkout():
             form.student_search.data = q
             student = User.query.filter(
                 User.role == 'student',
-                or_(User.student_id.ilike(q), User.full_name.ilike(f'%{q}%')),
+                or_(User.student_id.ilike(f'%{q}%'), User.full_name.ilike(f'%{q}%')),
             ).first()
 
     if form.validate_on_submit():
         search = form.student_search.data.strip()
         student = User.query.filter(
             User.role == 'student',
-            or_(User.student_id.ilike(search), User.full_name.ilike(f'%{search}%')),
+            or_(User.student_id.ilike(f'%{search}%'), User.full_name.ilike(f'%{search}%')),
         ).first()
         if not student:
             flash('Student not found.', 'danger')
@@ -91,6 +94,15 @@ def checkout():
         book = Book.query.get(form.book_id.data)
         if not book or book.available_physical_copies <= 0:
             flash('Book is not available for checkout.', 'danger')
+            return render_template('librarian/checkout.html', form=form, student=student)
+
+        active_count = Checkout.query.filter(
+            Checkout.user_id == student.user_id,
+            Checkout.status.in_(['active', 'overdue']),
+        ).count()
+        max_checkouts = get_max_active_checkouts()
+        if active_count >= max_checkouts:
+            flash(f'{student.full_name} already has {active_count} active checkouts (limit: {max_checkouts}).', 'danger')
             return render_template('librarian/checkout.html', form=form, student=student)
 
         loan_days = get_loan_period_days()
@@ -185,8 +197,9 @@ def books():
     query = Book.query
     if q:
         query = query.filter(or_(Book.title.ilike(f'%{q}%'), Book.author.ilike(f'%{q}%'), Book.isbn.ilike(f'%{q}%')))
-    books_list = query.order_by(Book.title).all()
-    return render_template('librarian/books.html', books=books_list, q=q)
+    page = request.args.get('page', 1, type=int)
+    pagination = query.order_by(Book.title).paginate(page=page, per_page=20, error_out=False)
+    return render_template('librarian/books.html', books=pagination.items, pagination=pagination, q=q)
 
 
 def _allowed_file(filename):
@@ -257,12 +270,12 @@ def book_form(book_id=None):
                 file.save(filepath)
                 book.digital_file_path = filepath
                 book.has_digital = True
-            
             else:
                 flash('Invalid file type. Allowed: PDF, TXT, HTML.', 'danger')
                 return render_template('librarian/book_form.html', form=form, book=book)
-            db.session.commit()
-        
+
+        db.session.commit()
+
         if not book_id:
             log_action('BOOK_CREATE', f'Book added: {book.title}', target_table='books', target_id=book.book_id)
             flash('Book added successfully.', 'success')
@@ -332,4 +345,28 @@ def reports():
         total_fines=total_fines,
         popular=popular,
     )
-     
+
+
+@librarian_bp.route('/settings')
+def settings():
+    password_form = ChangePasswordForm()
+    return render_template('librarian/settings.html', password_form=password_form)
+
+
+@librarian_bp.route('/settings/password', methods=['POST'])
+def change_password():
+    password_form = ChangePasswordForm()
+    if password_form.validate_on_submit():
+        if not current_user.check_password(password_form.current_password.data):
+            flash('Current password is incorrect.', 'danger')
+        else:
+            current_user.set_password(password_form.new_password.data)
+            db.session.commit()
+            log_action('PASSWORD_CHANGE', f'Librarian changed their own password: {current_user.email}')
+            flash('Password updated successfully.', 'success')
+    else:
+        for errors in password_form.errors.values():
+            for error in errors:
+                flash(error, 'danger')
+    return redirect(url_for('librarian.settings'))
+

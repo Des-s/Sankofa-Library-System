@@ -21,6 +21,7 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     profile_photo = db.Column(db.String(255), nullable=True)
+    email_notifications = db.Column(db.Boolean, default=True, nullable=False)
 
     library_card = db.relationship('LibraryCard', backref='user', uselist=False, cascade='all, delete-orphan')
     checkouts = db.relationship('Checkout', foreign_keys='Checkout.user_id', backref='student', lazy='dynamic')

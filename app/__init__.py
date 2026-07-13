@@ -58,4 +58,27 @@ def create_app(config_class='app.config.Config'):
         from app.utils.helpers import init_default_settings
         init_default_settings()
 
+    if not app.config.get('TESTING'):
+        _start_overdue_scheduler(app)
+
     return app
+
+
+def _start_overdue_scheduler(app):
+    """Periodically mark active checkouts as overdue and send due-soon reminders, independent of page traffic."""
+    from apscheduler.schedulers.background import BackgroundScheduler
+    from app.utils.fines import update_overdue_statuses
+    from app.utils.notifications import send_due_soon_reminders
+
+    def overdue_job():
+        with app.app_context():
+            update_overdue_statuses()
+
+    def reminder_job():
+        with app.app_context():
+            send_due_soon_reminders()
+
+    scheduler = BackgroundScheduler(daemon=True)
+    scheduler.add_job(overdue_job, 'interval', hours=1, id='update_overdue_statuses', replace_existing=True)
+    scheduler.add_job(reminder_job, 'interval', hours=24, id='send_due_soon_reminders', replace_existing=True)
+    scheduler.start()

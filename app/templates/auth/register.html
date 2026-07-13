@@ -67,6 +67,7 @@
 
   <div class="form-group">
     {{ form.password(placeholder="Password", class="form-input") }}
+    <small style="color:#888;font-size:0.78rem;">At least 8 characters, with a letter and a number.</small>
     {% for error in form.password.errors %}
       <span class="form-error">{{ error }}</span>
     {% endfor %}

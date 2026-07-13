@@ -5,7 +5,7 @@ from flask_login import current_user, login_required
 from sqlalchemy import func, or_
 
 from app.extensions import db
-from app.forms import SystemSettingsForm, UserForm
+from app.forms import ChangePasswordForm, SystemSettingsForm, UserForm
 from app.models import AuditLog, Book, Checkout, Fine, LibraryCard, ReadingSession, SystemSetting, User
 from app.utils.decorators import admin_required
 from app.utils.helpers import generate_library_card_number, init_default_settings, log_action
@@ -27,7 +27,7 @@ def dashboard():
         'total_students': User.query.filter_by(role='student').count(),
         'active_books': Book.query.filter_by(is_active=True).count(),
         'active_checkouts': Checkout.query.filter(Checkout.status.in_(['active', 'overdue'])).count(),
-        'total_fines_outstanding': db.session.query(func.sum(Fine.total_amount)).filter(
+        'outstanding_fines': db.session.query(func.sum(Fine.total_amount)).filter(
             Fine.status.in_(['issued', 'pending'])
         ).scalar() or 0,
         'reading_sessions': ReadingSession.query.filter(
@@ -50,8 +50,9 @@ def users():
         ))
     if role:
         query = query.filter_by(role=role)
-    users_list = query.order_by(User.full_name).all()
-    return render_template('admin/users.html', users=users_list, q=q, role=role)
+    page = request.args.get('page', 1, type=int)
+    pagination = query.order_by(User.full_name).paginate(page=page, per_page=20, error_out=False)
+    return render_template('admin/users.html', users=pagination.items, pagination=pagination, q=q, role=role)
 
 
 @admin_bp.route('/users/add', methods=['GET', 'POST'])
@@ -71,7 +72,7 @@ def user_form(user_id=None):
                 return render_template('admin/user_form.html', form=form, user=user)
 
             user = User(
-                full_name=form.full_name.data.strip(),
+                full_name=form.name.data.strip(),
                 email=form.email.data.strip().lower(),
                 role=form.role.data,
                 student_id=form.student_id.data.strip().upper() if form.student_id.data else None,
@@ -91,7 +92,7 @@ def user_form(user_id=None):
             log_action('USER_CREATE', f'User created: {user.email} ({user.role})', target_table='users', target_id=user.user_id)
             flash('User created successfully.', 'success')
         else:
-            user.full_name = form.full_name.data.strip()
+            user.full_name = form.name.data.strip()
             user.email = form.email.data.strip().lower()
             user.role = form.role.data
             user.is_active = form.is_active.data
@@ -127,16 +128,19 @@ def toggle_user(user_id):
 def settings():
     init_default_settings()
     form = SystemSettingsForm()
+    password_form = ChangePasswordForm()
     if request.method == 'GET':
         form.fine_rate_per_day.data = float(db.session.query(SystemSetting).filter_by(setting_key='fine_rate_per_day').first().setting_value)
         form.loan_period_days.data = int(db.session.query(SystemSetting).filter_by(setting_key='loan_period_days').first().setting_value)
         form.library_card_format.data = db.session.query(SystemSetting).filter_by(setting_key='library_card_format').first().setting_value
+        form.max_active_checkouts.data = int(db.session.query(SystemSetting).filter_by(setting_key='max_active_checkouts').first().setting_value)
 
     if form.validate_on_submit():
         for key, value in [
             ('fine_rate_per_day', str(form.fine_rate_per_day.data)),
             ('loan_period_days', str(form.loan_period_days.data)),
             ('library_card_format', form.library_card_format.data.strip()),
+            ('max_active_checkouts', str(form.max_active_checkouts.data)),
         ]:
             setting = SystemSetting.query.filter_by(setting_key=key).first()
             if setting:
@@ -146,7 +150,25 @@ def settings():
         flash('Settings saved.', 'success')
         return redirect(url_for('admin.settings'))
 
-    return render_template('admin/settings.html', form=form)
+    return render_template('admin/settings.html', form=form, password_form=password_form)
+
+
+@admin_bp.route('/settings/password', methods=['POST'])
+def change_password():
+    password_form = ChangePasswordForm()
+    if password_form.validate_on_submit():
+        if not current_user.check_password(password_form.current_password.data):
+            flash('Current password is incorrect.', 'danger')
+        else:
+            current_user.set_password(password_form.new_password.data)
+            db.session.commit()
+            log_action('PASSWORD_CHANGE', f'Admin changed their own password: {current_user.email}')
+            flash('Password updated successfully.', 'success')
+    else:
+        for errors in password_form.errors.values():
+            for error in errors:
+                flash(error, 'danger')
+    return redirect(url_for('admin.settings'))
 
 
 @admin_bp.route('/audit')

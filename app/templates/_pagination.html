@@ -1,0 +1,17 @@
+{% if pagination and pagination.pages > 1 %}
+{% set args = request.args.to_dict() %}
+{% set _ = args.pop('page', None) %}
+<div class="pagination">
+    {% if pagination.has_prev %}
+    <a href="{{ url_for(request.endpoint, page=pagination.prev_num, **args) }}" class="btn btn-sm btn-outline">&laquo; Prev</a>
+    {% else %}
+    <span class="btn btn-sm btn-outline btn-disabled">&laquo; Prev</span>
+    {% endif %}
+    <span class="pagination-info">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+    {% if pagination.has_next %}
+    <a href="{{ url_for(request.endpoint, page=pagination.next_num, **args) }}" class="btn btn-sm btn-outline">Next &raquo;</a>
+    {% else %}
+    <span class="btn btn-sm btn-outline btn-disabled">Next &raquo;</span>
+    {% endif %}
+</div>
+{% endif %}

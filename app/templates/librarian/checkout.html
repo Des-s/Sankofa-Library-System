@@ -2,21 +2,35 @@
 {% block title %}Check Out Book{% endblock %}
 {% block content %}
 <div class="page-header"><h1>Check Out Book</h1><p>In-person checkout only</p></div>
+
 <div class="card" style="max-width:600px;">
-    <form method="POST">
-        {{ form.hidden_tag() }}
+    <form method="GET">
         <div class="form-group">
-            {{ form.student_search.label }}
-            {{ form.student_search(class='form-control', placeholder='Enter student ID or name') }}
+            <label>Student ID or Name</label>
+            <input type="text" name="q" class="form-control" value="{{ request.args.get('q', '') }}" placeholder="Enter student ID or name">
         </div>
-        {% if student %}
-        <div class="alert alert-info">Selected: <strong>{{ student.full_name }}</strong> ({{ student.student_id }})</div>
-        {% endif %}
-        <div class="form-group">
-            {{ form.book_id.label }}
-            {{ form.book_id(class='form-control') }}
-        </div>
-        {{ form.submit(class='btn btn-primary') }}
+        <button type="submit" class="btn btn-primary">Search</button>
     </form>
 </div>
+
+{% if request.args.get('q') %}
+    {% if student %}
+    <div class="card" style="max-width:600px;">
+        <div class="alert alert-info">Found: <strong>{{ student.full_name }}</strong> ({{ student.student_id }}) &mdash; {{ student.department }}</div>
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            {{ form.student_search(type='hidden') }}
+            <div class="form-group">
+                {{ form.book_id.label }}
+                {{ form.book_id(class='form-control') }}
+            </div>
+            {{ form.submit(class='btn btn-primary') }}
+        </form>
+    </div>
+    {% else %}
+    <div class="card" style="max-width:600px;">
+        <div class="alert alert-danger">No student found matching "{{ request.args.get('q') }}".</div>
+    </div>
+    {% endif %}
+{% endif %}
 {% endblock %}

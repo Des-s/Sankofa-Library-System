@@ -1,3 +1,5 @@
+import re
+
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import (
@@ -9,13 +11,18 @@ from wtforms.validators import DataRequired, Email, EqualTo, Length, NumberRange
 from app.models import Book, User
 
 
+def validate_password_strength(form, field):
+    if field.data and not (re.search(r'[A-Za-z]', field.data) and re.search(r'\d', field.data)):
+        raise ValidationError('Password must contain at least one letter and one number.')
+
+
 class RegistrationForm(FlaskForm):
     name = StringField('Full Name', validators=[DataRequired(), Length(max=150)])
     student_id = StringField('Student ID', validators=[DataRequired(), Length(max=50)])
     email = StringField('Email', validators=[DataRequired(), Email(), Length(max=150)])
     department = StringField('Department', validators=[DataRequired(), Length(max=100)])
     year_of_study = IntegerField('Year of Study', validators=[DataRequired(), NumberRange(min=1, max=6)])
-    password = PasswordField('Password', validators=[DataRequired(), Length(min=8)])
+    password = PasswordField('Password', validators=[DataRequired(), Length(min=8), validate_password_strength])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField('Register')
 
@@ -96,7 +103,7 @@ class UserForm(FlaskForm):
     student_id = StringField('Student ID', validators=[Optional(), Length(max=50)])
     department = StringField('Department', validators=[Optional(), Length(max=100)])
     year_of_study = IntegerField('Year of Study', validators=[Optional(), NumberRange(min=1, max=6)])
-    password = PasswordField('Password', validators=[Optional(), Length(min=8)])
+    password = PasswordField('Password', validators=[Optional(), Length(min=8), validate_password_strength])
     is_active = BooleanField('Active', default=True)
     submit = SubmitField('Save User')
 
@@ -105,7 +112,20 @@ class SystemSettingsForm(FlaskForm):
     fine_rate_per_day = DecimalField('Fine Rate (GHS/day)', places=2, validators=[DataRequired(), NumberRange(min=0)])
     loan_period_days = IntegerField('Loan Period (days)', validators=[DataRequired(), NumberRange(min=1, max=90)])
     library_card_format = StringField('Card Format', validators=[DataRequired(), Length(max=100)])
+    max_active_checkouts = IntegerField('Max Active Checkouts per Student', validators=[DataRequired(), NumberRange(min=1, max=50)])
     submit = SubmitField('Save Settings')
+
+
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField('Current Password', validators=[DataRequired()])
+    new_password = PasswordField('New Password', validators=[DataRequired(), Length(min=8), validate_password_strength])
+    confirm_new_password = PasswordField('Confirm New Password', validators=[DataRequired(), EqualTo('new_password')])
+    submit = SubmitField('Change Password')
+
+
+class NotificationSettingsForm(FlaskForm):
+    email_notifications = BooleanField('Email me when a borrowed book is due soon')
+    submit = SubmitField('Save Preferences')
 
 
 class CatalogSearchForm(FlaskForm):

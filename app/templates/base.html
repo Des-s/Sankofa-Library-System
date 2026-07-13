@@ -21,6 +21,7 @@
                     <a href="{{ url_for('student.borrowings') }}">My Borrowings</a>
                     <a href="{{ url_for('student.fines') }}">My Fines</a>
                     <a href="{{ url_for('student.profile') }}">Profile</a>
+                    <a href="{{ url_for('student.settings') }}">Settings</a>
                 {% elif current_user.is_librarian and not current_user.is_admin %}
                     <a href="{{ url_for('librarian.dashboard') }}">Dashboard</a>
                     <a href="{{ url_for('librarian.checkout') }}">Checkout</a>
@@ -29,11 +30,16 @@
                     <a href="{{ url_for('librarian.students') }}">Students</a>
                     <a href="{{ url_for('catalog.catalog') }}">Catalog</a>
                     <a href="{{ url_for('librarian.reports') }}">Reports</a>
+                    <a href="{{ url_for('librarian.settings') }}">Settings</a>
                 {% elif current_user.is_admin %}
                     <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
                     <a href="{{ url_for('librarian.checkout') }}">Checkout</a>
                     <a href="{{ url_for('librarian.books') }}">Books</a>
                     <a href="{{ url_for('catalog.catalog') }}">Catalog</a>
+                    <a href="{{ url_for('admin.users') }}">Users</a>
+                    <a href="{{ url_for('admin.audit') }}">Audit Log</a>
+                    <a href="{{ url_for('admin.analytics') }}">Analytics</a>
+                    <a href="{{ url_for('admin.settings') }}">Settings</a>
                 {% endif %}
                 <a href="{{ url_for('auth.logout') }}">Logout</a>
             </nav>
