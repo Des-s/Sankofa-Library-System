@@ -13,7 +13,7 @@
             <div class="form-group">{{ form.year_published.label }}{{ form.year_published(class='form-control') }}</div>
         </div>
         <div class="form-group">
-    <label>Cover Image</label>
+    <label>{{ form.cover_image.label.text }}</label>
     {{ form.cover_image(class="form-control") }}
     {% if book and book.cover_image %}
     <div style="margin-top:0.5rem;">
@@ -21,17 +21,39 @@
              alt="Current cover" style="height:80px; border-radius:4px;">
         <small style="color:var(--color-muted); display:block;">Current cover — upload a new one to replace it</small>
     </div>
+    {% else %}
+    <small style="color:var(--color-muted); display:block;margin-top:0.35rem;">If left blank, we'll try to fetch a cover automatically using the ISBN.</small>
     {% endif %}
     {% for error in form.cover_image.errors %}
     <span class="form-error">{{ error }}</span>
     {% endfor %}
     </div>
-        <div class="form-group">{{ form.category.label }}{{ form.category(class='form-control') }}</div>
-        <div class="form-group">{{ form.total_physical_copies.label }}{{ form.total_physical_copies(class='form-control') }}</div>
+        <div class="grid-2">
+            <div class="form-group">{{ form.category.label }}{{ form.category(class='form-control') }}</div>
+            <div class="form-group">{{ form.subcategory.label }}{{ form.subcategory(class='form-control') }}</div>
+        </div>
+        <div class="form-group">
+            {{ form.has_physical.label }}{{ form.has_physical(class='form-control', id='has_physical_select') }}
+        </div>
+        <div class="form-group" id="physical_copies_group">{{ form.total_physical_copies.label }}{{ form.total_physical_copies(class='form-control') }}
+            {% for error in form.total_physical_copies.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </div>
         <div class="form-group">{{ form.digital_file.label }}{{ form.digital_file(class='form-control') }}</div>
         <div class="form-group checkbox-group">{{ form.is_active() }} {{ form.is_active.label }}</div>
         {{ form.submit(class='btn btn-primary') }}
         <a href="{{ url_for('librarian.books') }}" class="btn btn-outline" style="margin-left:0.5rem;">Cancel</a>
     </form>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const select = document.getElementById('has_physical_select');
+    const group = document.getElementById('physical_copies_group');
+    function sync() { group.style.display = select.value === 'no' ? 'none' : 'block'; }
+    select.addEventListener('change', sync);
+    sync();
+});
+</script>
 {% endblock %}

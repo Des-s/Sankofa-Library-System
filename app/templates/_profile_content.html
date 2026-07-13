@@ -1,0 +1,72 @@
+<div class="page-header page-header-split">
+    <div>
+        <h1>Profile</h1>
+        <p>{{ current_user.email }}</p>
+    </div>
+    <a href="{{ url_for(role + '.settings') }}" class="btn btn-primary"><i class="fa-solid fa-gear"></i> Settings</a>
+</div>
+
+<div class="avatar-upload">
+    <form method="POST" action="{{ url_for(role + '.update_photo') }}" enctype="multipart/form-data" id="photoForm">
+        {{ photo_form.hidden_tag() }}
+        <div class="avatar-upload-circle">
+            {% if current_user.profile_photo %}
+            <img src="{{ url_for('static', filename='uploads/profile_photos/' + current_user.profile_photo) }}" alt="">
+            {% else %}
+            <span>{{ current_user.full_name.split()[0][0] }}{{ current_user.full_name.split()[-1][0] if current_user.full_name.split()|length > 1 else '' }}</span>
+            {% endif %}
+            <label for="photoInput" class="avatar-upload-btn" title="Change photo">
+                <i class="fa-solid fa-camera"></i>
+            </label>
+            {{ photo_form.profile_photo(id="photoInput", style="display:none;", onchange="document.getElementById('photoForm').submit()") }}
+        </div>
+    </form>
+</div>
+{% if photo_form.profile_photo.errors %}
+<p style="color:var(--color-danger);text-align:center;margin-top:-1rem;margin-bottom:1rem;font-size:0.85rem;">{{ photo_form.profile_photo.errors[0] }}</p>
+{% endif %}
+
+{% if card %}
+<div class="library-card-display" style="margin-bottom:1.5rem;">
+    <div class="card-label">Sankofa Library Card</div>
+    <div class="card-number">{{ card.card_number }}</div>
+    <div class="card-holder">{{ current_user.full_name }}</div>
+</div>
+{% endif %}
+
+<div class="settings-section-label">Account</div>
+<div class="settings-rows">
+    <div class="settings-row open">
+        <div class="settings-row-header settings-row-flat">
+            <span class="row-icon"><i class="fa-solid fa-user"></i></span>
+            <span class="row-label">Edit Profile</span>
+        </div>
+        <div class="settings-row-body">
+            <p><strong>Name:</strong> {{ current_user.full_name }}</p>
+            <p><strong>Email:</strong> {{ current_user.email }}</p>
+            {% if current_user.username %}<p><strong>Username:</strong> {{ current_user.username }}</p>{% endif %}
+            {% if current_user.student_id %}<p><strong>Student ID:</strong> {{ current_user.student_id }}</p>{% endif %}
+            {% if current_user.department %}<p><strong>Department:</strong> {{ current_user.department }}</p>{% endif %}
+            {% if current_user.year_of_study %}<p><strong>Year of Study:</strong> {{ current_user.year_of_study }}</p>{% endif %}
+            <small style="color:var(--color-muted);display:block;margin:0.5rem 0;">This information is managed by the library. Contact staff to request a change.</small>
+        </div>
+    </div>
+
+    <div class="settings-row">
+        <div class="settings-row-header settings-row-flat">
+            <span class="row-icon"><i class="fa-solid fa-lock"></i></span>
+            <span class="row-label">Change Password</span>
+        </div>
+        <div class="settings-row-body">
+            <form method="POST" action="{{ url_for(role + '.change_password') }}">
+                {{ password_form.hidden_tag() }}
+                <div class="form-group">{{ password_form.current_password.label }}{{ password_form.current_password(class='form-control') }}</div>
+                <div class="form-group">{{ password_form.new_password.label }}{{ password_form.new_password(class='form-control') }}
+                    <small style="color:var(--color-muted);">At least 8 characters, with a letter and a number.</small>
+                </div>
+                <div class="form-group">{{ password_form.confirm_new_password.label }}{{ password_form.confirm_new_password(class='form-control') }}</div>
+                {{ password_form.submit(class='btn btn-primary btn-sm') }}
+            </form>
+        </div>
+    </div>
+</div>

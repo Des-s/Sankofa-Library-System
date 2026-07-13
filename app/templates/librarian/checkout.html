@@ -16,14 +16,14 @@
 {% if request.args.get('q') %}
     {% if student %}
     <div class="card" style="max-width:600px;">
-        <div class="alert alert-info">Found: <strong>{{ student.full_name }}</strong> ({{ student.student_id }}) &mdash; {{ student.department }}</div>
         <form method="POST">
             {{ form.hidden_tag() }}
             {{ form.student_search(type='hidden') }}
-            <div class="form-group">
-                {{ form.book_id.label }}
-                {{ form.book_id(class='form-control') }}
-            </div>
+            <table style="margin-bottom:1rem;">
+                <tr><th style="width:120px;">Student Name</th><td>{{ student.full_name }}</td></tr>
+                <tr><th>Student ID</th><td>{{ student.student_id }}</td></tr>
+                <tr><th>{{ form.book_id.label.text }}</th><td>{{ form.book_id(class='form-control') }}</td></tr>
+            </table>
             {{ form.submit(class='btn btn-primary') }}
         </form>
     </div>

@@ -5,10 +5,17 @@ from flask_login import current_user, login_required
 from sqlalchemy import func, or_
 
 from app.extensions import db
-from app.forms import ChangePasswordForm, SystemSettingsForm, UserForm
-from app.models import AuditLog, Book, Checkout, Fine, LibraryCard, ReadingSession, SystemSetting, User
+from app.forms import (
+    ChangePasswordForm, LanguageForm, NotificationSettingsForm, ProfilePhotoForm,
+    SupportRequestForm, SystemSettingsForm, ThemeForm, UserForm,
+)
+from app.models import AuditLog, Book, Checkout, Fine, LibraryCard, ReadingSession, Report, SystemSetting, User
 from app.utils.decorators import admin_required
-from app.utils.helpers import generate_library_card_number, init_default_settings, log_action
+from app.utils.helpers import (
+    generate_library_card_number, get_book_availability_rate, get_checkouts_by_department,
+    get_digital_coverage_rate, get_fine_collection_rate, get_on_time_return_rate,
+    get_user_signups_by_month, init_default_settings, log_action, save_profile_photo,
+)
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -33,8 +40,35 @@ def dashboard():
         'reading_sessions': ReadingSession.query.filter(
                                db.func.date(ReadingSession.session_start) == date.today()
                             ).count(),
+        'pending_approvals': User.query.filter_by(role='student', approval_status='pending').count(),
     }
-    return render_template('admin/dashboard.html', stats=stats)
+
+    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    monthly_checkouts = Checkout.query.filter(Checkout.checkout_date >= thirty_days_ago.date()).count()
+    monthly_reading = ReadingSession.query.filter(ReadingSession.session_start >= thirty_days_ago).count()
+    fine_revenue = db.session.query(func.sum(Fine.total_amount)).filter(Fine.status == 'paid').scalar() or 0
+
+    popular_books = db.session.query(
+        Book.title, func.count(Checkout.checkout_id).label('borrow_count')
+    ).join(Checkout).group_by(Book.book_id).order_by(func.count(Checkout.checkout_id).desc()).limit(10).all()
+
+    department_breakdown = get_checkouts_by_department()
+    signups_by_month = get_user_signups_by_month()
+
+    return render_template(
+        'admin/dashboard.html',
+        stats=stats,
+        monthly_checkouts=monthly_checkouts,
+        monthly_reading=monthly_reading,
+        fine_revenue=fine_revenue,
+        popular_books=popular_books,
+        department_breakdown=department_breakdown,
+        signups_by_month=signups_by_month,
+        book_availability_rate=get_book_availability_rate(),
+        on_time_return_rate=get_on_time_return_rate(),
+        digital_coverage_rate=get_digital_coverage_rate(),
+        fine_collection_rate=get_fine_collection_rate(),
+    )
 
 
 @admin_bp.route('/users')
@@ -110,6 +144,13 @@ def user_form(user_id=None):
     return render_template('admin/user_form.html', form=form, user=user)
 
 
+@admin_bp.route('/users/<int:user_id>')
+def user_detail(user_id):
+    user = User.query.get_or_404(user_id)
+    reports_list = Report.query.filter_by(student_id=user_id).order_by(Report.date_filed.desc()).all()
+    return render_template('admin/user_detail.html', user=user, reports=reports_list)
+
+
 @admin_bp.route('/users/toggle/<int:user_id>', methods=['POST'])
 def toggle_user(user_id):
     user = User.query.get_or_404(user_id)
@@ -124,11 +165,17 @@ def toggle_user(user_id):
     return redirect(url_for('admin.users'))
 
 
+@admin_bp.route('/profile')
+def profile():
+    password_form = ChangePasswordForm()
+    photo_form = ProfilePhotoForm()
+    return render_template('admin/profile.html', password_form=password_form, photo_form=photo_form)
+
+
 @admin_bp.route('/settings', methods=['GET', 'POST'])
 def settings():
     init_default_settings()
     form = SystemSettingsForm()
-    password_form = ChangePasswordForm()
     if request.method == 'GET':
         form.fine_rate_per_day.data = float(db.session.query(SystemSetting).filter_by(setting_key='fine_rate_per_day').first().setting_value)
         form.loan_period_days.data = int(db.session.query(SystemSetting).filter_by(setting_key='loan_period_days').first().setting_value)
@@ -150,10 +197,22 @@ def settings():
         flash('Settings saved.', 'success')
         return redirect(url_for('admin.settings'))
 
-    return render_template('admin/settings.html', form=form, password_form=password_form)
+    notification_form = NotificationSettingsForm(email_notifications=current_user.email_notifications)
+    theme_form = ThemeForm(dark_mode=(current_user.theme_preference == 'dark'))
+    language_form = LanguageForm(language_preference=current_user.language_preference)
+    support_form = SupportRequestForm()
+
+    return render_template(
+        'admin/settings.html',
+        form=form,
+        notification_form=notification_form,
+        theme_form=theme_form,
+        language_form=language_form,
+        support_form=support_form,
+    )
 
 
-@admin_bp.route('/settings/password', methods=['POST'])
+@admin_bp.route('/profile/password', methods=['POST'])
 def change_password():
     password_form = ChangePasswordForm()
     if password_form.validate_on_submit():
@@ -168,6 +227,63 @@ def change_password():
         for errors in password_form.errors.values():
             for error in errors:
                 flash(error, 'danger')
+    return redirect(url_for('admin.profile'))
+
+
+@admin_bp.route('/profile/photo', methods=['POST'])
+def update_photo():
+    photo_form = ProfilePhotoForm()
+    if photo_form.validate_on_submit():
+        save_profile_photo(current_user, photo_form.profile_photo.data)
+        db.session.commit()
+        flash('Profile photo updated.', 'success')
+    return redirect(url_for('admin.profile'))
+
+
+@admin_bp.route('/settings/notifications', methods=['POST'])
+def update_notifications():
+    notification_form = NotificationSettingsForm()
+    if notification_form.validate_on_submit():
+        current_user.email_notifications = notification_form.email_notifications.data
+        db.session.commit()
+        flash('Notification preferences saved.', 'success')
+    return redirect(url_for('admin.settings'))
+
+
+@admin_bp.route('/settings/theme', methods=['POST'])
+def update_theme():
+    theme_form = ThemeForm()
+    if theme_form.validate_on_submit():
+        current_user.theme_preference = 'dark' if theme_form.dark_mode.data else 'light'
+        db.session.commit()
+        flash('Appearance updated.', 'success')
+    return redirect(url_for('admin.settings'))
+
+
+@admin_bp.route('/settings/language', methods=['POST'])
+def update_language():
+    language_form = LanguageForm()
+    if language_form.validate_on_submit():
+        current_user.language_preference = language_form.language_preference.data
+        db.session.commit()
+        flash('Language updated.', 'success')
+    return redirect(url_for('admin.settings'))
+
+
+@admin_bp.route('/settings/support', methods=['POST'])
+def submit_support_request():
+    support_form = SupportRequestForm()
+    if support_form.validate_on_submit():
+        report = Report(
+            report_type='support',
+            title=support_form.subject.data.strip(),
+            description=support_form.description.data.strip(),
+            filed_by=current_user.user_id,
+        )
+        db.session.add(report)
+        db.session.commit()
+        log_action('SUPPORT_REQUEST', f'Support request filed: {report.title}', target_table='reports', target_id=report.id)
+        flash('Your report has been submitted.', 'success')
     return redirect(url_for('admin.settings'))
 
 
@@ -182,31 +298,6 @@ def audit():
         ))
     logs = query.order_by(AuditLog.created_at.desc()).limit(200).all()
     return render_template('admin/audit.html', logs=logs, q=q)
-
-
-@admin_bp.route('/analytics')
-def analytics():
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-    monthly_checkouts = Checkout.query.filter(Checkout.checkout_date >= thirty_days_ago.date()).count()
-    monthly_reading = ReadingSession.query.filter(ReadingSession.session_start >= thirty_days_ago).count()
-    fine_revenue = db.session.query(func.sum(Fine.total_amount)).filter(Fine.status == 'paid').scalar() or 0
-
-    popular_books = db.session.query(
-        Book.title, func.count(Checkout.checkout_id).label('borrow_count')
-    ).join(Checkout).group_by(Book.book_id).order_by(func.count(Checkout.checkout_id).desc()).limit(10).all()
-
-    popular_reads = db.session.query(
-        Book.title, func.count(ReadingSession.session_id).label('read_count')
-    ).join(ReadingSession).group_by(Book.book_id).order_by(func.count(ReadingSession.session_id).desc()).limit(10).all()
-
-    return render_template(
-        'admin/analytics.html',
-        monthly_checkouts=monthly_checkouts,
-        monthly_reading=monthly_reading,
-        fine_revenue=fine_revenue,
-        popular_books=popular_books,
-        popular_reads=popular_reads,
-    )
 
 
 @admin_bp.route('/reports')

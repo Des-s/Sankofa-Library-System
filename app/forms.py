@@ -10,6 +10,8 @@ from wtforms.validators import DataRequired, Email, EqualTo, Length, NumberRange
 
 from app.models import Book, User
 
+STUDENT_EMAIL_DOMAIN = 'st.knust.edu.gh'
+
 
 def validate_password_strength(form, field):
     if field.data and not (re.search(r'[A-Za-z]', field.data) and re.search(r'\d', field.data)):
@@ -18,6 +20,7 @@ def validate_password_strength(form, field):
 
 class RegistrationForm(FlaskForm):
     name = StringField('Full Name', validators=[DataRequired(), Length(max=150)])
+    username = StringField('Username', validators=[DataRequired(), Length(min=3, max=50)])
     student_id = StringField('Student ID', validators=[DataRequired(), Length(max=50)])
     email = StringField('Email', validators=[DataRequired(), Email(), Length(max=150)])
     department = StringField('Department', validators=[DataRequired(), Length(max=100)])
@@ -26,6 +29,13 @@ class RegistrationForm(FlaskForm):
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField('Register')
 
+    def validate_username(self, field):
+        username = field.data.strip().lower()
+        if not re.match(r'^[a-zA-Z0-9_.]+$', username):
+            raise ValidationError('Username may only contain letters, numbers, dots and underscores.')
+        if User.query.filter(User.username.ilike(username)).first():
+            raise ValidationError('This username is already taken.')
+
     def validate_student_id(self, field):
         student_id = field.data.strip().upper()
         if User.query.filter_by(student_id=student_id).first():
@@ -33,6 +43,8 @@ class RegistrationForm(FlaskForm):
 
     def validate_email(self, field):
         email = field.data.strip().lower()
+        if not email.endswith('@' + STUDENT_EMAIL_DOMAIN):
+            raise ValidationError(f'You must register with your student email address (@{STUDENT_EMAIL_DOMAIN}).')
         if User.query.filter_by(email=email).first():
             raise ValidationError('This email is already registered.')
 
@@ -41,15 +53,6 @@ class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Log In')
-
-
-class ProfileForm(FlaskForm):
-    name = StringField('Full Name', validators=[DataRequired(), Length(max=150)])
-    email = StringField('Email', validators=[DataRequired(), Email(), Length(max=150)])
-    department = StringField('Department', validators=[DataRequired(), Length(max=100)])
-    year_of_study = IntegerField('Year of Study', validators=[DataRequired(), NumberRange(min=1, max=6)])
-    profile_photo = FileField('Profile Photo', validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Images only')])
-    submit = SubmitField('Update Profile')
 
 
 class CardVerificationForm(FlaskForm):
@@ -63,12 +66,18 @@ class BookForm(FlaskForm):
     isbn = StringField('ISBN', validators=[DataRequired(), Length(max=20)])
     publisher = StringField('Publisher', validators=[Optional(), Length(max=150)])
     year_published = IntegerField('Year Published', validators=[Optional(), NumberRange(min=1000, max=2100)])
-    category = StringField('Category', validators=[Optional(), Length(max=100)])
-    total_physical_copies = IntegerField('Physical Copies', validators=[DataRequired(), NumberRange(min=0)])
+    category = StringField('Category (e.g. Science)', validators=[Optional(), Length(max=100)])
+    subcategory = StringField('Subcategory (e.g. Biology)', validators=[Optional(), Length(max=100)])
+    has_physical = SelectField('Physical Copies Available?', choices=[('yes', 'Yes'), ('no', 'No — digital only')], default='yes')
+    total_physical_copies = IntegerField('Number of Physical Copies', validators=[Optional(), NumberRange(min=0)])
     digital_file = FileField('Digital File (PDF/TXT/HTML)')
-    cover_image = FileField('Cover Image', validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Images only')])
+    cover_image = FileField('Cover Image (leave blank to auto-fetch by ISBN)', validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Images only')])
     is_active = BooleanField('Active in Catalog', default=True)
     submit = SubmitField('Save Book')
+
+    def validate_total_physical_copies(self, field):
+        if self.has_physical.data == 'yes' and not field.data:
+            raise ValidationError('Enter the number of physical copies, or set "Physical Copies Available?" to No.')
 
 
 class CheckoutForm(FlaskForm):
@@ -124,8 +133,36 @@ class ChangePasswordForm(FlaskForm):
 
 
 class NotificationSettingsForm(FlaskForm):
-    email_notifications = BooleanField('Email me when a borrowed book is due soon')
+    email_notifications = BooleanField('Email me notifications')
     submit = SubmitField('Save Preferences')
+
+
+class ThemeForm(FlaskForm):
+    dark_mode = BooleanField('Dark Mode')
+    submit = SubmitField('Save Appearance')
+
+
+class LanguageForm(FlaskForm):
+    language_preference = SelectField('Language', choices=[('en', 'English'), ('fr', 'Français')], validators=[DataRequired()])
+    submit = SubmitField('Save Language')
+
+
+class ProfilePhotoForm(FlaskForm):
+    profile_photo = FileField('Profile Photo', validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Images only')])
+    submit = SubmitField('Upload Photo')
+
+
+class SupportRequestForm(FlaskForm):
+    subject = StringField('Subject', validators=[DataRequired(), Length(max=200)])
+    description = TextAreaField('Describe the problem', validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+
+class StudentEditForm(FlaskForm):
+    department = StringField('Department', validators=[DataRequired(), Length(max=100)])
+    year_of_study = IntegerField('Year of Study', validators=[DataRequired(), NumberRange(min=1, max=6)])
+    is_active = BooleanField('Active', default=True)
+    submit = SubmitField('Save Changes')
 
 
 class CatalogSearchForm(FlaskForm):

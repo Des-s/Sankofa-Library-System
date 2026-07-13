@@ -1,17 +1,17 @@
-import os
-from datetime import date
+from decimal import Decimal
 
-from flask import Blueprint, current_app, flash, redirect, render_template, request, send_file, url_for, abort
+from flask import Blueprint, flash, redirect, render_template, request, send_file, url_for, abort
 from flask_login import current_user, login_required
-from sqlalchemy import or_
-from werkzeug.utils import secure_filename
 
 from app.extensions import db
-from app.forms import CardVerificationForm, ChangePasswordForm, NotificationSettingsForm, ProfileForm
-from app.models import Book, Checkout, Fine, ReadingSession, User
+from app.forms import (
+    CardVerificationForm, ChangePasswordForm, LanguageForm, NotificationSettingsForm,
+    ProfilePhotoForm, SupportRequestForm, ThemeForm,
+)
+from app.models import Book, Checkout, Fine, Report, ReadingSession
 from app.utils.decorators import student_required
 from app.utils.fines import update_overdue_statuses
-from app.utils.helpers import log_action
+from app.utils.helpers import log_action, save_profile_photo
 
 student_bp = Blueprint('student', __name__, url_prefix='/student')
 
@@ -44,47 +44,38 @@ def dashboard():
     )
 
 
-@student_bp.route('/profile', methods=['GET', 'POST'])
+@student_bp.route('/profile')
 @login_required
 @student_required
 def profile():
-    form = ProfileForm(obj=current_user)
-    if form.validate_on_submit():
-        existing = User.query.filter(User.email == form.email.data, User.user_id != current_user.user_id).first()
-        if existing:
-            flash('That email is already in use.', 'danger')
-        else:
-            current_user.full_name = form.name.data.strip()
-            current_user.email = form.email.data.strip().lower()
-            current_user.department = form.department.data.strip()
-            current_user.year_of_study = form.year_of_study.data
-
-            photo = form.profile_photo.data
-            if photo and photo.filename:
-                ext = photo.filename.rsplit('.', 1)[1].lower()
-                filename = secure_filename(f'user_{current_user.user_id}.{ext}')
-                photos_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'profile_photos')
-                os.makedirs(photos_folder, exist_ok=True)
-                photo.save(os.path.join(photos_folder, filename))
-                current_user.profile_photo = filename
-
-            db.session.commit()
-            log_action('PROFILE_UPDATE', f'Student updated profile: {current_user.email}')
-            flash('Profile updated successfully.', 'success')
-            return redirect(url_for('student.profile'))
-    return render_template('student/profile.html', form=form, card=current_user.library_card)
+    password_form = ChangePasswordForm()
+    photo_form = ProfilePhotoForm()
+    return render_template(
+        'student/profile.html',
+        password_form=password_form,
+        photo_form=photo_form,
+        card=current_user.library_card,
+    )
 
 
 @student_bp.route('/settings')
 @login_required
 @student_required
 def settings():
-    password_form = ChangePasswordForm()
     notification_form = NotificationSettingsForm(email_notifications=current_user.email_notifications)
-    return render_template('student/settings.html', password_form=password_form, notification_form=notification_form)
+    theme_form = ThemeForm(dark_mode=(current_user.theme_preference == 'dark'))
+    language_form = LanguageForm(language_preference=current_user.language_preference)
+    support_form = SupportRequestForm()
+    return render_template(
+        'student/settings.html',
+        notification_form=notification_form,
+        theme_form=theme_form,
+        language_form=language_form,
+        support_form=support_form,
+    )
 
 
-@student_bp.route('/settings/password', methods=['POST'])
+@student_bp.route('/profile/password', methods=['POST'])
 @login_required
 @student_required
 def change_password():
@@ -101,7 +92,19 @@ def change_password():
         for errors in password_form.errors.values():
             for error in errors:
                 flash(error, 'danger')
-    return redirect(url_for('student.settings'))
+    return redirect(url_for('student.profile'))
+
+
+@student_bp.route('/profile/photo', methods=['POST'])
+@login_required
+@student_required
+def update_photo():
+    photo_form = ProfilePhotoForm()
+    if photo_form.validate_on_submit():
+        save_profile_photo(current_user, photo_form.profile_photo.data)
+        db.session.commit()
+        flash('Profile photo updated.', 'success')
+    return redirect(url_for('student.profile'))
 
 
 @student_bp.route('/settings/notifications', methods=['POST'])
@@ -116,14 +119,63 @@ def update_notifications():
     return redirect(url_for('student.settings'))
 
 
+@student_bp.route('/settings/theme', methods=['POST'])
+@login_required
+@student_required
+def update_theme():
+    theme_form = ThemeForm()
+    if theme_form.validate_on_submit():
+        current_user.theme_preference = 'dark' if theme_form.dark_mode.data else 'light'
+        db.session.commit()
+        flash('Appearance updated.', 'success')
+    return redirect(url_for('student.settings'))
+
+
+@student_bp.route('/settings/language', methods=['POST'])
+@login_required
+@student_required
+def update_language():
+    language_form = LanguageForm()
+    if language_form.validate_on_submit():
+        current_user.language_preference = language_form.language_preference.data
+        db.session.commit()
+        flash('Language updated.', 'success')
+    return redirect(url_for('student.settings'))
+
+
+@student_bp.route('/settings/support', methods=['POST'])
+@login_required
+@student_required
+def submit_support_request():
+    support_form = SupportRequestForm()
+    if support_form.validate_on_submit():
+        report = Report(
+            report_type='support',
+            title=support_form.subject.data.strip(),
+            description=support_form.description.data.strip(),
+            student_id=current_user.user_id,
+            student_name=current_user.full_name,
+            filed_by=current_user.user_id,
+        )
+        db.session.add(report)
+        db.session.commit()
+        log_action('SUPPORT_REQUEST', f'Support request filed: {report.title}', target_table='reports', target_id=report.id)
+        flash('Your report has been submitted to the library staff.', 'success')
+    return redirect(url_for('student.settings'))
+
+
 @student_bp.route('/borrowings')
 @login_required
 @student_required
 def borrowings():
+    tab = request.args.get('tab', 'borrowed')
     checkouts = Checkout.query.filter_by(user_id=current_user.user_id).order_by(
         Checkout.checkout_date.desc()
     ).all()
-    return render_template('student/borrowings.html', checkouts=checkouts)
+    reading_sessions = ReadingSession.query.filter_by(user_id=current_user.user_id).order_by(
+        ReadingSession.session_start.desc()
+    ).all()
+    return render_template('student/borrowings.html', checkouts=checkouts, reading_sessions=reading_sessions, tab=tab)
 
 
 @student_bp.route('/fines')
@@ -133,7 +185,14 @@ def fines():
     fines_list = Fine.query.filter_by(user_id=current_user.user_id).order_by(
         Fine.created_at.desc()
     ).all()
-    return render_template('student/fines.html', fines=fines_list)
+    outstanding = [f for f in fines_list if f.status in ('issued', 'pending')]
+    total_outstanding = sum((f.total_amount for f in outstanding), Decimal('0.00'))
+    return render_template(
+        'student/fines.html',
+        fines=fines_list,
+        total_outstanding=total_outstanding,
+        outstanding_count=len(outstanding),
+    )
 
 
 @student_bp.route('/read/<int:book_id>', methods=['GET', 'POST'])

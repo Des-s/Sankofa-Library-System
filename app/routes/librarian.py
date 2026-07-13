@@ -7,11 +7,19 @@ from werkzeug.utils import secure_filename
 import os
 
 from app.extensions import db
-from app.forms import BookForm, ChangePasswordForm, CheckoutForm, FineActionForm, ReturnForm
+from app.forms import (
+    BookForm, ChangePasswordForm, CheckoutForm, FineActionForm, LanguageForm,
+    NotificationSettingsForm, ProfilePhotoForm, ReturnForm, StudentEditForm,
+    SupportRequestForm, ThemeForm,
+)
 from app.models import Book, Checkout, Fine, Report, User
+from app.utils.covers import fetch_cover_by_isbn
 from app.utils.decorators import librarian_required
 from app.utils.fines import get_accrued_fine_amount, process_return, update_overdue_statuses
-from app.utils.helpers import get_loan_period_days, get_max_active_checkouts, log_action
+from app.utils.helpers import (
+    get_book_availability_rate, get_checkouts_by_department, get_digital_coverage_rate,
+    get_loan_period_days, get_max_active_checkouts, get_on_time_return_rate, log_action, save_profile_photo,
+)
 from flask import current_app
 
 librarian_bp = Blueprint('librarian', __name__, url_prefix='/librarian')
@@ -43,7 +51,10 @@ def dashboard():
 @librarian_bp.route('/students')
 def students():
     q = request.args.get('q', '').strip()
+    tab = request.args.get('tab', 'all')
     query = User.query.filter_by(role='student')
+    if tab == 'pending':
+        query = query.filter_by(approval_status='pending')
     if q:
         query = query.filter(or_(
             User.student_id.ilike(f'%{q}%'),
@@ -52,7 +63,35 @@ def students():
         ))
     page = request.args.get('page', 1, type=int)
     pagination = query.order_by(User.full_name).paginate(page=page, per_page=20, error_out=False)
-    return render_template('librarian/students.html', students=pagination.items, pagination=pagination, q=q)
+    pending_count = User.query.filter_by(role='student', approval_status='pending').count()
+    return render_template(
+        'librarian/students.html',
+        students=pagination.items,
+        pagination=pagination,
+        q=q,
+        tab=tab,
+        pending_count=pending_count,
+    )
+
+
+@librarian_bp.route('/students/<int:user_id>/approve', methods=['POST'])
+def approve_student(user_id):
+    student = User.query.filter_by(user_id=user_id, role='student').first_or_404()
+    student.approval_status = 'approved'
+    db.session.commit()
+    log_action('STUDENT_APPROVE', f'Approved student registration: {student.email}', target_table='users', target_id=user_id)
+    flash(f'{student.full_name} approved.', 'success')
+    return redirect(url_for('librarian.students', tab='pending'))
+
+
+@librarian_bp.route('/students/<int:user_id>/reject', methods=['POST'])
+def reject_student(user_id):
+    student = User.query.filter_by(user_id=user_id, role='student').first_or_404()
+    student.approval_status = 'rejected'
+    db.session.commit()
+    log_action('STUDENT_REJECT', f'Rejected student registration: {student.email}', target_table='users', target_id=user_id)
+    flash(f'{student.full_name} rejected.', 'info')
+    return redirect(url_for('librarian.students', tab='pending'))
 
 
 @librarian_bp.route('/students/<int:user_id>')
@@ -60,7 +99,29 @@ def student_detail(user_id):
     student = User.query.filter_by(user_id=user_id, role='student').first_or_404()
     checkouts = Checkout.query.filter_by(user_id=user_id).order_by(Checkout.checkout_date.desc()).all()
     fines_list = Fine.query.filter_by(user_id=user_id).order_by(Fine.created_at.desc()).all()
-    return render_template('librarian/student_detail.html', student=student, checkouts=checkouts, fines=fines_list)
+    reports_list = Report.query.filter_by(student_id=user_id).order_by(Report.date_filed.desc()).all()
+    return render_template(
+        'librarian/student_detail.html',
+        student=student,
+        checkouts=checkouts,
+        fines=fines_list,
+        reports=reports_list,
+    )
+
+
+@librarian_bp.route('/students/<int:user_id>/edit', methods=['GET', 'POST'])
+def edit_student(user_id):
+    student = User.query.filter_by(user_id=user_id, role='student').first_or_404()
+    form = StudentEditForm(obj=student)
+    if form.validate_on_submit():
+        student.department = form.department.data.strip()
+        student.year_of_study = form.year_of_study.data
+        student.is_active = form.is_active.data
+        db.session.commit()
+        log_action('STUDENT_EDIT', f'Updated student record: {student.email}', target_table='users', target_id=user_id)
+        flash('Student record updated.', 'success')
+        return redirect(url_for('librarian.student_detail', user_id=user_id))
+    return render_template('librarian/edit_student.html', form=form, student=student)
 
 
 @librarian_bp.route('/checkout', methods=['GET', 'POST'])
@@ -198,7 +259,7 @@ def books():
     if q:
         query = query.filter(or_(Book.title.ilike(f'%{q}%'), Book.author.ilike(f'%{q}%'), Book.isbn.ilike(f'%{q}%')))
     page = request.args.get('page', 1, type=int)
-    pagination = query.order_by(Book.title).paginate(page=page, per_page=20, error_out=False)
+    pagination = query.order_by(Book.created_at.desc()).paginate(page=page, per_page=20, error_out=False)
     return render_template('librarian/books.html', books=pagination.items, pagination=pagination, q=q)
 
 
@@ -213,8 +274,19 @@ def book_form(book_id=None):
     form = BookForm(obj=book)
     if book:
         form.total_physical_copies.data = book.total_physical_copies
+        form.has_physical.data = 'yes' if book.total_physical_copies > 0 else 'no'
 
     if form.validate_on_submit():
+        has_physical = form.has_physical.data == 'yes'
+        new_total = form.total_physical_copies.data if has_physical else 0
+        will_have_digital = book.has_digital if book else False
+        if form.digital_file.data and form.digital_file.data.filename:
+            will_have_digital = True
+
+        if not has_physical and not will_have_digital:
+            flash('A book must have physical copies, a digital file, or both.', 'danger')
+            return render_template('librarian/book_form.html', form=form, book=book)
+
         if book is None:
             existing = Book.query.filter_by(isbn=form.isbn.data).first()
             if existing:
@@ -228,15 +300,15 @@ def book_form(book_id=None):
                 publisher=form.publisher.data.strip() if form.publisher.data else None,
                 year_published=form.year_published.data,
                 category=form.category.data.strip() if form.category.data else None,
-                total_physical_copies=form.total_physical_copies.data,
-                available_physical_copies=form.total_physical_copies.data,
+                subcategory=form.subcategory.data.strip() if form.subcategory.data else None,
+                total_physical_copies=new_total,
+                available_physical_copies=new_total,
                 is_active=form.is_active.data,
             )
             db.session.add(book)
             db.session.flush()
         else:
             checked_out = book.total_physical_copies - book.available_physical_copies
-            new_total = form.total_physical_copies.data
             if new_total < checked_out:
                 flash(f'Cannot reduce copies below {checked_out} (currently checked out).', 'danger')
                 return render_template('librarian/book_form.html', form=form, book=book)
@@ -246,12 +318,13 @@ def book_form(book_id=None):
             book.publisher = form.publisher.data.strip() if form.publisher.data else None
             book.year_published = form.year_published.data
             book.category = form.category.data.strip() if form.category.data else None
+            book.subcategory = form.subcategory.data.strip() if form.subcategory.data else None
             diff = new_total - book.total_physical_copies
             book.total_physical_copies = new_total
             book.available_physical_copies = max(0, book.available_physical_copies + diff)
             book.is_active = form.is_active.data
-         
-         # Save cover image
+
+        # Save cover image
         cover = form.cover_image.data
         if cover and cover.filename:
             cover_filename = secure_filename(f'cover_{form.isbn.data}.{cover.filename.rsplit(".", 1)[1].lower()}')
@@ -259,6 +332,10 @@ def book_form(book_id=None):
             os.makedirs(covers_folder, exist_ok=True)
             cover.save(os.path.join(covers_folder, cover_filename))
             book.cover_image = cover_filename
+        elif not book.cover_image:
+            fetched_filename = fetch_cover_by_isbn(book.isbn)
+            if fetched_filename:
+                book.cover_image = fetched_filename
 
         file = form.digital_file.data
         if file and file.filename:
@@ -303,15 +380,18 @@ def reports():
     if request.method == 'POST':
         report_type  = request.form.get('report_type')
         title        = request.form.get('title')
-        student_name = request.form.get('student_name')
+        student_id   = request.form.get('student_id') or None
         book_title   = request.form.get('book_title')
         description  = request.form.get('description')
         severity     = request.form.get('severity')
 
+        student = User.query.filter_by(user_id=student_id, role='student').first() if student_id else None
+
         new_report = Report(
             report_type=report_type,
             title=title,
-            student_name=student_name,
+            student_id=student.user_id if student else None,
+            student_name=student.full_name if student else None,
             book_title=book_title,
             description=description,
             severity=severity,
@@ -319,9 +399,11 @@ def reports():
         )
         db.session.add(new_report)
         db.session.commit()
+        log_action('REPORT_FILED', f'Report filed: {title}', target_table='reports', target_id=new_report.id)
         flash('Report submitted successfully.', 'success')
         return redirect(url_for('librarian.reports'))
     # GET: build the reports dashboard
+    student_choices = User.query.filter_by(role='student').order_by(User.full_name).all()
     active_checkouts = Checkout.query.filter(Checkout.status.in_(['active', 'overdue'])).count()
     overdue_count = Checkout.query.filter_by(status='overdue').count()
 
@@ -344,16 +426,45 @@ def reports():
         overdue_count=overdue_count,
         total_fines=total_fines,
         popular=popular,
+        student_choices=student_choices,
     )
+
+
+@librarian_bp.route('/analytics')
+def analytics():
+    department_breakdown = get_checkouts_by_department()
+    return render_template(
+        'librarian/analytics.html',
+        department_breakdown=department_breakdown,
+        book_availability_rate=get_book_availability_rate(),
+        on_time_return_rate=get_on_time_return_rate(),
+        digital_coverage_rate=get_digital_coverage_rate(),
+    )
+
+
+@librarian_bp.route('/profile')
+def profile():
+    password_form = ChangePasswordForm()
+    photo_form = ProfilePhotoForm()
+    return render_template('librarian/profile.html', password_form=password_form, photo_form=photo_form)
 
 
 @librarian_bp.route('/settings')
 def settings():
-    password_form = ChangePasswordForm()
-    return render_template('librarian/settings.html', password_form=password_form)
+    notification_form = NotificationSettingsForm(email_notifications=current_user.email_notifications)
+    theme_form = ThemeForm(dark_mode=(current_user.theme_preference == 'dark'))
+    language_form = LanguageForm(language_preference=current_user.language_preference)
+    support_form = SupportRequestForm()
+    return render_template(
+        'librarian/settings.html',
+        notification_form=notification_form,
+        theme_form=theme_form,
+        language_form=language_form,
+        support_form=support_form,
+    )
 
 
-@librarian_bp.route('/settings/password', methods=['POST'])
+@librarian_bp.route('/profile/password', methods=['POST'])
 def change_password():
     password_form = ChangePasswordForm()
     if password_form.validate_on_submit():
@@ -368,5 +479,62 @@ def change_password():
         for errors in password_form.errors.values():
             for error in errors:
                 flash(error, 'danger')
+    return redirect(url_for('librarian.profile'))
+
+
+@librarian_bp.route('/profile/photo', methods=['POST'])
+def update_photo():
+    photo_form = ProfilePhotoForm()
+    if photo_form.validate_on_submit():
+        save_profile_photo(current_user, photo_form.profile_photo.data)
+        db.session.commit()
+        flash('Profile photo updated.', 'success')
+    return redirect(url_for('librarian.profile'))
+
+
+@librarian_bp.route('/settings/notifications', methods=['POST'])
+def update_notifications():
+    notification_form = NotificationSettingsForm()
+    if notification_form.validate_on_submit():
+        current_user.email_notifications = notification_form.email_notifications.data
+        db.session.commit()
+        flash('Notification preferences saved.', 'success')
+    return redirect(url_for('librarian.settings'))
+
+
+@librarian_bp.route('/settings/theme', methods=['POST'])
+def update_theme():
+    theme_form = ThemeForm()
+    if theme_form.validate_on_submit():
+        current_user.theme_preference = 'dark' if theme_form.dark_mode.data else 'light'
+        db.session.commit()
+        flash('Appearance updated.', 'success')
+    return redirect(url_for('librarian.settings'))
+
+
+@librarian_bp.route('/settings/language', methods=['POST'])
+def update_language():
+    language_form = LanguageForm()
+    if language_form.validate_on_submit():
+        current_user.language_preference = language_form.language_preference.data
+        db.session.commit()
+        flash('Language updated.', 'success')
+    return redirect(url_for('librarian.settings'))
+
+
+@librarian_bp.route('/settings/support', methods=['POST'])
+def submit_support_request():
+    support_form = SupportRequestForm()
+    if support_form.validate_on_submit():
+        report = Report(
+            report_type='support',
+            title=support_form.subject.data.strip(),
+            description=support_form.description.data.strip(),
+            filed_by=current_user.user_id,
+        )
+        db.session.add(report)
+        db.session.commit()
+        log_action('SUPPORT_REQUEST', f'Support request filed: {report.title}', target_table='reports', target_id=report.id)
+        flash('Your report has been submitted.', 'success')
     return redirect(url_for('librarian.settings'))
 

@@ -2,14 +2,23 @@
 {% block title %}Student Lookup{% endblock %}
 {% block content %}
 <div class="page-header"><h1>Student Lookup</h1></div>
+
+<div class="tab-bar">
+    <a href="{{ url_for('librarian.students', q=q) }}" class="tab-link {% if tab == 'all' %}active{% endif %}">All Students</a>
+    <a href="{{ url_for('librarian.students', tab='pending') }}" class="tab-link {% if tab == 'pending' %}active{% endif %}">
+        Pending Approval {% if pending_count %}<span class="badge badge-issued">{{ pending_count }}</span>{% endif %}
+    </a>
+</div>
+
 <form method="GET" class="search-bar card">
+    <input type="hidden" name="tab" value="{{ tab }}">
     <div class="form-group"><input type="text" name="q" class="form-control" value="{{ q }}" placeholder="Student ID, name, or email..."></div>
     <button type="submit" class="btn btn-primary">Search</button>
 </form>
 <div class="card">
     <div class="table-wrap">
         <table>
-            <thead><tr><th>Name</th><th>Student ID</th><th>Email</th><th>Department</th><th>Card</th><th></th></tr></thead>
+            <thead><tr><th>Name</th><th>Student ID</th><th>Email</th><th>Department</th><th>Card</th><th>Status</th><th></th></tr></thead>
             <tbody>
             {% for s in students %}
             <tr>
@@ -18,10 +27,23 @@
                 <td>{{ s.email }}</td>
                 <td>{{ s.department }}</td>
                 <td>{{ s.library_card.card_number if s.library_card else '—' }}</td>
-                <td><a href="{{ url_for('librarian.student_detail', user_id=s.user_id) }}" class="btn btn-sm btn-outline">View</a></td>
+                <td><span class="badge badge-{{ 'issued' if s.approval_status == 'pending' else ('overdue' if s.approval_status == 'rejected' else 'active') }}">{{ s.approval_status }}</span></td>
+                <td class="table-actions">
+                    <a href="{{ url_for('librarian.student_detail', user_id=s.user_id) }}" class="btn btn-sm btn-outline">View</a>
+                    {% if s.approval_status == 'pending' %}
+                    <form method="POST" action="{{ url_for('librarian.approve_student', user_id=s.user_id) }}" class="inline-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-primary">Approve</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('librarian.reject_student', user_id=s.user_id) }}" class="inline-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                    </form>
+                    {% endif %}
+                </td>
             </tr>
             {% else %}
-            <tr><td colspan="6" class="empty-state">No students found.</td></tr>
+            <tr><td colspan="7" class="empty-state">No students found.</td></tr>
             {% endfor %}
             </tbody>
         </table>

@@ -18,6 +18,7 @@ def catalog():
     query = Book.query.filter_by(is_active=True)
     q = request.args.get('q', '').strip()
     category = request.args.get('category', '')
+    subcategory = request.args.get('subcategory', '')
     availability = request.args.get('availability', '')
 
     if q:
@@ -29,10 +30,21 @@ def catalog():
         ))
     if category:
         query = query.filter_by(category=category)
+    if subcategory:
+        query = query.filter_by(subcategory=subcategory)
     if availability == 'physical':
         query = query.filter(Book.available_physical_copies > 0)
     elif availability == 'digital':
         query = query.filter_by(has_digital=True)
+
+    subcategories = []
+    if category:
+        subcategories = [
+            s[0] for s in Book.query.with_entities(Book.subcategory)
+            .filter(Book.category == category, Book.subcategory.isnot(None))
+            .distinct().all()
+        ]
+        subcategories = sorted(subcategories)
 
     page = request.args.get('page', 1, type=int)
     pagination = query.order_by(Book.title).paginate(page=page, per_page=24, error_out=False)
@@ -43,6 +55,9 @@ def catalog():
         form=form,
         q=q,
         category=category,
+        subcategory=subcategory,
+        subcategories=subcategories,
+        categories=sorted(categories),
         availability=availability,
     )
 

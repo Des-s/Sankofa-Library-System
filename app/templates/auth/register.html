@@ -45,7 +45,14 @@
   </div>
 
   <div class="form-group">
-    {{ form.email(placeholder="Email", class="form-input") }}
+    {{ form.username(placeholder="Username", class="form-input") }}
+    {% for error in form.username.errors %}
+      <span class="form-error">{{ error }}</span>
+    {% endfor %}
+  </div>
+
+  <div class="form-group">
+    {{ form.email(placeholder="Student Email (@st.knust.edu.gh)", class="form-input") }}
     {% for error in form.email.errors %}
       <span class="form-error">{{ error }}</span>
     {% endfor %}

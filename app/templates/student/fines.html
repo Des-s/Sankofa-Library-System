@@ -2,6 +2,18 @@
 {% block title %}My Fines — Sankofa Library{% endblock %}
 {% block content %}
 <div class="page-header"><h1>My Fines</h1></div>
+
+<div class="fines-summary-bar">
+    <div class="item">
+        <span class="value">GHS {{ '%.2f'|format(total_outstanding) }}</span>
+        <span class="label">Total Outstanding</span>
+    </div>
+    <div class="item">
+        <span class="value">{{ outstanding_count }}</span>
+        <span class="label">Unpaid Fine{{ 's' if outstanding_count != 1 }}</span>
+    </div>
+</div>
+
 <div class="card">
     {% if fines %}
     <div class="table-wrap">

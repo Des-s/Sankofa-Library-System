@@ -1,20 +1,34 @@
 {% extends 'base.html' %}
-{% block title %}Catalog — Sankofa Library{% endblock %}
+{% block title %}{{ t('page.book_catalog') }} — Sankofa Library{% endblock %}
 {% block content %}
-<div class="page-header"><h1>Book Catalog</h1><p>Search and browse available books</p></div>
+<div class="page-header"><h1>{{ t('page.book_catalog') }}</h1><p>Search and browse available books</p></div>
 
-<form method="GET" class="search-bar card">
+<div class="tab-bar">
+    <a href="{{ url_for('catalog.catalog', q=q, availability=availability) }}" class="tab-link {% if not category %}active{% endif %}">All</a>
+    {% for c in categories %}
+    <a href="{{ url_for('catalog.catalog', category=c, q=q, availability=availability) }}" class="tab-link {% if category == c %}active{% endif %}">{{ c }}</a>
+    {% endfor %}
+</div>
+
+{% if subcategories %}
+<div class="chip-bar">
+    <a href="{{ url_for('catalog.catalog', category=category, q=q, availability=availability) }}" class="chip {% if not subcategory %}active{% endif %}">All {{ category }}</a>
+    {% for s in subcategories %}
+    <a href="{{ url_for('catalog.catalog', category=category, subcategory=s, q=q, availability=availability) }}" class="chip {% if subcategory == s %}active{% endif %}">{{ s }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+
+<button type="button" id="filterToggleBtn" class="btn btn-outline" style="margin-bottom:1rem;">
+    <i class="fa-solid fa-filter"></i> {{ t('common.filter') }}
+</button>
+
+<form method="GET" class="search-bar card filter-panel{% if q or availability %} open{% endif %}" id="filterPanel">
+    <input type="hidden" name="category" value="{{ category }}">
+    <input type="hidden" name="subcategory" value="{{ subcategory }}">
     <div class="form-group">
         <label>Search</label>
         <input type="text" name="q" class="form-control" value="{{ q }}" placeholder="Title, author, ISBN...">
-    </div>
-    <div class="form-group">
-        <label>Category</label>
-        <select name="category" class="form-control">
-            {% for val, label in form.category.choices %}
-            <option value="{{ val }}" {% if category == val %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-        </select>
     </div>
     <div class="form-group">
         <label>Availability</label>
@@ -24,8 +38,9 @@
             <option value="digital" {% if availability == 'digital' %}selected{% endif %}>Digital Available</option>
         </select>
     </div>
-    <button type="submit" class="btn btn-primary">Search</button>
+    <button type="submit" class="btn btn-primary">Apply</button>
 </form>
+
 {% if books %}
 <div class="book-grid">
     {% for book in books %}
@@ -44,6 +59,7 @@
         <div class="author">{{ book.author }}</div>
         <div class="book-meta">
             {% if book.category %}<span class="tag">{{ book.category }}</span>{% endif %}
+            {% if book.subcategory %}<span class="tag">{{ book.subcategory }}</span>{% endif %}
             {% if book.available_physical_copies > 0 %}<span class="tag">{{ book.available_physical_copies }} physical</span>{% endif %}
             {% if book.has_digital %}<span class="tag">Digital</span>{% endif %}
         </div>
@@ -54,4 +70,14 @@
 <div class="empty-state">No books found matching your search.</div>
 {% endif %}
 {% include '_pagination.html' %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('filterToggleBtn').addEventListener('click', function () {
+        document.getElementById('filterPanel').classList.toggle('open');
+    });
+});
+</script>
 {% endblock %}

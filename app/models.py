@@ -11,6 +11,7 @@ class User(UserMixin, db.Model):
 
     user_id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.String(50), unique=True, nullable=True)
+    username = db.Column(db.String(50), unique=True, nullable=True)
     full_name = db.Column(db.String(150), nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
@@ -18,10 +19,17 @@ class User(UserMixin, db.Model):
     department = db.Column(db.String(100), nullable=True)
     year_of_study = db.Column(db.Integer, nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
+    approval_status = db.Column(
+        db.Enum('pending', 'approved', 'rejected', name='approval_status'),
+        default='approved',
+        nullable=False,
+    )
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     profile_photo = db.Column(db.String(255), nullable=True)
     email_notifications = db.Column(db.Boolean, default=True, nullable=False)
+    theme_preference = db.Column(db.String(10), default='light', nullable=False)
+    language_preference = db.Column(db.String(10), default='en', nullable=False)
 
     library_card = db.relationship('LibraryCard', backref='user', uselist=False, cascade='all, delete-orphan')
     checkouts = db.relationship('Checkout', foreign_keys='Checkout.user_id', backref='student', lazy='dynamic')
@@ -72,6 +80,7 @@ class Book(db.Model):
     publisher = db.Column(db.String(150), nullable=True)
     year_published = db.Column(db.Integer, nullable=True)
     category = db.Column(db.String(100), nullable=True)
+    subcategory = db.Column(db.String(100), nullable=True)
     total_physical_copies = db.Column(db.Integer, default=0, nullable=False)
     available_physical_copies = db.Column(db.Integer, default=0, nullable=False)
     has_digital = db.Column(db.Boolean, default=False, nullable=False)
@@ -184,6 +193,7 @@ class Report(db.Model):
     report_type  = db.Column(db.String(50), nullable=False)
     title        = db.Column(db.String(200), nullable=False)
     student_name = db.Column(db.String(100))
+    student_id   = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=True)
     book_title   = db.Column(db.String(200))
     description  = db.Column(db.Text, nullable=False)
     severity     = db.Column(db.String(20), default='medium')
@@ -191,3 +201,4 @@ class Report(db.Model):
     date_filed   = db.Column(db.DateTime, default=datetime.utcnow)
 
     filer = db.relationship('User', foreign_keys=[filed_by])
+    student = db.relationship('User', foreign_keys=[student_id])

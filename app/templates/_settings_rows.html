@@ -1,0 +1,100 @@
+<div class="settings-section-label">Notifications</div>
+<div class="settings-rows">
+    <form method="POST" action="{{ url_for(role + '.update_notifications') }}" class="settings-row-flat no-chevron">
+        {{ notification_form.hidden_tag() }}
+        <span class="row-icon"><i class="fa-solid fa-bell"></i></span>
+        <span class="row-label">Email Notifications</span>
+        <label class="toggle-switch">
+            {{ notification_form.email_notifications(onchange="this.form.submit()") }}
+            <span class="toggle-slider"></span>
+        </label>
+    </form>
+</div>
+
+<div class="settings-section-label">Appearance</div>
+<div class="settings-rows">
+    <form method="POST" action="{{ url_for(role + '.update_theme') }}" class="settings-row-flat no-chevron">
+        {{ theme_form.hidden_tag() }}
+        <span class="row-icon"><i class="fa-solid fa-moon"></i></span>
+        <span class="row-label">Dark Mode</span>
+        <label class="toggle-switch">
+            {{ theme_form.dark_mode(onchange="this.form.submit()") }}
+            <span class="toggle-slider"></span>
+        </label>
+    </form>
+</div>
+
+<div class="settings-section-label">Preferences</div>
+<div class="settings-rows">
+    <form method="POST" action="{{ url_for(role + '.update_language') }}" class="settings-row-flat no-chevron">
+        {{ language_form.hidden_tag() }}
+        <span class="row-icon"><i class="fa-solid fa-language"></i></span>
+        <span class="row-label">Language</span>
+        {{ language_form.language_preference(class="row-select", onchange="this.form.submit()") }}
+    </form>
+</div>
+
+{% if library_policy_form %}
+<div class="settings-section-label">Library Policy</div>
+<div class="settings-rows">
+    <div class="settings-row">
+        <div class="settings-row-header settings-row-flat">
+            <span class="row-icon"><i class="fa-solid fa-sliders"></i></span>
+            <span class="row-label">Library Policy</span>
+        </div>
+        <div class="settings-row-body">
+            <form method="POST" action="{{ url_for('admin.settings') }}">
+                {{ library_policy_form.hidden_tag() }}
+                <div class="form-group">{{ library_policy_form.fine_rate_per_day.label }}{{ library_policy_form.fine_rate_per_day(class='form-control') }}</div>
+                <div class="form-group">{{ library_policy_form.loan_period_days.label }}{{ library_policy_form.loan_period_days(class='form-control') }}</div>
+                <div class="form-group">{{ library_policy_form.max_active_checkouts.label }}{{ library_policy_form.max_active_checkouts(class='form-control') }}</div>
+                <div class="form-group">{{ library_policy_form.library_card_format.label }}{{ library_policy_form.library_card_format(class='form-control') }}
+                    <small style="color:var(--color-muted);">Use {year} and {student_id} placeholders</small>
+                </div>
+                {{ library_policy_form.submit(class='btn btn-primary btn-sm') }}
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="settings-section-label">About</div>
+<div class="settings-rows">
+    <div class="settings-row">
+        <div class="settings-row-header settings-row-flat">
+            <span class="row-icon"><i class="fa-solid fa-circle-info"></i></span>
+            <span class="row-label">About Sankofa Library</span>
+        </div>
+        <div class="settings-row-body">
+            <p>Sankofa Library System is an academic library management platform for tracking physical and digital book lending, fines, and reading activity — built to bring catalog search, checkouts, fines and reporting into one place for students, librarians, and administrators.</p>
+        </div>
+    </div>
+    <div class="settings-row">
+        <div class="settings-row-header settings-row-flat">
+            <span class="row-icon"><i class="fa-solid fa-flag"></i></span>
+            <span class="row-label">Report a Problem</span>
+        </div>
+        <div class="settings-row-body">
+            <form method="POST" action="{{ url_for(role + '.submit_support_request') }}">
+                {{ support_form.hidden_tag() }}
+                <div class="form-group">{{ support_form.subject.label }}{{ support_form.subject(class='form-control') }}</div>
+                <div class="form-group">{{ support_form.description.label }}{{ support_form.description(class='form-control', rows=4) }}</div>
+                {{ support_form.submit(class='btn btn-primary btn-sm') }}
+            </form>
+        </div>
+    </div>
+    <div class="settings-row">
+        <div class="settings-row-header settings-row-flat">
+            <span class="row-icon"><i class="fa-solid fa-circle-question"></i></span>
+            <span class="row-label">FAQ</span>
+        </div>
+        <div class="settings-row-body">
+            <div class="faq-item"><strong>How do I borrow a physical book?</strong><p>Visit the library with your library card; a librarian will check the book out to you.</p></div>
+            <div class="faq-item"><strong>How are fines calculated?</strong><p>A daily rate applies for each day a physical book is returned after its due date. The rate is set by the library.</p></div>
+            <div class="faq-item"><strong>Can I read books online?</strong><p>Yes — books marked "Digital" in the catalog can be read after verifying your library card number.</p></div>
+            <div class="faq-item"><strong>How do I reset my password?</strong><p>Use "Forgot password?" on the login page, or change it any time from your Profile once logged in.</p></div>
+        </div>
+    </div>
+</div>
+
+<p class="settings-footer-version">Sankofa Library v1.0</p>

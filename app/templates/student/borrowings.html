@@ -1,28 +1,81 @@
 {% extends 'base.html' %}
-{% block title %}My Borrowings — Sankofa Library{% endblock %}
+{% block title %}My Collection — Sankofa Library{% endblock %}
 {% block content %}
-<div class="page-header"><h1>My Borrowings</h1><p>History of all hard-copy checkouts</p></div>
-<div class="card">
-    {% if checkouts %}
-    <div class="table-wrap">
-        <table>
-            <thead><tr><th>Book</th><th>Author</th><th>Checked Out</th><th>Due Date</th><th>Returned</th><th>Status</th></tr></thead>
-            <tbody>
-            {% for c in checkouts %}
-            <tr>
-                <td>{{ c.book.title }}</td>
-                <td>{{ c.book.author }}</td>
-                <td>{{ c.checkout_date }}</td>
-                <td>{{ c.expected_return_date }}</td>
-                <td>{{ c.actual_return_date or '—' }}</td>
-                <td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+<div class="page-header"><h1>My Collection</h1></div>
+
+<div class="tab-bar">
+    <a href="{{ url_for('student.borrowings', tab='borrowed') }}" class="tab-link {% if tab == 'borrowed' %}active{% endif %}">Currently Borrowed</a>
+    <a href="{{ url_for('student.borrowings', tab='reading') }}" class="tab-link {% if tab == 'reading' %}active{% endif %}">Recent Reading</a>
+    <a href="{{ url_for('student.borrowings', tab='history') }}" class="tab-link {% if tab == 'history' %}active{% endif %}">Full History</a>
+</div>
+
+{% if tab == 'borrowed' %}
+    {% set active_list = checkouts | selectattr('status', 'in', ['active', 'overdue']) | list %}
+    {% if active_list %}
+    <div class="collection-grid">
+        {% for c in active_list %}
+        <div class="collection-item">
+            <a href="{{ url_for('catalog.book_detail', book_id=c.book.book_id) }}">
+                {% if c.book.cover_image %}
+                <img src="{{ url_for('static', filename='covers/' + c.book.cover_image) }}" alt="{{ c.book.title }}" class="book-cover">
+                {% else %}
+                <div class="book-cover-placeholder"><i class="fa-solid fa-book-open"></i></div>
+                {% endif %}
+            </a>
+            <div class="title">{{ c.book.title }}</div>
+            <div class="meta">Due {{ c.expected_return_date }}</div>
+            <span class="badge badge-{{ c.status }}">{{ c.status }}</span>
+        </div>
+        {% endfor %}
     </div>
     {% else %}
-    <div class="empty-state">No borrowing history yet. Visit the library to borrow a book!</div>
+    <div class="empty-state">You have no books currently checked out.</div>
     {% endif %}
-</div>
+
+{% elif tab == 'reading' %}
+    {% if reading_sessions %}
+    <div class="collection-grid">
+        {% for s in reading_sessions %}
+        <div class="collection-item">
+            <a href="{{ url_for('catalog.book_detail', book_id=s.book.book_id) }}">
+                {% if s.book.cover_image %}
+                <img src="{{ url_for('static', filename='covers/' + s.book.cover_image) }}" alt="{{ s.book.title }}" class="book-cover">
+                {% else %}
+                <div class="book-cover-placeholder"><i class="fa-solid fa-book-open"></i></div>
+                {% endif %}
+            </a>
+            <div class="title">{{ s.book.title }}</div>
+            <div class="meta">{{ s.session_start.strftime('%Y-%m-%d') }}{% if not s.session_end %} &middot; in progress{% endif %}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">No reading activity yet. Browse the catalog to start reading a digital book.</div>
+    {% endif %}
+
+{% else %}
+    <div class="card">
+        {% if checkouts %}
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Book</th><th>Author</th><th>Checked Out</th><th>Due Date</th><th>Returned</th><th>Status</th></tr></thead>
+                <tbody>
+                {% for c in checkouts %}
+                <tr>
+                    <td>{{ c.book.title }}</td>
+                    <td>{{ c.book.author }}</td>
+                    <td>{{ c.checkout_date }}</td>
+                    <td>{{ c.expected_return_date }}</td>
+                    <td>{{ c.actual_return_date or '—' }}</td>
+                    <td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">No borrowing history yet. Visit the library to borrow a book!</div>
+        {% endif %}
+    </div>
+{% endif %}
 {% endblock %}

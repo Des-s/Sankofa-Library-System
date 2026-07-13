@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Analytics{% endblock %}
+{% block content %}
+<div class="page-header"><h1>Analytics</h1><p>Library activity at a glance</p></div>
+
+<div class="grid-3">
+    <div class="card ring-card">
+        <div class="ring" style="--pct: {{ book_availability_rate }}; --ring-color: #8e44ad;"><span>{{ book_availability_rate }}%</span></div>
+        <div class="ring-label">Book Availability</div>
+    </div>
+    <div class="card ring-card">
+        <div class="ring" style="--pct: {{ on_time_return_rate }}; --ring-color: #16a085;"><span>{{ on_time_return_rate }}%</span></div>
+        <div class="ring-label">On-Time Returns</div>
+    </div>
+    <div class="card ring-card">
+        <div class="ring" style="--pct: {{ digital_coverage_rate }}; --ring-color: #2980b9;"><span>{{ digital_coverage_rate }}%</span></div>
+        <div class="ring-label">Digital Coverage</div>
+    </div>
+</div>
+
+<div class="card" style="max-width:400px;">
+    <h2>Books Borrowed by Department</h2>
+    {% if department_breakdown %}
+    <div class="chart-box chart-box-sm"><canvas id="deptPieChart"></canvas></div>
+    {% else %}<div class="empty-state">No checkout data yet.</div>{% endif %}
+</div>
+{% if department_breakdown %}
+<div class="card" style="max-width:600px;">
+    <div class="table-wrap"><table>
+        <thead><tr><th>Department</th><th>Books Borrowed</th></tr></thead>
+        <tbody>{% for dept, count in department_breakdown %}<tr><td>{{ dept }}</td><td>{{ count }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    {% if department_breakdown %}
+    const mutedColor = getComputedStyle(document.documentElement).getPropertyValue('--color-muted').trim();
+    const palette = ['#1a4d2e', '#d4a843', '#2980b9', '#c0392b', '#27ae60', '#8e44ad', '#e67e22'];
+    new Chart(document.getElementById('deptPieChart'), {
+        type: 'pie',
+        data: {
+            labels: {{ department_breakdown | map(attribute=0) | list | tojson }},
+            datasets: [{
+                data: {{ department_breakdown | map(attribute=1) | list | tojson }},
+                backgroundColor: palette,
+            }],
+        },
+        options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: mutedColor, boxWidth: 12 } } } },
+    });
+    {% endif %}
+});
+</script>
+{% endblock %}

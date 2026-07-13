@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="{{ current_user.theme_preference if current_user.is_authenticated else 'light' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,34 +16,35 @@
                   Sankofa <span>Library</span></a>
             <nav class="main-nav">
                 {% if current_user.is_student %}
-                    <a href="{{ url_for('student.dashboard') }}">Dashboard</a>
-                    <a href="{{ url_for('catalog.catalog') }}">Catalog</a>
-                    <a href="{{ url_for('student.borrowings') }}">My Borrowings</a>
-                    <a href="{{ url_for('student.fines') }}">My Fines</a>
-                    <a href="{{ url_for('student.profile') }}">Profile</a>
-                    <a href="{{ url_for('student.settings') }}">Settings</a>
+                    <a href="{{ url_for('student.dashboard') }}">{{ t('nav.dashboard') }}</a>
+                    <a href="{{ url_for('catalog.catalog') }}">{{ t('nav.catalog') }}</a>
+                    <a href="{{ url_for('student.borrowings') }}">{{ t('nav.my_collection') }}</a>
+                    <a href="{{ url_for('student.fines') }}">{{ t('nav.my_fines') }}</a>
                 {% elif current_user.is_librarian and not current_user.is_admin %}
-                    <a href="{{ url_for('librarian.dashboard') }}">Dashboard</a>
-                    <a href="{{ url_for('librarian.checkout') }}">Checkout</a>
-                    <a href="{{ url_for('librarian.fines') }}">Fines</a>
-                    <a href="{{ url_for('librarian.books') }}">Books</a>
-                    <a href="{{ url_for('librarian.students') }}">Students</a>
-                    <a href="{{ url_for('catalog.catalog') }}">Catalog</a>
-                    <a href="{{ url_for('librarian.reports') }}">Reports</a>
-                    <a href="{{ url_for('librarian.settings') }}">Settings</a>
+                    <a href="{{ url_for('librarian.dashboard') }}">{{ t('nav.dashboard') }}</a>
+                    <a href="{{ url_for('librarian.checkout') }}">{{ t('nav.checkout') }}</a>
+                    <a href="{{ url_for('librarian.fines') }}">{{ t('nav.fines') }}</a>
+                    <a href="{{ url_for('librarian.books') }}">{{ t('nav.books') }}</a>
+                    <a href="{{ url_for('librarian.students') }}">{{ t('nav.students') }}</a>
+                    <a href="{{ url_for('catalog.catalog') }}">{{ t('nav.catalog') }}</a>
+                    <a href="{{ url_for('librarian.analytics') }}">{{ t('nav.analytics') }}</a>
+                    <a href="{{ url_for('librarian.reports') }}">{{ t('nav.reports') }}</a>
                 {% elif current_user.is_admin %}
-                    <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
-                    <a href="{{ url_for('librarian.checkout') }}">Checkout</a>
-                    <a href="{{ url_for('librarian.books') }}">Books</a>
-                    <a href="{{ url_for('catalog.catalog') }}">Catalog</a>
-                    <a href="{{ url_for('admin.users') }}">Users</a>
-                    <a href="{{ url_for('admin.audit') }}">Audit Log</a>
-                    <a href="{{ url_for('admin.analytics') }}">Analytics</a>
-                    <a href="{{ url_for('admin.settings') }}">Settings</a>
+                    <a href="{{ url_for('admin.dashboard') }}">{{ t('nav.dashboard') }}</a>
+                    <a href="{{ url_for('catalog.catalog') }}">{{ t('nav.catalog') }}</a>
+                    <a href="{{ url_for('admin.users') }}">{{ t('nav.users') }}</a>
+                    <a href="{{ url_for('admin.audit') }}">{{ t('nav.audit_log') }}</a>
                 {% endif %}
-                <a href="{{ url_for('auth.logout') }}">Logout</a>
             </nav>
-            <span class="user-badge">{{ current_user.full_name }} ({{ current_user.role }})</span>
+            <div class="header-actions">
+                <a href="{{ url_for(current_user.role + '.profile') }}" class="btn btn-sm btn-outline profile-btn">
+                    <span class="avatar-circle">{{ current_user.full_name.split()[0][0] }}{{ current_user.full_name.split()[-1][0] if current_user.full_name.split()|length > 1 else '' }}</span>
+                    {{ current_user.full_name }}
+                </a>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-danger icon-btn" title="{{ t('nav.logout') }}" aria-label="{{ t('nav.logout') }}">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </a>
+            </div>
         </div>
     </header>
     {% endif %}
@@ -70,19 +71,18 @@
     document.querySelectorAll('.feature-card').forEach(function(card) {
       card.addEventListener('click', function() {
         const isOpen = this.classList.contains('open');
+        document.querySelectorAll('.feature-card').forEach(function(c) { c.classList.remove('open'); });
+        if (!isOpen) this.classList.add('open');
+      });
+    });
 
-        // Close all cards
-        document.querySelectorAll('.feature-card').forEach(function(c) {
-          c.classList.remove('open');
-        });
-
-        // If it wasn't open, open it; if it was open, leave it closed
-        if (!isOpen) {
-          this.classList.add('open');
-        }
+    document.querySelectorAll('.settings-row-header').forEach(function(header) {
+      header.addEventListener('click', function() {
+        header.closest('.settings-row').classList.toggle('open');
       });
     });
   });
 </script>
+{% block extra_scripts %}{% endblock %}
 </body>
 </html>

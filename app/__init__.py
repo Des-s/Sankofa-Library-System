@@ -42,6 +42,9 @@ def create_app(config_class='app.config.Config'):
     app.register_blueprint(admin_bp)
     app.register_blueprint(catalog_bp)
 
+    from app.utils.i18n import t
+    app.jinja_env.globals['t'] = t
+
     @app.errorhandler(403)
     def forbidden(e):
         return render_template('errors/403.html'), 403

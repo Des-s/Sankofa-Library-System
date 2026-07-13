@@ -45,8 +45,12 @@
 
     <div style="margin-bottom:1rem;">
       <label style="color:#fff; display:block; margin-bottom:0.4rem;">Student Involved (if any)</label>
-      <input type="text" name="student_name" placeholder="Student name or ID (optional)"
-        style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff;"/>
+      <select name="student_id" style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff;">
+        <option value="">-- None --</option>
+        {% for s in student_choices %}
+        <option value="{{ s.user_id }}">{{ s.full_name }} ({{ s.student_id }})</option>
+        {% endfor %}
+      </select>
     </div>
 
     <div style="margin-bottom:1rem;">

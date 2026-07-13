@@ -48,8 +48,106 @@
 </div>
 <div class="btn-group">
     <a href="{{ url_for('admin.users') }}" class="btn btn-primary">Manage Users</a>
-    <a href="{{ url_for('admin.settings') }}" class="btn btn-accent">System Settings</a>
+    {% if stats.pending_approvals %}
+    <a href="{{ url_for('librarian.students', tab='pending') }}" class="btn btn-accent">{{ stats.pending_approvals }} Pending Approval{{ 's' if stats.pending_approvals != 1 }}</a>
+    {% endif %}
+    <a href="{{ url_for('admin.settings') }}" class="btn btn-outline">Settings</a>
     <a href="{{ url_for('admin.audit') }}" class="btn btn-outline">Audit Log</a>
-    <a href="{{ url_for('admin.analytics') }}" class="btn btn-outline">Analytics</a>
 </div>
+
+<div class="page-header" style="margin-top:2rem;"><h2 style="font-size:1.3rem;color:var(--color-primary);">Analytics — Last 30 Days</h2></div>
+<div class="grid-3">
+    <div class="stat-card"><div class="stat-value">{{ monthly_checkouts }}</div><div class="stat-label">Checkouts (30d)</div></div>
+    <div class="stat-card"><div class="stat-value">{{ monthly_reading }}</div><div class="stat-label">Reading Sessions (30d)</div></div>
+    <div class="stat-card"><div class="stat-value">GHS {{ '%.2f'|format(fine_revenue) }}</div><div class="stat-label">Fine Revenue (Total Paid)</div></div>
+</div>
+
+<div class="grid-4">
+    <div class="card ring-card">
+        <div class="ring" style="--pct: {{ book_availability_rate }}; --ring-color: #8e44ad;"><span>{{ book_availability_rate }}%</span></div>
+        <div class="ring-label">Book Availability</div>
+    </div>
+    <div class="card ring-card">
+        <div class="ring" style="--pct: {{ on_time_return_rate }}; --ring-color: #16a085;"><span>{{ on_time_return_rate }}%</span></div>
+        <div class="ring-label">On-Time Returns</div>
+    </div>
+    <div class="card ring-card">
+        <div class="ring" style="--pct: {{ digital_coverage_rate }}; --ring-color: #2980b9;"><span>{{ digital_coverage_rate }}%</span></div>
+        <div class="ring-label">Digital Coverage</div>
+    </div>
+    <div class="card ring-card">
+        <div class="ring" style="--pct: {{ fine_collection_rate }}; --ring-color: #e67e22;"><span>{{ fine_collection_rate }}%</span></div>
+        <div class="ring-label">Fine Collection</div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <h2>Borrows by Department</h2>
+        {% if department_breakdown %}
+        <div class="chart-box chart-box-sm"><canvas id="deptPieChart"></canvas></div>
+        {% else %}<div class="empty-state">No checkout data yet.</div>{% endif %}
+    </div>
+    <div class="card">
+        <h2>User Growth (Last 6 Months)</h2>
+        <div class="chart-box"><canvas id="userGrowthChart"></canvas></div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Most Borrowed Books</h2>
+    {% if popular_books %}
+    <div class="table-wrap"><table>
+        <thead><tr><th>Title</th><th>Borrows</th></tr></thead>
+        <tbody>{% for title, count in popular_books %}<tr><td>{{ title }}</td><td>{{ count }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% else %}<div class="empty-state">No checkout data yet.</div>{% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const mutedColor = getComputedStyle(document.documentElement).getPropertyValue('--color-muted').trim();
+    const palette = ['#1a4d2e', '#d4a843', '#2980b9', '#c0392b', '#27ae60', '#8e44ad', '#e67e22'];
+
+    {% if department_breakdown %}
+    new Chart(document.getElementById('deptPieChart'), {
+        type: 'pie',
+        data: {
+            labels: {{ department_breakdown | map(attribute=0) | list | tojson }},
+            datasets: [{
+                data: {{ department_breakdown | map(attribute=1) | list | tojson }},
+                backgroundColor: palette,
+            }],
+        },
+        options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: mutedColor, boxWidth: 12 } } } },
+    });
+    {% endif %}
+
+    new Chart(document.getElementById('userGrowthChart'), {
+        type: 'line',
+        data: {
+            labels: {{ signups_by_month | map(attribute=0) | list | tojson }},
+            datasets: [{
+                label: 'New Users',
+                data: {{ signups_by_month | map(attribute=1) | list | tojson }},
+                borderColor: '#1a4d2e',
+                backgroundColor: 'rgba(26,77,46,0.15)',
+                fill: true,
+                tension: 0.3,
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: mutedColor }, grid: { display: false } },
+                y: { ticks: { color: mutedColor, precision: 0 }, beginAtZero: true },
+            },
+        },
+    });
+});
+</script>
 {% endblock %}

@@ -4,6 +4,9 @@
 <div class="page-header">
     <h1>{{ student.full_name }}</h1>
     <p>{{ student.student_id }} &mdash; {{ student.department }}, Year {{ student.year_of_study }}</p>
+    <div class="btn-group">
+        <a href="{{ url_for('librarian.edit_student', user_id=student.user_id) }}" class="btn btn-outline">Edit Student</a>
+    </div>
 </div>
 <div class="grid-2">
     <div class="card">
@@ -50,6 +53,15 @@
         <thead><tr><th>Book</th><th>Checked Out</th><th>Due</th><th>Returned</th><th>Status</th></tr></thead>
         <tbody>{% for c in checkouts %}<tr><td>{{ c.book.title }}</td><td>{{ c.checkout_date }}</td><td>{{ c.expected_return_date }}</td><td>{{ c.actual_return_date or '—' }}</td><td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td></tr>{% endfor %}</tbody>
     </table></div>
+</div>
+<div class="card">
+    <h2>Reports Filed About This Student</h2>
+    {% if reports %}
+    <div class="table-wrap"><table>
+        <thead><tr><th>Title</th><th>Type</th><th>Severity</th><th>Filed</th><th>Description</th></tr></thead>
+        <tbody>{% for r in reports %}<tr><td>{{ r.title }}</td><td>{{ r.report_type }}</td><td><span class="badge badge-{{ 'overdue' if r.severity == 'high' else ('issued' if r.severity == 'medium' else 'active') }}">{{ r.severity }}</span></td><td>{{ r.date_filed.strftime('%Y-%m-%d') if r.date_filed else '—' }}</td><td>{{ r.description }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% else %}<div class="empty-state">No reports filed about this student.</div>{% endif %}
 </div>
 <a href="{{ url_for('librarian.students') }}" class="btn btn-outline">Back to Students</a>
 {% endblock %}

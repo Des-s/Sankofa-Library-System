@@ -27,7 +27,8 @@
             <td>{{ u.email }}</td>
             <td><span class="badge badge-{{ u.role }}">{{ u.role }}</span></td>
             <td>{% if u.is_active %}Active{% else %}Inactive{% endif %}</td>
-            <td>
+            <td class="table-actions">
+                <a href="{{ url_for('admin.user_detail', user_id=u.user_id) }}" class="btn btn-sm btn-outline">View</a>
                 <a href="{{ url_for('admin.user_form', user_id=u.user_id) }}" class="btn btn-sm btn-outline">Edit</a>
                 <form method="POST" action="{{ url_for('admin.toggle_user', user_id=u.user_id) }}" class="inline-form">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

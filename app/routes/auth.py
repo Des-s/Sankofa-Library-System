@@ -9,6 +9,7 @@ from app.extensions import db, mail
 from app.forms import LoginForm, RegistrationForm
 from app.models import LibraryCard, User
 from app.utils.helpers import generate_library_card_number, log_action
+from app.utils.notifications import notify_admins_of_pending_registration
 
 
 auth_bp = Blueprint('auth', __name__)
@@ -34,12 +35,14 @@ def register():
     if form.validate_on_submit():
         user = User(
             student_id=form.student_id.data.strip().upper(),
+            username=form.username.data.strip().lower(),
             full_name=form.name.data.strip(),
             email=form.email.data.strip().lower(),
             role='student',
             department=form.department.data.strip(),
             year_of_study=form.year_of_study.data,
             is_active=True,
+            approval_status='pending',
         )
         user.set_password(form.password.data)
         db.session.add(user)
@@ -52,15 +55,19 @@ def register():
 
         log_action(
             'REGISTER',
-            f'Student registered: {user.full_name} ({user.student_id}). Card: {card_number}',
+            f'Student registered (pending approval): {user.full_name} ({user.student_id}). Card: {card_number}',
             target_table='users',
             target_id=user.user_id,
             actor_id=user.user_id,
         )
+        notify_admins_of_pending_registration(user)
 
-        flash(f'Registration successful! Your library card number is: {card_number}', 'success')
-        login_user(user)
-        return redirect(url_for('student.dashboard'))
+        flash(
+            'Registration successful! Your account is pending approval by library staff. '
+            'You will be able to log in once approved.',
+            'info',
+        )
+        return redirect(url_for('auth.login'))
 
     return render_template('auth/register.html', form=form)
 
@@ -76,6 +83,12 @@ def login():
         if user and user.check_password(form.password.data):
             if not user.is_active:
                 flash('Your account has been deactivated. Contact the library.', 'danger')
+                return render_template('auth/login.html', form=form)
+            if user.approval_status == 'pending':
+                flash('Your account is still pending approval by library staff.', 'warning')
+                return render_template('auth/login.html', form=form)
+            if user.approval_status == 'rejected':
+                flash('Your registration was not approved. Contact the library for details.', 'danger')
                 return render_template('auth/login.html', form=form)
             login_user(user)
             log_action('LOGIN', f'User logged in: {user.email}', actor_id=user.user_id)
