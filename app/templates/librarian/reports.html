@@ -24,54 +24,42 @@
 <div class="card" style="margin-top: 2rem;">
   <h2>File a Report</h2>
   <form method="POST" action="{{ url_for('librarian.reports') }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    {{ form.hidden_tag() }}
 
     <div style="margin-bottom:1rem;">
       <label style="color:#fff; display:block; margin-bottom:0.4rem;">Report Type</label>
-      <select name="report_type" required style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff;">
-        <option value="">-- Select Report Type --</option>
-        <option value="lost_damaged">Lost / Damaged Book</option>
-        <option value="student_incident">Student Incident / Complaint</option>
-        <option value="inventory">Inventory / Stock Issue</option>
-        <option value="general">General Custom Report</option>
-      </select>
+      {{ form.report_type(style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff;") }}
+      {% for error in form.report_type.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
     </div>
 
     <div style="margin-bottom:1rem;">
       <label style="color:#fff; display:block; margin-bottom:0.4rem;">Title / Subject</label>
-      <input type="text" name="title" required placeholder="Brief title of the report"
-        style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff;"/>
+      {{ form.title(placeholder="Brief title of the report", style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff;") }}
+      {% for error in form.title.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
     </div>
 
     <div style="margin-bottom:1rem;">
       <label style="color:#fff; display:block; margin-bottom:0.4rem;">Student Involved (if any)</label>
-      <select name="student_id" style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff;">
-        <option value="">-- None --</option>
-        {% for s in student_choices %}
-        <option value="{{ s.user_id }}">{{ s.full_name }} ({{ s.student_id }})</option>
-        {% endfor %}
-      </select>
+      {{ form.student_id(style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff;") }}
+      {% for error in form.student_id.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
     </div>
 
     <div style="margin-bottom:1rem;">
       <label style="color:#fff; display:block; margin-bottom:0.4rem;">Book Title (if applicable)</label>
-      <input type="text" name="book_title" placeholder="Book title or ISBN (optional)"
-        style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff;"/>
+      {{ form.book_title(placeholder="Book title or ISBN (optional)", style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff;") }}
+      {% for error in form.book_title.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
     </div>
 
     <div style="margin-bottom:1rem;">
       <label style="color:#fff; display:block; margin-bottom:0.4rem;">Description</label>
-      <textarea name="description" required rows="5" placeholder="Describe the issue in detail..."
-        style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff; resize:vertical;"></textarea>
+      {{ form.description(rows="5", placeholder="Describe the issue in detail...", style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff; resize:vertical;") }}
+      {% for error in form.description.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
     </div>
 
     <div style="margin-bottom:1.5rem;">
       <label style="color:#fff; display:block; margin-bottom:0.4rem;">Severity</label>
-      <select name="severity" style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff;">
-        <option value="low">Low</option>
-        <option value="medium" selected>Medium</option>
-        <option value="high">High</option>
-      </select>
+      {{ form.severity(style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff;") }}
+      {% for error in form.severity.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
     </div>
 
     <button type="submit" class="btn btn-primary">Submit Report</button>

@@ -9,7 +9,7 @@ import os
 from app.extensions import db
 from app.forms import (
     BookForm, ChangePasswordForm, CheckoutForm, FineActionForm, LanguageForm,
-    NotificationSettingsForm, ProfilePhotoForm, ReturnForm, StudentEditForm,
+    NotificationSettingsForm, ProfilePhotoForm, ReportForm, ReturnForm, StudentEditForm,
     SupportRequestForm, ThemeForm,
 )
 from app.models import Book, Checkout, Fine, Report, User
@@ -377,33 +377,34 @@ def deactivate_book(book_id):
 @librarian_bp.route('/reports', methods=['GET', 'POST'])
 @login_required
 def reports():
-    if request.method == 'POST':
-        report_type  = request.form.get('report_type')
-        title        = request.form.get('title')
-        student_id   = request.form.get('student_id') or None
-        book_title   = request.form.get('book_title')
-        description  = request.form.get('description')
-        severity     = request.form.get('severity')
+    form = ReportForm()
+    form.student_id.choices = [('', '-- None --')] + [
+        (s.user_id, f'{s.full_name} ({s.student_id})')
+        for s in User.query.filter_by(role='student').order_by(User.full_name).all()
+    ]
 
-        student = User.query.filter_by(user_id=student_id, role='student').first() if student_id else None
+    if form.validate_on_submit():
+        student = (
+            User.query.filter_by(user_id=form.student_id.data, role='student').first()
+            if form.student_id.data else None
+        )
 
         new_report = Report(
-            report_type=report_type,
-            title=title,
+            report_type=form.report_type.data,
+            title=form.title.data.strip(),
             student_id=student.user_id if student else None,
             student_name=student.full_name if student else None,
-            book_title=book_title,
-            description=description,
-            severity=severity,
+            book_title=form.book_title.data.strip() if form.book_title.data else None,
+            description=form.description.data.strip(),
+            severity=form.severity.data,
             filed_by=current_user.user_id
         )
         db.session.add(new_report)
         db.session.commit()
-        log_action('REPORT_FILED', f'Report filed: {title}', target_table='reports', target_id=new_report.id)
+        log_action('REPORT_FILED', f'Report filed: {new_report.title}', target_table='reports', target_id=new_report.id)
         flash('Report submitted successfully.', 'success')
         return redirect(url_for('librarian.reports'))
-    # GET: build the reports dashboard
-    student_choices = User.query.filter_by(role='student').order_by(User.full_name).all()
+    # GET (or failed validation): build the reports dashboard
     active_checkouts = Checkout.query.filter(Checkout.status.in_(['active', 'overdue'])).count()
     overdue_count = Checkout.query.filter_by(status='overdue').count()
 
@@ -422,11 +423,11 @@ def reports():
 
     return render_template(
         'librarian/reports.html',
+        form=form,
         active_checkouts=active_checkouts,
         overdue_count=overdue_count,
         total_fines=total_fines,
         popular=popular,
-        student_choices=student_choices,
     )
 
 

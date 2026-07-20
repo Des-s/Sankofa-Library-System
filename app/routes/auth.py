@@ -6,7 +6,7 @@ from flask_login import current_user, login_required, login_user, logout_user
 from flask_mail import Message
 
 from app.extensions import db, mail
-from app.forms import LoginForm, RegistrationForm
+from app.forms import ForgotPasswordForm, LoginForm, RegistrationForm
 from app.models import LibraryCard, User
 from app.utils.helpers import generate_library_card_number, log_action
 from app.utils.notifications import notify_admins_of_pending_registration
@@ -118,8 +118,9 @@ def forgot_password():
     if current_user.is_authenticated:
         return redirect(url_for('auth.index'))
 
-    if request.method == 'POST':
-        email = request.form.get('email', '').strip().lower()
+    form = ForgotPasswordForm()
+    if form.validate_on_submit():
+        email = form.email.data.strip().lower()
         user = User.query.filter(User.email.ilike(email)).first()
 
         if user:
@@ -152,4 +153,4 @@ def forgot_password():
         flash('If that email is registered, a temporary password has been sent.', 'info')
         return redirect(url_for('auth.login'))
 
-    return render_template('auth/forgot_password.html')
+    return render_template('auth/forgot_password.html', form=form)
