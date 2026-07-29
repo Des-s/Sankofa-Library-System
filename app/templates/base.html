@@ -47,6 +47,24 @@
             </div>
         </div>
     </header>
+    {% else %}
+    <header class="public-header">
+        <div class="public-header-inner">
+            <a href="{{ url_for('auth.index') }}" class="public-logo">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo-img">
+                Sankofa <span>Library</span>
+            </a>
+            <nav class="public-nav">
+                <a href="{{ url_for('auth.index') }}" class="{{ 'active' if request.endpoint == 'auth.index' }}">Home</a>
+                <a href="{{ url_for('auth.news') }}" class="{{ 'active' if request.endpoint == 'auth.news' }}">News</a>
+                <a href="{{ url_for('auth.contact') }}" class="{{ 'active' if request.endpoint == 'auth.contact' }}">Contact</a>
+            </nav>
+            <div class="public-header-actions">
+                <a href="{{ url_for('auth.login') }}" class="btn-pill btn-pill-outline">Log In</a>
+                <a href="{{ url_for('auth.register') }}" class="btn-pill btn-pill-solid">Register</a>
+            </div>
+        </div>
+    </header>
     {% endif %}
 
     <main>

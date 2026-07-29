@@ -1,13 +1,13 @@
 import secrets
 import string
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from flask_mail import Message
 
 from app.extensions import db, mail
-from app.forms import ForgotPasswordForm, LoginForm, RegistrationForm
-from app.models import LibraryCard, User
+from app.forms import ContactForm, ForgotPasswordForm, LoginForm, RegistrationForm
+from app.models import Book, LibraryCard, User
 from app.utils.helpers import generate_library_card_number, log_action
 from app.utils.notifications import notify_admins_of_pending_registration
 
@@ -23,7 +23,50 @@ def index():
         if current_user.is_librarian:
             return redirect(url_for('librarian.dashboard'))
         return redirect(url_for('student.dashboard'))
-    return render_template('index.html')
+
+    book_count = Book.query.filter_by(is_active=True).count()
+    student_count = User.query.filter_by(role='student', approval_status='approved').count()
+    category_count = Book.query.with_entities(Book.category).filter(
+        Book.is_active.is_(True), Book.category.isnot(None)
+    ).distinct().count()
+    featured_books = (
+        Book.query.filter_by(is_active=True)
+        .order_by(Book.book_id.desc())
+        .limit(4)
+        .all()
+    )
+    return render_template(
+        'index.html',
+        book_count=book_count,
+        student_count=student_count,
+        category_count=category_count,
+        featured_books=featured_books,
+    )
+
+
+@auth_bp.route('/news')
+def news():
+    return render_template('news.html')
+
+
+@auth_bp.route('/contact', methods=['GET', 'POST'])
+def contact():
+    form = ContactForm()
+    if form.validate_on_submit():
+        msg = Message(
+            subject=f'[Contact] {form.subject.data.strip()}',
+            recipients=[current_app.config.get('MAIL_DEFAULT_SENDER')],
+            reply_to=form.email.data.strip().lower(),
+            body=(
+                f'From: {form.name.data.strip()} <{form.email.data.strip().lower()}>\n\n'
+                f'{form.message.data.strip()}'
+            ),
+        )
+        mail.send(msg)
+        flash('Thanks for reaching out! Our team will get back to you shortly.', 'success')
+        return redirect(url_for('auth.contact'))
+
+    return render_template('contact.html', form=form)
 
 
 @auth_bp.route('/register', methods=['GET', 'POST'])

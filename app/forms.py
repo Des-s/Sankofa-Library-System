@@ -232,6 +232,14 @@ class ReportForm(FlaskForm):
     submit = SubmitField('Submit Report')
 
 
+class ContactForm(FlaskForm):
+    name = StringField('Your Name', validators=[DataRequired(), Length(max=150)])
+    email = StringField('Email', validators=[DataRequired(), Email(), Length(max=150)])
+    subject = StringField('Subject', validators=[DataRequired(), Length(max=200)])
+    message = TextAreaField('Message', validators=[DataRequired(), Length(max=3000)])
+    submit = SubmitField('Send Message')
+
+
 class CatalogSearchForm(FlaskForm):
     q = StringField('Search', validators=[Optional()])
     category = SelectField('Category', validators=[Optional()])

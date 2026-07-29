@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Contact — Sankofa Library{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Contact Us</h1>
+    <p>Questions about your account, a borrowed book, or a fine? Reach out and we'll get back to you.</p>
+</div>
+
+<div class="contact-layout">
+    <div class="card contact-info">
+        <h2>Get In Touch</h2>
+        <div class="contact-info-row">
+            <i class="fa-solid fa-location-dot"></i>
+            <span>Sankofa Library, Main Campus Building, KNUST</span>
+        </div>
+        <div class="contact-info-row">
+            <i class="fa-solid fa-envelope"></i>
+            <span>noreply@sankofa-library.edu</span>
+        </div>
+        <div class="contact-info-row">
+            <i class="fa-solid fa-clock"></i>
+            <span>Mon &ndash; Fri: 8:00am &ndash; 8:00pm<br>Sat: 9:00am &ndash; 2:00pm</span>
+        </div>
+    </div>
+
+    <div class="card contact-form-card">
+        <h2>Send a Message</h2>
+        <form method="POST" action="{{ url_for('auth.contact') }}">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                {{ form.name.label }}
+                {{ form.name(class="form-control") }}
+                {% for error in form.name.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                {{ form.email.label }}
+                {{ form.email(class="form-control") }}
+                {% for error in form.email.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                {{ form.subject.label }}
+                {{ form.subject(class="form-control") }}
+                {% for error in form.subject.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                {{ form.message.label }}
+                {{ form.message(class="form-control", rows=5) }}
+                {% for error in form.message.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+            {{ form.submit(class="btn btn-primary") }}
+        </form>
+    </div>
+</div>
+{% endblock %}
