@@ -46,16 +46,20 @@ def index():
 
 @auth_bp.route('/news')
 def news():
-    return render_template('news.html')
+    form = ContactForm()
+    return render_template('resources.html', form=form)
 
 
 @auth_bp.route('/faq')
 def faq():
-    return render_template('faq.html')
+    return redirect(url_for('auth.news', _anchor='faq-section'))
 
 
 @auth_bp.route('/contact', methods=['GET', 'POST'])
 def contact():
+    if request.method == 'GET':
+        return redirect(url_for('auth.news', _anchor='contact-section'))
+
     form = ContactForm()
     if form.validate_on_submit():
         msg = Message(
@@ -69,9 +73,9 @@ def contact():
         )
         mail.send(msg)
         flash('Thanks for reaching out! Our team will get back to you shortly.', 'success')
-        return redirect(url_for('auth.contact'))
+        return redirect(url_for('auth.news', _anchor='contact-section'))
 
-    return render_template('contact.html', form=form)
+    return render_template('resources.html', form=form, scroll_to='contact-section')
 
 
 @auth_bp.route('/register', methods=['GET', 'POST'])

@@ -13,105 +13,126 @@
     <a href="#why-heading" class="hero-scroll-cue" aria-label="Scroll down"><i class="fa-solid fa-arrow-down"></i></a>
 </section>
 
-<section class="why-section">
-    <div class="why-text reveal">
-        <h2 id="why-heading">Why Thousands of Students Choose Sankofa Library</h2>
-        <p>From physical stacks to a full digital reader, we make campus research and reading easier, safer, and more convenient with expert-curated collections and round-the-clock account access.</p>
+<div class="book-scroll">
+    <div class="book-spine" aria-hidden="true"></div>
 
-        <div class="why-stats">
-            <div class="why-stat">
-                <span class="why-stat-value">{{ book_count }}+</span>
-                <span class="why-stat-label">Books in Catalog</span>
-            </div>
-            <div class="why-stat">
-                <span class="why-stat-value">{{ student_count }}+</span>
-                <span class="why-stat-label">Active Students</span>
-            </div>
-            <div class="why-stat">
-                <span class="why-stat-value">{{ category_count }}+</span>
-                <span class="why-stat-label">Subject Categories</span>
-            </div>
-        </div>
-    </div>
+    <div class="book-page-frame">
+        <section class="book-page reveal" id="why-section">
+            <div class="why-section">
+                <div class="why-text">
+                    <span class="book-page-kicker">Page 01 &mdash; Why Sankofa</span>
+                    <h2 id="why-heading">Why Thousands of Students Choose Sankofa Library</h2>
+                    <p>From physical stacks to a full digital reader, we make campus research and reading easier, safer, and more convenient with expert-curated collections and round-the-clock account access.</p>
 
-    <div class="why-cards">
-        <div class="feature-card reveal">
-            <h3><i class="fa-solid fa-book-open"></i> Online Reading</h3>
-            <p class="feature-preview">Access digital books securely with your library card verification.</p>
-            <div class="feature-detail">
-                <p>With your registered library card, you can access hundreds of digital books directly in your browser — no downloads needed. Simply browse the catalog, verify your card, and start reading instantly. Your reading progress is saved automatically, and you can return to any book at any time during your borrowing period.</p>
-            </div>
-        </div>
+                    <div class="why-stats">
+                        <div class="why-stat">
+                            <span class="why-stat-value">{{ book_count }}+</span>
+                            <span class="why-stat-label">Books in Catalog</span>
+                        </div>
+                        <div class="why-stat">
+                            <span class="why-stat-value">{{ student_count }}+</span>
+                            <span class="why-stat-label">Active Students</span>
+                        </div>
+                        <div class="why-stat">
+                            <span class="why-stat-value">{{ category_count }}+</span>
+                            <span class="why-stat-label">Subject Categories</span>
+                        </div>
+                    </div>
+                </div>
 
-        <div class="feature-card reveal">
-            <h3><i class="fa-solid fa-book"></i> Hard-Copy Borrowing</h3>
-            <p class="feature-preview">Visit the library in person to borrow physical books from our catalog.</p>
-            <div class="feature-detail">
-                <p>Browse our full physical catalog online and reserve a book before you arrive. Present your library card at the desk to collect your reservation. Each member can borrow up to 3 books at a time for a 14-day period. Renewals can be requested online if no other member has reserved the same title.</p>
-            </div>
-        </div>
+                <div class="why-cards">
+                    <div class="feature-card">
+                        <h3><i class="fa-solid fa-book-open"></i> Online Reading</h3>
+                        <p class="feature-preview">Access digital books securely with your library card verification.</p>
+                        <div class="feature-detail">
+                            <p>With your registered library card, you can access hundreds of digital books directly in your browser — no downloads needed. Simply browse the catalog, verify your card, and start reading instantly. Your reading progress is saved automatically, and you can return to any book at any time during your borrowing period.</p>
+                        </div>
+                    </div>
 
-        <div class="feature-card reveal">
-            <h3><i class="fa-solid fa-exclamation-triangle"></i> Automated Fines</h3>
-            <p class="feature-preview">Transparent overdue fine tracking with configurable rates and waiver support.</p>
-            <div class="feature-detail">
-                <p>Fines are calculated automatically based on the number of days a book is overdue. You can view your current fine balance anytime from your dashboard. Librarians can apply waivers for exceptional circumstances. All fine history is logged transparently so you always know what you owe and why.</p>
-            </div>
-        </div>
-    </div>
-</section>
+                    <div class="feature-card">
+                        <h3><i class="fa-solid fa-book"></i> Hard-Copy Borrowing</h3>
+                        <p class="feature-preview">Visit the library in person to borrow physical books from our catalog.</p>
+                        <div class="feature-detail">
+                            <p>Browse our full physical catalog online and reserve a book before you arrive. Present your library card at the desk to collect your reservation. Each member can borrow up to 3 books at a time for a 14-day period. Renewals can be requested online if no other member has reserved the same title.</p>
+                        </div>
+                    </div>
 
-{% if featured_books %}
-<section class="featured-section reveal">
-    <div class="featured-header">
-        <h2>Recently Added Books</h2>
-        <p>A look at some of the latest titles added to the catalog — sign in to borrow or read online.</p>
-    </div>
-    <div class="featured-grid">
-        {% for book in featured_books %}
-        <div class="featured-card reveal" style="transition-delay: {{ loop.index0 * 0.08 }}s">
-            {% if book.cover_image %}
-            <img src="{{ url_for('static', filename='covers/' + book.cover_image) }}" alt="{{ book.title }}" class="featured-cover">
-            {% else %}
-            <div class="featured-cover-placeholder"><i class="fa-solid fa-book"></i></div>
-            {% endif %}
-            {% if book.category %}<span class="featured-badge">{{ book.category }}</span>{% endif %}
-            <div class="featured-card-body">
-                <h3>{{ book.title }}</h3>
-                <p class="featured-author">{{ book.author }}</p>
-                <div class="featured-tags">
-                    {% if book.available_physical_copies > 0 %}<span class="tag">Physical Available</span>{% endif %}
-                    {% if book.has_digital %}<span class="tag">Digital Available</span>{% endif %}
+                    <div class="feature-card">
+                        <h3><i class="fa-solid fa-exclamation-triangle"></i> Automated Fines</h3>
+                        <p class="feature-preview">Transparent overdue fine tracking with configurable rates and waiver support.</p>
+                        <div class="feature-detail">
+                            <p>Fines are calculated automatically based on the number of days a book is overdue. You can view your current fine balance anytime from your dashboard. Librarians can apply waivers for exceptional circumstances. All fine history is logged transparently so you always know what you owe and why.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        {% endfor %}
+        </section>
     </div>
-    <div class="featured-footer">
-        <a href="{{ url_for('auth.login') }}" class="btn btn-outline">View Full Catalog</a>
-    </div>
-</section>
-{% endif %}
 
-<section class="steps-section reveal">
-    <h2>Getting Started Is Easy As 1-2-3</h2>
-    <div class="steps-grid">
-        <div class="step">
-            <div class="step-number">1</div>
-            <h3>Register</h3>
-            <p>Sign up with your student ID and school email — it only takes a minute.</p>
-        </div>
-        <div class="step">
-            <div class="step-number">2</div>
-            <h3>Get Approved</h3>
-            <p>Library staff review and approve your account, then issue your digital library card.</p>
-        </div>
-        <div class="step">
-            <div class="step-number">3</div>
-            <h3>Borrow &amp; Read</h3>
-            <p>Reserve physical books or read digital titles online, and track it all from your dashboard.</p>
-        </div>
+    {% if featured_books %}
+    <div class="book-page-frame">
+        <section class="book-page reveal" id="featured-section">
+            <div class="featured-section">
+                <div class="featured-header">
+                    <div>
+                        <span class="book-page-kicker">Page 02 &mdash; Catalog</span>
+                        <h2>Recently Added Books</h2>
+                    </div>
+                    <p>A look at some of the latest titles added to the catalog — sign in to borrow or read online.</p>
+                </div>
+                <div class="featured-grid">
+                    {% for book in featured_books %}
+                    <div class="featured-card">
+                        {% if book.cover_image %}
+                        <img src="{{ url_for('static', filename='covers/' + book.cover_image) }}" alt="{{ book.title }}" class="featured-cover">
+                        {% else %}
+                        <div class="featured-cover-placeholder"><i class="fa-solid fa-book"></i></div>
+                        {% endif %}
+                        {% if book.category %}<span class="featured-badge">{{ book.category }}</span>{% endif %}
+                        <div class="featured-card-body">
+                            <h3>{{ book.title }}</h3>
+                            <p class="featured-author">{{ book.author }}</p>
+                            <div class="featured-tags">
+                                {% if book.available_physical_copies > 0 %}<span class="tag">Physical Available</span>{% endif %}
+                                {% if book.has_digital %}<span class="tag">Digital Available</span>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="featured-footer">
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline">View Full Catalog</a>
+                </div>
+            </div>
+        </section>
     </div>
-</section>
+    {% endif %}
+
+    <div class="book-page-frame">
+        <section class="book-page reveal" id="steps-section">
+            <div class="steps-section">
+                <span class="book-page-kicker">Page 03 &mdash; Get Started</span>
+                <h2>Getting Started Is Easy As 1-2-3</h2>
+                <div class="steps-grid">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <h3>Register</h3>
+                        <p>Sign up with your student ID and school email — it only takes a minute.</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <h3>Get Approved</h3>
+                        <p>Library staff review and approve your account, then issue your digital library card.</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <h3>Borrow &amp; Read</h3>
+                        <p>Reserve physical books or read digital titles online, and track it all from your dashboard.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
 
 {% endblock %}

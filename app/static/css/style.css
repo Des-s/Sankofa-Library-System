@@ -446,6 +446,7 @@ th { background: var(--color-bg); font-weight: 600; color: var(--color-primary);
     align-items: start;
     margin-bottom: 3rem;
 }
+.book-page .why-section { margin-bottom: 0; }
 
 .why-text h2 { font-size: 1.75rem; color: var(--color-primary); margin-bottom: 1rem; }
 .why-text > p { color: var(--color-muted); margin-bottom: 2rem; }
@@ -521,7 +522,8 @@ th { background: var(--color-bg); font-weight: 600; color: var(--color-primary);
     user-select: none;
     pointer-events: none;
 }
-.faq-hero h1 { position: relative; z-index: 1; font-size: 2rem; color: var(--color-primary); margin-bottom: 0.5rem; }
+.faq-hero h2 { position: relative; z-index: 1; font-size: 1.75rem; color: var(--color-primary); margin-bottom: 0.5rem; }
+.faq-hero .book-page-kicker { position: relative; z-index: 1; text-align: center; }
 .faq-hero p { position: relative; z-index: 1; color: var(--color-muted); }
 
 .faq-layout { display: grid; grid-template-columns: 1.6fr 1fr; gap: 2rem; align-items: start; }
@@ -600,6 +602,12 @@ th { background: var(--color-bg); font-weight: 600; color: var(--color-primary);
     padding: 2.5rem;
     margin-bottom: 3rem;
 }
+.book-page .featured-section {
+    background: none;
+    border-radius: 0;
+    padding: 0;
+    margin-bottom: 0;
+}
 
 .featured-header { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.75rem; }
 .featured-header h2 { font-size: 1.6rem; color: var(--color-primary); }
@@ -647,6 +655,7 @@ th { background: var(--color-bg); font-weight: 600; color: var(--color-primary);
 
 /* ── Getting-started steps section ── */
 .steps-section { text-align: center; margin-bottom: 3rem; }
+.book-page .steps-section { margin-bottom: 0; }
 .steps-section h2 { font-size: 1.6rem; color: var(--color-primary); margin-bottom: 2rem; }
 
 .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
@@ -726,27 +735,58 @@ th { background: var(--color-bg); font-weight: 600; color: var(--color-primary);
 .btn-pill-outline-light { border-color: rgba(255,255,255,0.8); color: white; }
 .btn-pill-outline-light:hover { background: white; color: var(--color-primary); text-decoration: none; }
 
-/* ── Page banner (dark inner-page header) ── */
-.page-banner {
-    position: relative;
-    display: flex;
-    align-items: center;
-    min-height: 200px;
-    padding: 2rem 3rem;
-    background:
-        linear-gradient(rgba(10, 12, 10, 0.6), rgba(10, 12, 10, 0.6)),
-        url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=1600');
-    background-size: cover;
-    background-position: center;
-    border-radius: 16px;
-    color: white;
-    margin-bottom: 2rem;
-}
-.page-banner-crumb { display: block; font-size: 0.85rem; opacity: 0.8; margin-bottom: 0.5rem; }
-.page-banner-crumb a { color: white; text-decoration: underline; }
-.page-banner h1 { font-size: 2.25rem; font-weight: 800; margin: 0; }
+/* ── Book-scroll page (News / FAQs / Contact) ── */
+html { scroll-behavior: smooth; }
 
-/* ── News page ── */
+.book-scroll { position: relative; padding-left: 2rem; }
+
+.book-spine {
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    bottom: 0.5rem;
+    width: 5px;
+    border-radius: 3px;
+    background: linear-gradient(var(--color-accent), var(--color-primary));
+    opacity: 0.6;
+}
+
+.book-page-frame {
+    margin-bottom: 4.5rem;
+}
+.book-page-frame:last-child { margin-bottom: 0; }
+
+.book-page {
+    background: var(--color-surface);
+    border-radius: 16px;
+    border-top: 6px solid var(--color-primary);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.16);
+    padding: 2.5rem 2.5rem 3rem;
+}
+
+.book-page-header { margin-bottom: 2rem; }
+.book-page-kicker {
+    display: block;
+    color: var(--color-accent);
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.4rem;
+}
+.book-page-header h2 { color: var(--color-primary); font-size: 1.75rem; margin-bottom: 0.5rem; }
+.book-page-header p { color: var(--color-muted); }
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+}
+
+@media (max-width: 640px) {
+    .book-scroll { padding-left: 1rem; }
+    .book-page { padding: 1.75rem 1.5rem 2rem; }
+}
+
+/* ── News section ── */
 .news-intro { color: var(--color-muted); margin-bottom: 1.75rem; }
 
 .news-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; }
@@ -1330,16 +1370,6 @@ th { background: var(--color-bg); font-weight: 600; color: var(--color-primary);
 }
 .reveal.in-view { opacity: 1; transform: translateY(0); }
 
-.why-cards .feature-card.reveal:nth-child(1) { transition-delay: 0s; }
-.why-cards .feature-card.reveal:nth-child(2) { transition-delay: 0.1s; }
-.why-cards .feature-card.reveal:nth-child(3) { transition-delay: 0.2s; }
-
-.steps-grid .step { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
-.steps-section.in-view .steps-grid .step { opacity: 1; transform: translateY(0); }
-.steps-grid .step:nth-child(1) { transition-delay: 0s; }
-.steps-grid .step:nth-child(2) { transition-delay: 0.12s; }
-.steps-grid .step:nth-child(3) { transition-delay: 0.24s; }
-
 /* Hover motion on interactive elements */
 .btn-pill, .btn, .btn-outline { transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease; }
 .btn-pill:hover, .btn:hover, .featured-footer .btn-outline:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.15); }
@@ -1380,7 +1410,7 @@ th { background: var(--color-bg); font-weight: 600; color: var(--color-primary);
 @media (prefers-reduced-motion: reduce) {
     .hero { animation: none; }
     .hero-scroll-cue { animation: none; }
-    .reveal, .steps-grid .step { transition: none; opacity: 1; transform: none; }
+    .reveal { transition: none; opacity: 1; transform: none; }
     .btn-pill, .btn, .btn-outline, .feature-card, .featured-card, .featured-cover, .featured-cover-placeholder, .step-number, .why-stat-value {
         transition: none;
     }
