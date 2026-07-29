@@ -57,6 +57,7 @@
             <nav class="public-nav">
                 <a href="{{ url_for('auth.index') }}" class="{{ 'active' if request.endpoint == 'auth.index' }}">Home</a>
                 <a href="{{ url_for('auth.news') }}" class="{{ 'active' if request.endpoint == 'auth.news' }}">News</a>
+                <a href="{{ url_for('auth.faq') }}" class="{{ 'active' if request.endpoint == 'auth.faq' }}">FAQs</a>
                 <a href="{{ url_for('auth.contact') }}" class="{{ 'active' if request.endpoint == 'auth.contact' }}">Contact</a>
             </nav>
             <div class="public-header-actions">
@@ -94,11 +95,45 @@
       });
     });
 
+    document.querySelectorAll('.news-card').forEach(function(card) {
+      card.addEventListener('click', function() {
+        this.classList.toggle('open');
+      });
+    });
+
     document.querySelectorAll('.settings-row-header').forEach(function(header) {
       header.addEventListener('click', function() {
         header.closest('.settings-row').classList.toggle('open');
       });
     });
+
+    var revealEls = document.querySelectorAll('.reveal');
+    if (revealEls.length) {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) {
+        revealEls.forEach(function(el) { el.classList.add('in-view'); });
+      } else {
+        var observer = new IntersectionObserver(function(entries) {
+          entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('in-view');
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.15 });
+        revealEls.forEach(function(el) { observer.observe(el); });
+      }
+    }
+
+    var scrollCue = document.querySelector('.hero-scroll-cue');
+    if (scrollCue) {
+      scrollCue.addEventListener('click', function(e) {
+        var target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    }
   });
 </script>
 {% block extra_scripts %}{% endblock %}

@@ -1,34 +1,74 @@
 {% extends 'base.html' %}
 {% block title %}News — Sankofa Library{% endblock %}
 {% block content %}
-<div class="page-header">
-    <h1>Library News &amp; Announcements</h1>
-    <p>Stay up to date with what's happening at Sankofa Library.</p>
+<div class="page-banner">
+    <div>
+        <span class="page-banner-crumb"><a href="{{ url_for('auth.index') }}">Home</a> / News</span>
+        <h1>News</h1>
+    </div>
 </div>
 
-<div class="news-list">
-    <article class="news-item">
-        <span class="news-date">July 2026</span>
-        <h3>Extended Reading Room Hours for Exam Season</h3>
-        <p>The reading room will remain open until midnight on weekdays throughout the exam period. Digital access to the catalog remains available 24/7 from your dashboard.</p>
+<p class="news-intro">Stay up to date with what's happening at Sankofa Library.</p>
+
+<div class="news-grid">
+    <article class="news-card">
+        <div class="news-card-image" style="background-image: url('https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=500')">
+            <span class="news-card-date">July 2026</span>
+        </div>
+        <div class="news-card-body">
+            <span class="news-card-byline"><i class="fa-solid fa-user"></i> Library Staff</span>
+            <h3>Extended Reading Room Hours for Exam Season</h3>
+            <p class="feature-preview">The reading room will remain open until midnight on weekdays throughout the exam period.</p>
+            <div class="feature-detail">
+                <p>Digital access to the catalog remains available 24/7 from your dashboard, so you can keep studying whether you're on campus or not.</p>
+            </div>
+            <span class="news-read-more">Read More <i class="fa-solid fa-arrow-right"></i></span>
+        </div>
     </article>
 
-    <article class="news-item">
-        <span class="news-date">June 2026</span>
-        <h3>New Digital Titles Added Across All Departments</h3>
-        <p>We've expanded our digital collection with new titles across Science, Engineering, and the Humanities. Browse the catalog after logging in to see what's new.</p>
+    <article class="news-card">
+        <div class="news-card-image" style="background-image: url('https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500')">
+            <span class="news-card-date">June 2026</span>
+        </div>
+        <div class="news-card-body">
+            <span class="news-card-byline"><i class="fa-solid fa-user"></i> Library Staff</span>
+            <h3>New Digital Titles Added Across All Departments</h3>
+            <p class="feature-preview">We've expanded our digital collection with new titles across several departments.</p>
+            <div class="feature-detail">
+                <p>New titles have been added across Science, Engineering, and the Humanities. Browse the catalog after logging in to see what's new.</p>
+            </div>
+            <span class="news-read-more">Read More <i class="fa-solid fa-arrow-right"></i></span>
+        </div>
     </article>
 
-    <article class="news-item">
-        <span class="news-date">May 2026</span>
-        <h3>Automated Fine Waivers for First-Time Overdue Returns</h3>
-        <p>Students returning a book late for the first time can now request an automatic waiver review from their dashboard, in addition to speaking with library staff directly.</p>
+    <article class="news-card">
+        <div class="news-card-image" style="background-image: url('https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=500')">
+            <span class="news-card-date">May 2026</span>
+        </div>
+        <div class="news-card-body">
+            <span class="news-card-byline"><i class="fa-solid fa-user"></i> Library Staff</span>
+            <h3>Automated Fine Waivers for First-Time Overdue Returns</h3>
+            <p class="feature-preview">First-time overdue returns can now be reviewed for an automatic waiver.</p>
+            <div class="feature-detail">
+                <p>Students returning a book late for the first time can now request an automatic waiver review from their dashboard, in addition to speaking with library staff directly.</p>
+            </div>
+            <span class="news-read-more">Read More <i class="fa-solid fa-arrow-right"></i></span>
+        </div>
     </article>
 
-    <article class="news-item">
-        <span class="news-date">April 2026</span>
-        <h3>Sankofa Library System Launches</h3>
-        <p>Our new online system lets you register for a library card, browse the full catalog, borrow physical books, and read digital titles — all from one account.</p>
+    <article class="news-card">
+        <div class="news-card-image" style="background-image: url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=500')">
+            <span class="news-card-date">April 2026</span>
+        </div>
+        <div class="news-card-body">
+            <span class="news-card-byline"><i class="fa-solid fa-user"></i> Library Staff</span>
+            <h3>Sankofa Library System Launches</h3>
+            <p class="feature-preview">Our new online system brings your library card, catalog, and reading online.</p>
+            <div class="feature-detail">
+                <p>Register for a library card, browse the full catalog, borrow physical books, and read digital titles — all from one account.</p>
+            </div>
+            <span class="news-read-more">Read More <i class="fa-solid fa-arrow-right"></i></span>
+        </div>
     </article>
 </div>
 {% endblock %}

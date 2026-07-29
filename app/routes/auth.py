@@ -49,6 +49,11 @@ def news():
     return render_template('news.html')
 
 
+@auth_bp.route('/faq')
+def faq():
+    return render_template('faq.html')
+
+
 @auth_bp.route('/contact', methods=['GET', 'POST'])
 def contact():
     form = ContactForm()
