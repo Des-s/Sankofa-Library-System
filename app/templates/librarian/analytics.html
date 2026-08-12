@@ -1,37 +1,59 @@
 {% extends 'base.html' %}
-{% block title %}Analytics{% endblock %}
+{% block title %}Analytics — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<a href="{{ url_for('librarian.dashboard') }}">Dashboard</a><span>Analytics</span>{% endblock %}
 {% block content %}
-<div class="page-header"><h1>Analytics</h1><p>Library activity at a glance</p></div>
+<div class="page-header">
+    <h1><i class="fa-solid fa-chart-line text-primary" aria-hidden="true"></i> Library Analytics</h1>
+    <p class="page-subtitle">Health rings and circulation breakdowns across the catalog.</p>
+</div>
 
-<div class="grid-3">
+<!-- Ring metrics -->
+<div class="grid-3" style="margin-bottom:1.5rem;">
     <div class="card ring-card">
-        <div class="ring" style="--pct: {{ book_availability_rate }}; --ring-color: #8e44ad;"><span>{{ book_availability_rate }}%</span></div>
+        <div class="ring" style="--pct: {{ book_availability_rate }}; --ring-color: #1B4332;"><span>{{ book_availability_rate }}%</span></div>
         <div class="ring-label">Book Availability</div>
+        <p class="text-muted" style="font-size:0.8rem;margin-top:0.5rem;text-align:center;">Books on shelf / total copies</p>
     </div>
     <div class="card ring-card">
-        <div class="ring" style="--pct: {{ on_time_return_rate }}; --ring-color: #16a085;"><span>{{ on_time_return_rate }}%</span></div>
+        <div class="ring" style="--pct: {{ on_time_return_rate }}; --ring-color: #15803D;"><span>{{ on_time_return_rate }}%</span></div>
         <div class="ring-label">On-Time Returns</div>
+        <p class="text-muted" style="font-size:0.8rem;margin-top:0.5rem;text-align:center;">Returns before due date</p>
     </div>
     <div class="card ring-card">
-        <div class="ring" style="--pct: {{ digital_coverage_rate }}; --ring-color: #2980b9;"><span>{{ digital_coverage_rate }}%</span></div>
+        <div class="ring" style="--pct: {{ digital_coverage_rate }}; --ring-color: #C04E2C;"><span>{{ digital_coverage_rate }}%</span></div>
         <div class="ring-label">Digital Coverage</div>
+        <p class="text-muted" style="font-size:0.8rem;margin-top:0.5rem;text-align:center;">Titles with digital edition</p>
     </div>
 </div>
 
-<div class="card" style="max-width:400px;">
-    <h2>Books Borrowed by Department</h2>
-    {% if department_breakdown %}
-    <div class="chart-box chart-box-sm"><canvas id="deptPieChart"></canvas></div>
-    {% else %}<div class="empty-state">No checkout data yet.</div>{% endif %}
+<!-- Department breakdown -->
+<div class="grid-2">
+    <div class="card">
+        <h2><i class="fa-solid fa-chart-pie text-gold" aria-hidden="true"></i> Books Borrowed by Department</h2>
+        {% if department_breakdown %}
+        <div class="chart-box"><canvas id="deptPieChart" aria-label="Department breakdown pie chart"></canvas></div>
+        {% else %}<div class="empty-state">No checkout data yet.</div>{% endif %}
+    </div>
+
+    <div class="card">
+        <h2><i class="fa-solid fa-table" aria-hidden="true"></i> Department Breakdown</h2>
+        {% if department_breakdown %}
+        <div class="table-wrap fancy-scroll" style="max-height:18rem;">
+            <table>
+                <thead><tr><th>Department</th><th style="text-align:right;">Books Borrowed</th></tr></thead>
+                <tbody>
+                {% for dept, count in department_breakdown %}
+                <tr>
+                    <td>{{ dept }}</td>
+                    <td style="text-align:right;font-weight:600;color:var(--color-primary);">{{ count }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}<div class="empty-state">No checkout data yet.</div>{% endif %}
+    </div>
 </div>
-{% if department_breakdown %}
-<div class="card" style="max-width:600px;">
-    <div class="table-wrap"><table>
-        <thead><tr><th>Department</th><th>Books Borrowed</th></tr></thead>
-        <tbody>{% for dept, count in department_breakdown %}<tr><td>{{ dept }}</td><td>{{ count }}</td></tr>{% endfor %}</tbody>
-    </table></div>
-</div>
-{% endif %}
 {% endblock %}
 
 {% block extra_scripts %}
@@ -40,15 +62,12 @@
 document.addEventListener('DOMContentLoaded', function () {
     {% if department_breakdown %}
     const mutedColor = getComputedStyle(document.documentElement).getPropertyValue('--color-muted').trim();
-    const palette = ['#1a4d2e', '#d4a843', '#2980b9', '#c0392b', '#27ae60', '#8e44ad', '#e67e22'];
+    const palette = ['#1B4332', '#D4A574', '#C04E2C', '#8B1A1A', '#2D6A4F', '#B8860B', '#15803D'];
     new Chart(document.getElementById('deptPieChart'), {
         type: 'pie',
         data: {
             labels: {{ department_breakdown | map(attribute=0) | list | tojson }},
-            datasets: [{
-                data: {{ department_breakdown | map(attribute=1) | list | tojson }},
-                backgroundColor: palette,
-            }],
+            datasets: [{ data: {{ department_breakdown | map(attribute=1) | list | tojson }}, backgroundColor: palette }],
         },
         options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: mutedColor, boxWidth: 12 } } } },
     });

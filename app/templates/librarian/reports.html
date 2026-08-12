@@ -1,69 +1,120 @@
 {% extends 'base.html' %}
-{% block title %}Reports{% endblock %}
+{% block title %}Library Reports — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<a href="{{ url_for('librarian.dashboard') }}">Dashboard</a><span>Reports</span>{% endblock %}
 {% block content %}
-
-<div class="page-header"><h1>Library Reports</h1></div>
-
-<div class="grid-3">
-  <div class="stat-card"><div class="stat-value">{{ active_checkouts }}</div><div class="stat-label">Active Checkouts</div></div>
-  <div class="stat-card"><div class="stat-value">{{ overdue_count }}</div><div class="stat-label">Overdue</div></div>
-  <div class="stat-card"><div class="stat-value">GHS {{ '%.2f'|format(total_fines) }}</div><div class="stat-label">Fines Collected</div></div>
+<div class="page-header">
+    <h1>Library Reports</h1>
+    <p class="page-subtitle">File incident, inventory, and support reports. All submissions are audit-logged.</p>
 </div>
 
-<div class="card">
-  <h2>Most Borrowed Books</h2>
-  {% if popular %}
-  <div class="table-wrap"><table>
-    <thead><tr><th>Title</th><th>Checkouts</th></tr></thead>
-    <tbody>{% for title, count in popular %}<tr><td>{{ title }}</td><td>{{ count }}</td></tr>{% endfor %}</tbody>
-  </table></div>
-  {% else %}<div class="empty-state">No checkout data yet.</div>{% endif %}
+<!-- Summary -->
+<div class="grid-3" style="margin-bottom:1.5rem;">
+    <div class="stat-card">
+        <div class="stat-text"><div class="stat-value">{{ active_checkouts }}</div><div class="stat-label">Active Checkouts</div></div>
+        <i class="fa-solid fa-book-bookmark stat-icon forest" aria-hidden="true"></i>
+    </div>
+    <div class="stat-card">
+        <div class="stat-text"><div class="stat-value">{{ overdue_count }}</div><div class="stat-label">Overdue Items</div></div>
+        <i class="fa-solid fa-triangle-exclamation stat-icon adinkra" aria-hidden="true"></i>
+    </div>
+    <div class="stat-card">
+        <div class="stat-text"><div class="stat-value">{{ currency_symbol }} {{ '%.2f'|format(total_fines) }}</div><div class="stat-label">Fines Collected</div></div>
+        <span class="stat-icon cedis-icon" aria-hidden="true">₵</span>
+    </div>
 </div>
 
-<!-- File a Report -->
-<div class="card" style="margin-top: 2rem;">
-  <h2>File a Report</h2>
-  <form method="POST" action="{{ url_for('librarian.reports') }}">
-    {{ form.hidden_tag() }}
+<div class="grid-2">
+    <!-- File a report -->
+    <div class="card">
+        <h2><i class="fa-solid fa-file-circle-plus text-primary" aria-hidden="true"></i> File a Report</h2>
+        <form method="POST" action="{{ url_for('librarian.reports') }}">
+            {{ form.hidden_tag() }}
 
-    <div style="margin-bottom:1rem;">
-      <label style="color:#fff; display:block; margin-bottom:0.4rem;">Report Type</label>
-      {{ form.report_type(style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff;") }}
-      {% for error in form.report_type.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            <div class="form-group">
+                {{ form.report_type.label }}
+                {{ form.report_type(id='report_type', class='form-control') }}
+                {% for error in form.report_type.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.title.label }}
+                {{ form.title(id='title', class='form-control', placeholder='Brief title of the report') }}
+                {% for error in form.title.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.student_id.label }}
+                {{ form.student_id(id='student_id', class='form-control') }}
+                {% for error in form.student_id.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.book_title.label }}
+                {{ form.book_title(id='book_title', class='form-control', placeholder='Book title or ISBN (optional)') }}
+                {% for error in form.book_title.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.description.label }}
+                {{ form.description(id='description', class='form-control', rows=5, placeholder='Describe the issue in detail...') }}
+                {% for error in form.description.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.severity.label }}
+                {{ form.severity(id='severity', class='form-control') }}
+                {% for error in form.severity.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+
+            <button type="submit" class="btn btn-gradient" title="Submit this report — it will be audit-logged">
+                <i class="fa-solid fa-paper-plane" aria-hidden="true"></i> {{ form.submit.label.text }}
+            </button>
+        </form>
     </div>
 
-    <div style="margin-bottom:1rem;">
-      <label style="color:#fff; display:block; margin-bottom:0.4rem;">Title / Subject</label>
-      {{ form.title(placeholder="Brief title of the report", style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff;") }}
-      {% for error in form.title.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
-    </div>
+    <!-- Most borrowed + recent reports -->
+    <div>
+        <div class="card" style="margin-bottom:1.5rem;">
+            <h2><i class="fa-solid fa-trophy text-gold" aria-hidden="true"></i> Most Borrowed Books</h2>
+            {% if popular %}
+            <div class="table-wrap fancy-scroll" style="max-height:18rem;">
+                <table>
+                    <thead><tr><th style="width:2.5rem;">#</th><th>Title</th><th style="text-align:right;">Checkouts</th></tr></thead>
+                    <tbody>
+                    {% for title, count in popular %}
+                    <tr>
+                        <td class="text-muted" style="font-family:monospace;">{{ loop.index }}</td>
+                        <td>{{ title }}</td>
+                        <td style="text-align:right;font-weight:600;color:var(--color-primary);">{{ count }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}<div class="empty-state">No checkout data yet.</div>{% endif %}
+        </div>
 
-    <div style="margin-bottom:1rem;">
-      <label style="color:#fff; display:block; margin-bottom:0.4rem;">Student Involved (if any)</label>
-      {{ form.student_id(style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff;") }}
-      {% for error in form.student_id.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        <div class="card">
+            <h2><i class="fa-solid fa-file-lines text-primary" aria-hidden="true"></i> Recent Reports <span class="text-muted" style="font-size:0.85rem;font-weight:400;">— latest 20</span></h2>
+            {% if recent_reports %}
+            <div class="table-wrap fancy-scroll" style="max-height:24rem;">
+                <table>
+                    <thead><tr><th>Title</th><th>Type</th><th>Severity</th><th>Filed By</th><th>Date</th></tr></thead>
+                    <tbody>
+                    {% for r in recent_reports %}
+                    <tr>
+                        <td><div style="font-weight:600;">{{ r.title }}</div><div class="text-muted" style="font-size:0.72rem;">{{ r.description[:80] }}{% if r.description|length > 80 %}…{% endif %}</div></td>
+                        <td><span class="badge">{{ r.report_type }}</span></td>
+                        <td><span class="badge badge-{{ r.severity }}">{{ r.severity }}</span></td>
+                        <td class="text-muted">{{ r.filer.full_name if r.filer else '—' }}</td>
+                        <td class="text-muted nowrap">{{ r.date_filed.strftime('%Y-%m-%d') if r.date_filed else '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}<div class="empty-state">No reports filed yet.</div>{% endif %}
+        </div>
     </div>
-
-    <div style="margin-bottom:1rem;">
-      <label style="color:#fff; display:block; margin-bottom:0.4rem;">Book Title (if applicable)</label>
-      {{ form.book_title(placeholder="Book title or ISBN (optional)", style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff;") }}
-      {% for error in form.book_title.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
-    </div>
-
-    <div style="margin-bottom:1rem;">
-      <label style="color:#fff; display:block; margin-bottom:0.4rem;">Description</label>
-      {{ form.description(rows="5", placeholder="Describe the issue in detail...", style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff; resize:vertical;") }}
-      {% for error in form.description.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
-    </div>
-
-    <div style="margin-bottom:1.5rem;">
-      <label style="color:#fff; display:block; margin-bottom:0.4rem;">Severity</label>
-      {{ form.severity(style="width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.35); color:#fff;") }}
-      {% for error in form.severity.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
-    </div>
-
-    <button type="submit" class="btn btn-primary">Submit Report</button>
-  </form>
 </div>
-
 {% endblock %}

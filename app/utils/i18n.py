@@ -1,8 +1,14 @@
+"""i18n — minimal en/fr translation table + ``t(key)`` lookup.
+
+Scope: covers the app's persistent chrome (nav, common buttons, page
+headers). Full-content translation of book data, flash messages, etc.
+is out of scope.
+
+Mirrors the Next.js i18n approach (next-intl in src/components/...).
+"""
 from flask_login import current_user
 
-# Scope note: this covers the app's persistent chrome (nav, common buttons, page
-# headers) rather than every string in the app — full-content translation of
-# book data, flash messages, etc. is out of scope.
+
 TRANSLATIONS = {
     'en': {
         'nav.dashboard': 'Dashboard',
@@ -19,6 +25,7 @@ TRANSLATIONS = {
         'nav.analytics': 'Analytics',
         'nav.users': 'Users',
         'nav.audit_log': 'Audit Log',
+        'nav.approvals': 'Approvals',
         'common.search': 'Search',
         'common.filter': 'Filter',
         'common.save': 'Save',
@@ -27,11 +34,16 @@ TRANSLATIONS = {
         'common.approve': 'Approve',
         'common.reject': 'Reject',
         'common.view': 'View',
+        'common.add': 'Add',
+        'common.delete': 'Delete',
+        'common.back': 'Back',
+        'common.actions': 'Actions',
         'page.welcome': 'Welcome',
         'page.settings': 'Settings',
         'page.book_catalog': 'Book Catalog',
         'page.student_lookup': 'Student Lookup',
         'page.user_management': 'User Management',
+        'page.profile': 'Profile',
     },
     'fr': {
         'nav.dashboard': 'Tableau de bord',
@@ -48,6 +60,7 @@ TRANSLATIONS = {
         'nav.analytics': 'Analytique',
         'nav.users': 'Utilisateurs',
         'nav.audit_log': "Journal d'audit",
+        'nav.approvals': 'Approbations',
         'common.search': 'Rechercher',
         'common.filter': 'Filtrer',
         'common.save': 'Enregistrer',
@@ -56,21 +69,39 @@ TRANSLATIONS = {
         'common.approve': 'Approuver',
         'common.reject': 'Rejeter',
         'common.view': 'Voir',
+        'common.add': 'Ajouter',
+        'common.delete': 'Supprimer',
+        'common.back': 'Retour',
+        'common.actions': 'Actions',
         'page.welcome': 'Bienvenue',
         'page.settings': 'Paramètres',
         'page.book_catalog': 'Catalogue de livres',
         'page.student_lookup': 'Recherche d’étudiants',
         'page.user_management': 'Gestion des utilisateurs',
+        'page.profile': 'Profil',
     },
 }
 
 
 def current_language():
-    if current_user.is_authenticated and current_user.language_preference in TRANSLATIONS:
-        return current_user.language_preference
+    """Return the current user's preferred language, or 'en'."""
+    try:
+        if current_user.is_authenticated and current_user.language_preference in TRANSLATIONS:
+            return current_user.language_preference
+    except Exception:
+        # Outside of a request context or no user bound.
+        pass
     return 'en'
 
 
 def t(key):
+    """Translate ``key`` in the current language.
+
+    Falls back to English, then to the key itself if no translation
+    exists.
+    """
     lang = current_language()
-    return TRANSLATIONS.get(lang, TRANSLATIONS['en']).get(key, TRANSLATIONS['en'].get(key, key))
+    return (
+        TRANSLATIONS.get(lang, TRANSLATIONS['en'])
+        .get(key, TRANSLATIONS['en'].get(key, key))
+    )

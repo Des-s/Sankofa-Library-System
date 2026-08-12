@@ -1,3 +1,15 @@
+"""Catalog blueprint — public-ish catalog browse + book detail.
+
+Faithful port of the Next.js catalog area (src/app/(app)/catalog/...).
+Both routes require @login_required (matches the Next.js middleware
+gate that redirects unauthenticated users to /login for any /catalog
+route).
+
+Routes:
+- `/catalog` — browse with search (q), category filter, availability
+  filter, sort, paginate 12/page.
+- `/catalog/<book_id>` — book detail with related books by category.
+"""
 from flask import Blueprint, render_template, request
 from flask_login import login_required
 from sqlalchemy import or_
@@ -12,14 +24,20 @@ catalog_bp = Blueprint('catalog', __name__)
 @login_required
 def catalog():
     form = CatalogSearchForm(request.args, meta={'csrf': False})
-    categories = [c[0] for c in Book.query.with_entities(Book.category).distinct().all() if c[0]]
-    form.category.choices = [('', 'All Categories')] + [(c, c) for c in sorted(categories)]
+    categories = [
+        c[0] for c in Book.query.with_entities(Book.category).distinct().all()
+        if c[0]
+    ]
+    form.category.choices = [('', 'All Categories')] + [
+        (c, c) for c in sorted(categories)
+    ]
 
     query = Book.query.filter_by(is_active=True)
     q = request.args.get('q', '').strip()
     category = request.args.get('category', '')
     subcategory = request.args.get('subcategory', '')
     availability = request.args.get('availability', '')
+    sort = request.args.get('sort', 'title')
 
     if q:
         query = query.filter(or_(
@@ -37,6 +55,18 @@ def catalog():
     elif availability == 'digital':
         query = query.filter_by(has_digital=True)
 
+    # Sort.
+    if sort == 'title_desc':
+        query = query.order_by(Book.title.desc())
+    elif sort == 'author':
+        query = query.order_by(Book.author.asc())
+    elif sort == 'year':
+        query = query.order_by(Book.year_published.desc().nullslast())
+    elif sort == 'recent':
+        query = query.order_by(Book.created_at.desc())
+    else:  # 'title' default
+        query = query.order_by(Book.title.asc())
+
     subcategories = []
     if category:
         subcategories = [
@@ -47,7 +77,7 @@ def catalog():
         subcategories = sorted(subcategories)
 
     page = request.args.get('page', 1, type=int)
-    pagination = query.order_by(Book.title).paginate(page=page, per_page=24, error_out=False)
+    pagination = query.paginate(page=page, per_page=12, error_out=False)
     return render_template(
         'catalog/catalog.html',
         books=pagination.items,
@@ -59,11 +89,32 @@ def catalog():
         subcategories=subcategories,
         categories=sorted(categories),
         availability=availability,
+        sort=sort,
     )
 
 
 @catalog_bp.route('/catalog/<int:book_id>')
 @login_required
 def book_detail(book_id):
+    """Full book detail page with metadata, availability, cover, and related
+    books by category. (FLASK-ADAPT)
+    """
     book = Book.query.filter_by(book_id=book_id, is_active=True).first_or_404()
-    return render_template('catalog/detail.html', book=book)
+
+    related_books = []
+    if book.category:
+        related_books = (
+            Book.query
+            .filter(
+                Book.is_active.is_(True),
+                Book.category == book.category,
+                Book.book_id != book.book_id,
+            )
+            .order_by(Book.title)
+            .limit(4)
+            .all()
+        )
+
+    return render_template(
+        'catalog/detail.html', book=book, related_books=related_books,
+    )

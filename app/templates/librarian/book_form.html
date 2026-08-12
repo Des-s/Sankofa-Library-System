@@ -1,47 +1,109 @@
 {% extends 'base.html' %}
-{% block title %}{% if book %}Edit Book{% else %}Add Book{% endif %}{% endblock %}
+{% block title %}{% if book %}Edit {{ book.title }}{% else %}Add New Book{% endif %} — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<a href="{{ url_for('librarian.dashboard') }}">Dashboard</a><a href="{{ url_for('librarian.books') }}">Books</a><span>{% if book %}Edit{% else %}Add{% endif %}</span>{% endblock %}
 {% block content %}
-<div class="page-header"><h1>{% if book %}Edit Book{% else %}Add New Book{% endif %}</h1></div>
-<div class="card" style="max-width:640px;">
+<div class="page-header">
+    <h1>{% if book %}Edit &ldquo;{{ book.title }}&rdquo;{% else %}Add a New Book{% endif %}</h1>
+    <p class="page-subtitle">{% if book %}Update the book's metadata, copies, and cover.{% else %}Add a new title to the library catalog.{% endif %}</p>
+</div>
+
+<div class="card" style="max-width:680px;">
     <form method="POST" enctype="multipart/form-data">
         {{ form.hidden_tag() }}
-        <div class="form-group">{{ form.title.label }}{{ form.title(class='form-control') }}</div>
-        <div class="form-group">{{ form.author.label }}{{ form.author(class='form-control') }}</div>
-        <div class="form-group">{{ form.isbn.label }}{{ form.isbn(class='form-control') }}</div>
-        <div class="grid-2">
-            <div class="form-group">{{ form.publisher.label }}{{ form.publisher(class='form-control') }}</div>
-            <div class="form-group">{{ form.year_published.label }}{{ form.year_published(class='form-control') }}</div>
-        </div>
+
         <div class="form-group">
-    <label>{{ form.cover_image.label.text }}</label>
-    {{ form.cover_image(class="form-control") }}
-    {% if book and book.cover_image %}
-    <div style="margin-top:0.5rem;">
-        <img src="{{ url_for('static', filename='covers/' + book.cover_image) }}"
-             alt="Current cover" style="height:80px; border-radius:4px;">
-        <small style="color:var(--color-muted); display:block;">Current cover — upload a new one to replace it</small>
-    </div>
-    {% else %}
-    <small style="color:var(--color-muted); display:block;margin-top:0.35rem;">If left blank, we'll try to fetch a cover automatically using the ISBN.</small>
-    {% endif %}
-    {% for error in form.cover_image.errors %}
-    <span class="form-error">{{ error }}</span>
-    {% endfor %}
-    </div>
+            <label for="title">{{ form.title.label.text }}</label>
+            {{ form.title(id='title', class='form-control', placeholder='e.g. Things Fall Apart') }}
+            {% for error in form.title.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </div>
+
         <div class="grid-2">
-            <div class="form-group">{{ form.category.label }}{{ form.category(class='form-control') }}</div>
-            <div class="form-group">{{ form.subcategory.label }}{{ form.subcategory(class='form-control') }}</div>
+            <div class="form-group">
+                <label for="author">{{ form.author.label.text }}</label>
+                {{ form.author(id='author', class='form-control', placeholder='e.g. Chinua Achebe') }}
+                {% for error in form.author.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                <label for="isbn">{{ form.isbn.label.text }}</label>
+                {{ form.isbn(id='isbn', class='form-control', placeholder='9780385474542' + ('' if book else ''), **({'disabled': True} if book else {})) }}
+                {% if book %}<small>ISBN cannot be changed after creation.</small>{% endif %}
+                {% for error in form.isbn.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
         </div>
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label for="publisher">{{ form.publisher.label.text }}</label>
+                {{ form.publisher(id='publisher', class='form-control', placeholder='Publisher name') }}
+            </div>
+            <div class="form-group">
+                <label for="year_published">{{ form.year_published.label.text }}</label>
+                {{ form.year_published(id='year_published', class='form-control', placeholder='2024', type='number', min='1000') }}
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label for="category">{{ form.category.label.text }}</label>
+                {{ form.category(id='category', class='form-control', placeholder='Literature, Science, ...') }}
+            </div>
+            <div class="form-group">
+                <label for="subcategory">{{ form.subcategory.label.text }}</label>
+                {{ form.subcategory(id='subcategory', class='form-control', placeholder='African Fiction, Physics, ...') }}
+            </div>
+        </div>
+
         <div class="form-group">
-            {{ form.has_physical.label }}{{ form.has_physical(class='form-control', id='has_physical_select') }}
+            <label for="description">{{ form.description.label.text }}</label>
+            {{ form.description(id='description', class='form-control', rows=4, placeholder='Brief description of the book') }}
         </div>
-        <div class="form-group" id="physical_copies_group">{{ form.total_physical_copies.label }}{{ form.total_physical_copies(class='form-control') }}
-            {% for error in form.total_physical_copies.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label for="has_physical">{{ form.has_physical.label.text }}</label>
+                {{ form.has_physical(id='has_physical_select', class='form-control') }}
+            </div>
+            <div class="form-group" id="physical_copies_group">
+                <label for="total_physical_copies">{{ form.total_physical_copies.label.text }}</label>
+                {{ form.total_physical_copies(id='total_physical_copies', class='form-control', placeholder='1', type='number', min='0') }}
+                {% for error in form.total_physical_copies.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
         </div>
-        <div class="form-group">{{ form.digital_file.label }}{{ form.digital_file(class='form-control') }}</div>
-        <div class="form-group checkbox-group">{{ form.is_active() }} {{ form.is_active.label }}</div>
-        {{ form.submit(class='btn btn-primary') }}
-        <a href="{{ url_for('librarian.books') }}" class="btn btn-outline" style="margin-left:0.5rem;">Cancel</a>
+
+        <div class="form-group">
+            <label for="digital_file">{{ form.digital_file.label.text }}</label>
+            {{ form.digital_file(id='digital_file', class='form-control') }}
+            <small>Upload a PDF, TXT, or HTML file. Students can read digital titles in-browser after card verification.</small>
+        </div>
+
+        <div class="form-group">
+            <label for="cover_image">{{ form.cover_image.label.text }}</label>
+            {{ form.cover_image(id='cover_image', class='form-control') }}
+            {% if book and book.cover_image %}
+            <div style="margin-top:0.5rem;display:flex;gap:0.75rem;align-items:center;">
+                <img src="{{ url_for('static', filename='covers/' + book.cover_image) }}" alt="Current cover" style="height:80px;border-radius:4px;border:1px solid var(--color-border);">
+                <small class="text-muted">Current cover — upload a new one to replace it.</small>
+            </div>
+            {% else %}
+            <small class="text-muted">If left blank, we'll try to fetch a cover automatically using the ISBN.</small>
+            {% endif %}
+            {% for error in form.cover_image.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </div>
+
+        <div class="form-group checkbox-group">
+            <label class="toggle-switch">
+                {{ form.is_active() }}
+                <span class="toggle-slider"></span>
+            </label>
+            <span>{{ form.is_active.label.text }}</span>
+        </div>
+
+        <div class="btn-group">
+            <button type="submit" class="btn btn-gradient" title="Save this book to the catalog">
+                <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> {{ form.submit.label.text }}
+            </button>
+            <a href="{{ url_for('librarian.books') }}" class="btn btn-outline">Cancel</a>
+        </div>
     </form>
 </div>
 {% endblock %}
@@ -51,9 +113,11 @@
 document.addEventListener('DOMContentLoaded', function () {
     const select = document.getElementById('has_physical_select');
     const group = document.getElementById('physical_copies_group');
-    function sync() { group.style.display = select.value === 'no' ? 'none' : 'block'; }
-    select.addEventListener('change', sync);
-    sync();
+    function sync() { if (group) group.style.display = select.value === 'no' ? 'none' : 'block'; }
+    if (select) {
+        select.addEventListener('change', sync);
+        sync();
+    }
 });
 </script>
 {% endblock %}

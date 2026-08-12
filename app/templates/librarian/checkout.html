@@ -1,35 +1,76 @@
 {% extends 'base.html' %}
-{% block title %}Check Out Book{% endblock %}
+{% block title %}Check Out Book — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<a href="{{ url_for('librarian.dashboard') }}">Dashboard</a><span>Check Out</span>{% endblock %}
 {% block content %}
-<div class="page-header"><h1>Check Out Book</h1><p>In-person checkout only</p></div>
+<div class="page-header">
+    <h1>Check Out a Book</h1>
+    <p class="page-subtitle">Three quick steps: find the student, choose a book, confirm the loan.</p>
+</div>
 
-<div class="card" style="max-width:600px;">
+<!-- Stepper -->
+<div class="stepper" style="margin-bottom:1.5rem;">
+    <div class="stepper-step {% if student %}done{% else %}active{% endif %}"><span class="num">1</span><span>Find student</span></div>
+    <span class="stepper-divider"><i class="fa-solid fa-chevron-right"></i></span>
+    <div class="stepper-step {% if student %}active{% endif %}"><span class="num">2</span><span>Select book</span></div>
+    <span class="stepper-divider"><i class="fa-solid fa-chevron-right"></i></span>
+    <div class="stepper-step"><span class="num">3</span><span>Confirm</span></div>
+</div>
+
+<!-- Step 1: Find student -->
+<div class="card" style="max-width:680px;">
+    <h2><i class="fa-solid fa-user-graduate text-primary" aria-hidden="true"></i> Step 1 — Find the student</h2>
     <form method="GET">
         <div class="form-group">
-            <label>Student ID or Name</label>
-            <input type="text" name="q" class="form-control" value="{{ request.args.get('q', '') }}" placeholder="Enter student ID or name">
+            <label for="student-q">Student ID or name</label>
+            <div class="auth-input-wrap">
+                <i class="fa-solid fa-magnifying-glass input-icon" aria-hidden="true"></i>
+                <input type="text" id="student-q" name="q" class="form-input" value="{{ request.args.get('q', '') }}"
+                       placeholder="e.g. STU2024001 or Kwame Mensah" autocomplete="off" required>
+            </div>
         </div>
-        <button type="submit" class="btn btn-primary">Search</button>
+        <button type="submit" class="btn btn-gradient" title="Search for the student">
+            <i class="fa-solid fa-magnifying-glass"></i> Search
+        </button>
     </form>
 </div>
 
 {% if request.args.get('q') %}
     {% if student %}
-    <div class="card" style="max-width:600px;">
+    <!-- Step 2 & 3: Book selection + confirm -->
+    <div class="card" style="max-width:680px;margin-top:1.5rem;">
+        <h2><i class="fa-solid fa-circle-check text-success" aria-hidden="true"></i> Student found</h2>
+        <div style="display:flex;gap:1rem;align-items:center;background:var(--color-secondary);padding:1rem;border-radius:10px;margin-bottom:1rem;">
+            <span class="avatar-circle" style="width:48px;height:48px;background:var(--color-primary);color:#fff;">{{ student.initials }}</span>
+            <div>
+                <div style="font-weight:600;">{{ student.full_name }}</div>
+                <div class="text-muted" style="font-size:0.85rem;">{{ student.student_id }} &middot; {{ student.department or 'No department' }}{% if student.year_of_study %} &middot; Year {{ student.year_of_study }}{% endif %}</div>
+                {% if student.library_card %}<div class="text-muted" style="font-size:0.8rem;"><i class="fa-solid fa-id-card"></i> {{ student.library_card.card_number }}</div>{% endif %}
+            </div>
+        </div>
+
+        <h2><i class="fa-solid fa-book text-gold" aria-hidden="true"></i> Step 2 — Select a book</h2>
         <form method="POST">
             {{ form.hidden_tag() }}
-            {{ form.student_search(type='hidden') }}
-            <table style="margin-bottom:1rem;">
-                <tr><th style="width:120px;">Student Name</th><td>{{ student.full_name }}</td></tr>
-                <tr><th>Student ID</th><td>{{ student.student_id }}</td></tr>
-                <tr><th>{{ form.book_id.label.text }}</th><td>{{ form.book_id(class='form-control') }}</td></tr>
-            </table>
-            {{ form.submit(class='btn btn-primary') }}
+            {{ form.student_search(type='hidden', value=request.args.get('q')) }}
+
+            <div class="form-group">
+                <label for="book_id">{{ form.book_id.label.text }}</label>
+                {{ form.book_id(id='book_id', class='form-control') }}
+                {% for error in form.book_id.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+
+            <button type="submit" class="btn btn-gradient" title="Issue this book to {{ student.full_name }} — a 14-day loan is created">
+                <i class="fa-solid fa-hand-holding-heart"></i> {{ form.submit.label.text }}
+            </button>
+            <a href="{{ url_for('librarian.checkout') }}" class="btn btn-outline" style="margin-left:0.5rem;">Reset</a>
         </form>
     </div>
     {% else %}
-    <div class="card" style="max-width:600px;">
-        <div class="alert alert-danger">No student found matching "{{ request.args.get('q') }}".</div>
+    <div class="card" style="max-width:680px;margin-top:1.5rem;border-left:4px solid var(--color-danger);">
+        <div class="alert alert-danger" style="margin:0;">
+            <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+            No student found matching &ldquo;{{ request.args.get('q') }}&rdquo;. Try a different name or student ID.
+        </div>
     </div>
     {% endif %}
 {% endif %}

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Pending Student Approvals — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<a href="{{ url_for('librarian.dashboard') if current_user.role == 'librarian' else 'admin.dashboard' }}">Dashboard</a><span>Approvals</span>{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1><i class="fa-solid fa-user-check text-gold" aria-hidden="true"></i> Pending Student Approvals</h1>
+    <p class="page-subtitle">Review and approve student registrations submitted through the self-service portal.</p>
+</div>
+
+<div class="card" style="margin-bottom:1.5rem;border-left:4px solid var(--gold);">
+    <div style="display:flex;align-items:center;gap:1rem;">
+        <div style="width:48px;height:48px;border-radius:50%;background:rgba(184,134,11,0.12);color:var(--gold);display:grid;place-items:center;font-size:1.25rem;">
+            <i class="fa-solid fa-clock" aria-hidden="true"></i>
+        </div>
+        <div>
+            <div class="text-muted" style="font-size:0.85rem;">Awaiting review</div>
+            <div style="font-size:1.5rem;font-weight:700;color:var(--color-primary);">{{ pending_students|length }} {{ 'student' if pending_students|length == 1 else 'students' }}</div>
+        </div>
+    </div>
+</div>
+
+{% if pending_students %}
+<div class="approval-grid">
+    {% for s in pending_students %}
+    <div class="card lift-on-hover">
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+            <span class="avatar-circle" style="width:48px;height:48px;background:var(--color-primary);color:#fff;">{{ s.initials }}</span>
+            <div style="flex:1;min-width:0;">
+                <h3 style="margin:0;font-size:1.05rem;">{{ s.full_name }}</h3>
+                <p style="margin:0;font-size:0.8rem;color:var(--color-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                    <i class="fa-solid fa-envelope" aria-hidden="true"></i> {{ s.email }}
+                </p>
+            </div>
+            <span class="badge badge-issued"><i class="fa-solid fa-clock"></i> Pending</span>
+        </div>
+
+        <dl class="book-detail-meta-grid" style="font-size:0.85rem;">
+            <div class="meta-row"><dt><i class="fa-solid fa-user-graduate"></i> Student ID</dt><dd><code>{{ s.student_id or '—' }}</code></dd></div>
+            <div class="meta-row"><dt><i class="fa-solid fa-building"></i> Department</dt><dd>{{ s.department or '—' }}</dd></div>
+            <div class="meta-row"><dt><i class="fa-solid fa-hashtag"></i> Year</dt><dd>{{ s.year_of_study or '—' }}</dd></div>
+            <div class="meta-row"><dt><i class="fa-solid fa-calendar"></i> Registered</dt><dd>{{ s.created_at.strftime('%Y-%m-%d') if s.created_at else '—' }}</dd></div>
+        </dl>
+
+        <div class="btn-group" style="margin-top:1rem;">
+            <form method="POST" action="{{ url_for('librarian.approve_student', user_id=s.user_id, from='approvals') }}" class="inline-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-gradient"
+                        title="Approve {{ s.full_name }} — grants library access immediately"
+                        data-confirm="Approve {{ s.full_name }}? They will be able to log in immediately. This action is logged in the audit trail.">
+                    <i class="fa-solid fa-check-circle"></i> Approve
+                </button>
+            </form>
+            <form method="POST" action="{{ url_for('librarian.reject_student', user_id=s.user_id, from='approvals') }}" class="inline-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline btn-danger"
+                        title="Reject {{ s.full_name }} — denies access permanently"
+                        data-confirm="Reject {{ s.full_name }}? They will not be able to log in. This action is logged in the audit trail.">
+                    <i class="fa-solid fa-times-circle"></i> Reject
+                </button>
+            </form>
+            <a href="{{ url_for('librarian.student_detail', user_id=s.user_id) }}" class="btn btn-sm btn-outline" title="View {{ s.full_name }}'s full profile">View</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state-component">
+        <i class="fa-solid fa-circle-check empty-icon" style="color:var(--success);" aria-hidden="true"></i>
+        <h3>All caught up!</h3>
+        <p>There are no pending student registrations awaiting approval right now.</p>
+        <a href="{{ url_for('librarian.students') }}" class="btn btn-outline" style="margin-top:1rem;">Go to Student Lookup</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,39 +1,99 @@
 {% extends 'base.html' %}
-{% block title %}Book Management{% endblock %}
+{% block title %}Book Management — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<a href="{{ url_for('librarian.dashboard') }}">Dashboard</a><span>Books</span>{% endblock %}
 {% block content %}
-<div class="page-header">
-    <h1>Book Management</h1>
-    <div class="btn-group"><a href="{{ url_for('librarian.book_form') }}" class="btn btn-primary">Add New Book</a></div>
+<div class="page-header page-header-split">
+    <div>
+        <h1>Book Management</h1>
+        <p class="page-subtitle">Add, edit, and deactivate books in the catalog. Cover images auto-fetch from Open Library by ISBN.</p>
+    </div>
+    <a href="{{ url_for('librarian.book_form') }}" class="btn btn-gradient" title="Add a new book to the catalog">
+        <i class="fa-solid fa-plus" aria-hidden="true"></i> Add New Book
+    </a>
 </div>
+
 <form method="GET" class="search-bar card">
-    <div class="form-group"><input type="text" name="q" class="form-control" value="{{ q }}" placeholder="Search books..."></div>
-    <button type="submit" class="btn btn-primary">Search</button>
+    <div class="form-group" style="flex:1;min-width:200px;">
+        <label for="book-q" class="sr-only">Search</label>
+        <div class="auth-input-wrap">
+            <i class="fa-solid fa-magnifying-glass input-icon" aria-hidden="true"></i>
+            <input type="text" id="book-q" name="q" class="form-input" value="{{ q }}"
+                   placeholder="Search by title, author, or ISBN..." autocomplete="off">
+        </div>
+    </div>
+    <button type="submit" class="btn btn-gradient" title="Run the search">
+        <i class="fa-solid fa-filter"></i> Search
+    </button>
+    {% if q %}<a href="{{ url_for('librarian.books') }}" class="btn btn-outline">Clear</a>{% endif %}
 </form>
+
 <div class="card">
-    <div class="table-wrap"><table>
-        <thead><tr><th>Title</th><th>Author</th><th>ISBN</th><th>Physical</th><th>Digital</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody>
-        {% for b in books %}
-        <tr>
-            <td>{{ b.title }}</td>
-            <td>{{ b.author }}</td>
-            <td>{{ b.isbn }}</td>
-            <td>{{ b.available_physical_copies }}/{{ b.total_physical_copies }}</td>
-            <td>{% if b.has_digital %}Yes{% else %}No{% endif %}</td>
-            <td>{% if b.is_active %}Active{% else %}Inactive{% endif %}</td>
-            <td>
-                <a href="{{ url_for('librarian.book_form', book_id=b.book_id) }}" class="btn btn-sm btn-outline">Edit</a>
-                {% if b.is_active %}
-                <form method="POST" action="{{ url_for('librarian.deactivate_book', book_id=b.book_id) }}" class="inline-form">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-sm btn-danger">Deactivate</button>
-                </form>
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table></div>
+    {% if books %}
+    <div class="table-wrap fancy-scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:60px;">Cover</th>
+                    <th>Title</th>
+                    <th class="hide-on-mobile">Author</th>
+                    <th class="hide-on-mobile">ISBN</th>
+                    <th>Physical</th>
+                    <th class="hide-on-mobile">Digital</th>
+                    <th>Status</th>
+                    <th class="nowrap">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for b in books %}
+            <tr>
+                <td>
+                    {% if b.cover_image %}
+                    <img src="{{ url_for('static', filename='covers/' + b.cover_image) }}" alt="" style="width:36px;height:48px;object-fit:cover;border-radius:4px;border:1px solid var(--color-border);">
+                    {% else %}
+                    <div style="width:36px;height:48px;background:var(--color-secondary);border-radius:4px;display:grid;place-items:center;color:var(--color-muted);"><i class="fa-solid fa-book"></i></div>
+                    {% endif %}
+                </td>
+                <td>
+                    <div style="font-weight:600;">{{ b.title }}</div>
+                    <div class="hide-on-mobile text-muted" style="font-size:0.75rem;">{{ b.author }}</div>
+                    {% if b.category %}<span class="tag" style="margin-top:0.25rem;">{{ b.category }}</span>{% endif %}
+                </td>
+                <td class="hide-on-mobile text-muted">{{ b.author }}</td>
+                <td class="hide-on-mobile"><code style="font-size:0.75rem;">{{ b.isbn }}</code></td>
+                <td>
+                    <strong>{{ b.available_physical_copies }}</strong>/{{ b.total_physical_copies }}
+                    {% if b.available_physical_copies == 0 %}<span class="badge badge-overdue" style="margin-left:0.25rem;">Out</span>{% endif %}
+                </td>
+                <td class="hide-on-mobile">
+                    {% if b.has_digital %}<span class="badge badge-active">Digital</span>{% else %}<span class="text-muted">—</span>{% endif %}
+                </td>
+                <td>{% if b.is_active %}<span class="badge badge-active">Active</span>{% else %}<span class="badge badge-returned">Inactive</span>{% endif %}</td>
+                <td class="table-actions">
+                    <a href="{{ url_for('librarian.book_form', book_id=b.book_id) }}" class="icon-action-btn" title="Edit &ldquo;{{ b.title }}&rdquo; — title, author, copies, cover">
+                        <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                    </a>
+                    {% if b.is_active %}
+                    <form method="POST" action="{{ url_for('librarian.deactivate_book', book_id=b.book_id) }}" class="inline-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="icon-action-btn danger" title="Deactivate &ldquo;{{ b.title }}&rdquo; — hides it from the catalog (soft delete)"
+                                data-confirm="Deactivate &ldquo;{{ b.title }}&rdquo;? It will be hidden from the catalog but kept in records.">
+                            <i class="fa-solid fa-circle-xmark" aria-hidden="true"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state-component">
+        <i class="fa-solid fa-book-medical empty-icon" aria-hidden="true"></i>
+        <h3>No books found</h3>
+        <p>Try adjusting your search, or add a new book to the catalog.</p>
+    </div>
+    {% endif %}
 </div>
 {% include '_pagination.html' %}
 {% endblock %}

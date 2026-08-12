@@ -1,107 +1,199 @@
 {% extends 'base.html' %}
-{% block title %}Admin Dashboard{% endblock %}
+{% block title %}Administrator Dashboard — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<span>Dashboard</span>{% endblock %}
 {% block content %}
-<div class="page-header"><h1>Administrator Dashboard</h1></div>
+<div class="page-header">
+    <h1>Administrator Dashboard</h1>
+    <p class="page-subtitle">System-wide overview of users, circulation, fines, and reading activity at Sankofa Academic Library.</p>
+</div>
+<div class="kente-bar" style="height:4px;border-radius:var(--radius);margin-bottom:1.5rem;"></div>
+
+<!-- 6 Stat cards -->
 <div class="stats-grid">
-    <div class="stat-card">
+    <div class="stat-card lift-on-hover animate-fade-in-up stagger-1">
         <div class="stat-text">
             <div class="stat-value">{{ stats.total_users }}</div>
             <div class="stat-label">Total Users</div>
+            <div class="stat-hint">{{ stats.total_students }} students · {{ stats.total_users - stats.total_students }} staff</div>
         </div>
-        <i class="fa-solid fa-people-group stat-icon"></i>  <!-- Members icon -->
+        <i class="fa-solid fa-people-group stat-icon forest" aria-hidden="true"></i>
     </div>
-    <div class="stat-card">
+    <div class="stat-card lift-on-hover animate-fade-in-up stagger-2">
         <div class="stat-text">
             <div class="stat-value">{{ stats.total_students }}</div>
-            <div class="stat-label">Students</div>
+            <div class="stat-label">Active Students</div>
+            <div class="stat-hint">Approved &amp; active accounts</div>
         </div>
-        <i class="fa-solid fa-user-graduate stat-icon"></i>  <!-- Student icon -->
+        <i class="fa-solid fa-user-graduate stat-icon success" aria-hidden="true"></i>
     </div>
-    <div class="stat-card">
+    <div class="stat-card lift-on-hover animate-fade-in-up stagger-3">
         <div class="stat-text">
             <div class="stat-value">{{ stats.active_books }}</div>
             <div class="stat-label">Active Books</div>
+            <div class="stat-hint">Titles currently in catalog</div>
         </div>
-        <i class="fa-solid fa-book stat-icon"></i>  <!-- Book icon -->
+        <i class="fa-solid fa-book stat-icon gold" aria-hidden="true"></i>
     </div>
-    <div class="stat-card">
+    <div class="stat-card lift-on-hover animate-fade-in-up stagger-4">
         <div class="stat-text">
             <div class="stat-value">{{ stats.active_checkouts }}</div>
             <div class="stat-label">Active Checkouts</div>
+            <div class="stat-hint">Includes overdue items</div>
         </div>
-        <i class="fa-solid fa-rocket stat-icon"></i>  <!-- Rocket icon -->
+        <i class="fa-solid fa-bookmark stat-icon kente" aria-hidden="true"></i>
     </div>
-    <div class="stat-card">
+    <div class="stat-card lift-on-hover animate-fade-in-up stagger-5">
         <div class="stat-text">
-            <div class="stat-value">GHS {{ '%.2f'|format(stats.outstanding_fines) }}</div>
+            <div class="stat-value">{{ currency_symbol }} {{ '%.2f'|format(stats.outstanding_fines) }}</div>
             <div class="stat-label">Outstanding Fines</div>
+            <div class="stat-hint">Issued &amp; pending collection</div>
         </div>
-        <span class="stat-icon cedis-icon">₵</span>  <!-- Cedis icon -->
+        <span class="stat-icon cedis-icon" aria-hidden="true">₵</span>
     </div>
-    <div class="stat-card">
+    <div class="stat-card lift-on-hover animate-fade-in-up stagger-6">
         <div class="stat-text">
             <div class="stat-value">{{ stats.reading_sessions }}</div>
-            <div class="stat-label">Reading Sessions Today</div>
+            <div class="stat-label">Reading Sessions (Today)</div>
+            <div class="stat-hint">In-library reading records</div>
         </div>
-        <i class="fa-solid fa-book-open stat-icon"></i>  <!-- Book/reading icon -->
+        <i class="fa-solid fa-book-open stat-icon forest" aria-hidden="true"></i>
     </div>
 </div>
-<div class="btn-group">
-    <a href="{{ url_for('admin.users') }}" class="btn btn-primary">Manage Users</a>
+
+<!-- Quick actions -->
+<div class="btn-group" style="margin-bottom:1.5rem;">
+    <a href="{{ url_for('admin.users') }}" class="btn btn-gradient" title="Manage user accounts — search, filter, and edit roles">
+        <i class="fa-solid fa-users" aria-hidden="true"></i> Manage Users
+    </a>
     {% if stats.pending_approvals %}
-    <a href="{{ url_for('librarian.students', tab='pending') }}" class="btn btn-accent">{{ stats.pending_approvals }} Pending Approval{{ 's' if stats.pending_approvals != 1 }}</a>
+    <a href="{{ url_for('admin.approvals') }}" class="btn btn-gradient-gold" title="Review {{ stats.pending_approvals }} pending student registration{{ 's' if stats.pending_approvals != 1 }}">
+        <i class="fa-solid fa-user-check" aria-hidden="true"></i> {{ stats.pending_approvals }} Pending Approval{{ 's' if stats.pending_approvals != 1 }}
+    </a>
     {% endif %}
-    <a href="{{ url_for('admin.settings') }}" class="btn btn-outline">Settings</a>
-    <a href="{{ url_for('admin.audit') }}" class="btn btn-outline">Audit Log</a>
+    <a href="{{ url_for('admin.audit') }}" class="btn btn-outline" title="Searchable audit trail of every system action">
+        <i class="fa-solid fa-scroll" aria-hidden="true"></i> Audit Log
+    </a>
+    <a href="{{ url_for('admin.settings') }}" class="btn btn-outline" title="Configure library policies and information">
+        <i class="fa-solid fa-gear" aria-hidden="true"></i> Settings
+    </a>
 </div>
 
-<div class="page-header" style="margin-top:2rem;"><h2 style="font-size:1.3rem;color:var(--color-primary);">Analytics — Last 30 Days</h2></div>
-<div class="grid-3">
-    <div class="stat-card"><div class="stat-value">{{ monthly_checkouts }}</div><div class="stat-label">Checkouts (30d)</div></div>
-    <div class="stat-card"><div class="stat-value">{{ monthly_reading }}</div><div class="stat-label">Reading Sessions (30d)</div></div>
-    <div class="stat-card"><div class="stat-value">GHS {{ '%.2f'|format(fine_revenue) }}</div><div class="stat-label">Fine Revenue (Total Paid)</div></div>
+<!-- Analytics — Last 30 Days -->
+<div class="grid-3" style="margin-bottom:1.5rem;">
+    <div class="stat-card">
+        <div class="stat-text"><div class="stat-value">{{ monthly_checkouts }}</div><div class="stat-label">Checkouts (30d)</div></div>
+        <i class="fa-solid fa-chart-line stat-icon kente" aria-hidden="true"></i>
+    </div>
+    <div class="stat-card">
+        <div class="stat-text"><div class="stat-value">{{ monthly_reading }}</div><div class="stat-label">Reading Sessions (30d)</div></div>
+        <i class="fa-solid fa-glasses stat-icon gold" aria-hidden="true"></i>
+    </div>
+    <div class="stat-card">
+        <div class="stat-text"><div class="stat-value>{{ currency_symbol }} {{ '%.2f'|format(fine_revenue) }}</div><div class="stat-label">Fine Revenue (Total Paid)</div></div>
+        <span class="stat-icon cedis-icon" aria-hidden="true">₵</span>
+    </div>
 </div>
 
-<div class="grid-4">
+<!-- Health rings -->
+<div class="grid-4" style="margin-bottom:1.5rem;">
     <div class="card ring-card">
-        <div class="ring" style="--pct: {{ book_availability_rate }}; --ring-color: #8e44ad;"><span>{{ book_availability_rate }}%</span></div>
+        <div class="ring" style="--pct: {{ book_availability_rate }}; --ring-color: #1B4332;"><span>{{ book_availability_rate }}%</span></div>
         <div class="ring-label">Book Availability</div>
     </div>
     <div class="card ring-card">
-        <div class="ring" style="--pct: {{ on_time_return_rate }}; --ring-color: #16a085;"><span>{{ on_time_return_rate }}%</span></div>
+        <div class="ring" style="--pct: {{ on_time_return_rate }}; --ring-color: #15803D;"><span>{{ on_time_return_rate }}%</span></div>
         <div class="ring-label">On-Time Returns</div>
     </div>
     <div class="card ring-card">
-        <div class="ring" style="--pct: {{ digital_coverage_rate }}; --ring-color: #2980b9;"><span>{{ digital_coverage_rate }}%</span></div>
+        <div class="ring" style="--pct: {{ digital_coverage_rate }}; --ring-color: #C04E2C;"><span>{{ digital_coverage_rate }}%</span></div>
         <div class="ring-label">Digital Coverage</div>
     </div>
     <div class="card ring-card">
-        <div class="ring" style="--pct: {{ fine_collection_rate }}; --ring-color: #e67e22;"><span>{{ fine_collection_rate }}%</span></div>
+        <div class="ring" style="--pct: {{ fine_collection_rate }}; --ring-color: #B8860B;"><span>{{ fine_collection_rate }}%</span></div>
         <div class="ring-label">Fine Collection</div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="grid-2">
+    <div class="card">
+        <h2><i class="fa-solid fa-chart-line" aria-hidden="true"></i> User Growth <span class="text-muted" style="font-size:0.85rem;font-weight:400;">— last 6 months</span></h2>
+        <div class="chart-box"><canvas id="userGrowthChart" aria-label="User growth line chart"></canvas></div>
+    </div>
+    <div class="card">
+        <h2><i class="fa-solid fa-chart-column" aria-hidden="true"></i> Checkout Volume <span class="text-muted" style="font-size:0.85rem;font-weight:400;">— last 6 months</span></h2>
+        <div class="chart-box"><canvas id="checkoutVolumeChart" aria-label="Checkout volume bar chart"></canvas></div>
     </div>
 </div>
 
 <div class="grid-2">
     <div class="card">
-        <h2>Borrows by Department</h2>
+        <h2><i class="fa-solid fa-chart-pie" aria-hidden="true"></i> Borrows by Department</h2>
         {% if department_breakdown %}
-        <div class="chart-box chart-box-sm"><canvas id="deptPieChart"></canvas></div>
+        <div class="chart-box chart-box-sm"><canvas id="deptPieChart" aria-label="Department breakdown pie chart"></canvas></div>
         {% else %}<div class="empty-state">No checkout data yet.</div>{% endif %}
     </div>
     <div class="card">
-        <h2>User Growth (Last 6 Months)</h2>
-        <div class="chart-box"><canvas id="userGrowthChart"></canvas></div>
+        <h2><i class="fa-solid fa-shapes" aria-hidden="true"></i> Books by Category</h2>
+        {% if category_distribution %}
+        <div class="chart-box chart-box-sm"><canvas id="categoryDoughnutChart" aria-label="Category distribution doughnut chart"></canvas></div>
+        {% else %}<div class="empty-state">No category data yet.</div>{% endif %}
     </div>
 </div>
 
-<div class="card">
-    <h2>Most Borrowed Books</h2>
-    {% if popular_books %}
-    <div class="table-wrap"><table>
-        <thead><tr><th>Title</th><th>Borrows</th></tr></thead>
-        <tbody>{% for title, count in popular_books %}<tr><td>{{ title }}</td><td>{{ count }}</td></tr>{% endfor %}</tbody>
-    </table></div>
-    {% else %}<div class="empty-state">No checkout data yet.</div>{% endif %}
+<!-- Top borrowed books + Recent audit -->
+<div class="grid-2">
+    <div class="card">
+        <h2><i class="fa-solid fa-trophy text-gold" aria-hidden="true"></i> Top Borrowed Books <span class="text-muted" style="font-size:0.85rem;font-weight:400;">— all time</span></h2>
+        {% if popular_books %}
+        <div class="table-container fancy-scroll" style="max-height:24rem;">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:2.5rem;">#</th>
+                        <th>Title</th>
+                        <th class="hide-on-mobile">Category</th>
+                        <th style="text-align:right;" class="nowrap">Borrows</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for title, count in popular_books %}
+                    <tr>
+                        <td class="text-muted" style="font-family:monospace;">{{ loop.index }}</td>
+                        <td>{{ title }}</td>
+                        <td class="hide-on-mobile text-muted">—</td>
+                        <td style="text-align:right;font-weight:600;color:var(--color-primary);">{{ count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}<div class="empty-state">No checkout data yet.</div>{% endif %}
+    </div>
+
+    <div class="card">
+        <h2><i class="fa-solid fa-scroll text-primary" aria-hidden="true"></i> Recent Audit Activity <span class="text-muted" style="font-size:0.85rem;font-weight:400;">— latest 10</span></h2>
+        {% if recent_logs %}
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.75rem;max-height:24rem;overflow-y:auto;" class="fancy-scroll">
+            {% for log in recent_logs %}
+            <li style="display:flex;gap:0.75rem;align-items:flex-start;border:1px solid var(--color-border);border-radius:10px;padding:0.75rem;background:var(--color-surface);">
+                <div style="width:36px;height:36px;border-radius:50%;background:rgba(27,67,50,0.10);color:var(--color-primary);display:grid;place-items:center;flex-shrink:0;">
+                    <i class="fa-solid fa-scroll" aria-hidden="true"></i>
+                </div>
+                <div style="min-width:0;flex:1;">
+                    <div style="display:flex;justify-content:space-between;gap:0.5rem;align-items:center;">
+                        <strong style="font-size:0.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{% if log.actor %}{{ log.actor.full_name }}{% else %}System{% endif %}</strong>
+                        <span class="badge badge-active" style="font-family:monospace;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;">{{ log.action_type }}</span>
+                    </div>
+                    <p class="text-muted" style="font-size:0.8rem;margin:0.25rem 0 0;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">{{ log.description }}</p>
+                    <p class="text-muted" style="font-size:0.7rem;margin:0.25rem 0 0;opacity:0.8;">{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        <a href="{{ url_for('admin.audit') }}" class="btn btn-sm btn-outline" style="margin-top:0.75rem;width:100%;">View full audit log</a>
+        {% else %}<div class="empty-state">No audit entries yet.</div>{% endif %}
+    </div>
 </div>
 {% endblock %}
 
@@ -110,17 +202,14 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const mutedColor = getComputedStyle(document.documentElement).getPropertyValue('--color-muted').trim();
-    const palette = ['#1a4d2e', '#d4a843', '#2980b9', '#c0392b', '#27ae60', '#8e44ad', '#e67e22'];
+    const palette = ['#1B4332', '#D4A574', '#C04E2C', '#8B1A1A', '#2D6A4F', '#B8860B', '#15803D'];
 
     {% if department_breakdown %}
     new Chart(document.getElementById('deptPieChart'), {
         type: 'pie',
         data: {
             labels: {{ department_breakdown | map(attribute=0) | list | tojson }},
-            datasets: [{
-                data: {{ department_breakdown | map(attribute=1) | list | tojson }},
-                backgroundColor: palette,
-            }],
+            datasets: [{ data: {{ department_breakdown | map(attribute=1) | list | tojson }}, backgroundColor: palette }],
         },
         options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: mutedColor, boxWidth: 12 } } } },
     });
@@ -133,21 +222,50 @@ document.addEventListener('DOMContentLoaded', function () {
             datasets: [{
                 label: 'New Users',
                 data: {{ signups_by_month | map(attribute=1) | list | tojson }},
-                borderColor: '#1a4d2e',
-                backgroundColor: 'rgba(26,77,46,0.15)',
-                fill: true,
-                tension: 0.3,
+                borderColor: '#1B4332',
+                backgroundColor: 'rgba(27,67,50,0.15)',
+                fill: true, tension: 0.3,
             }],
         },
         options: {
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
-            scales: {
-                x: { ticks: { color: mutedColor }, grid: { display: false } },
-                y: { ticks: { color: mutedColor, precision: 0 }, beginAtZero: true },
-            },
+            scales: { x: { ticks: { color: mutedColor }, grid: { display: false } }, y: { ticks: { color: mutedColor, precision: 0 }, beginAtZero: true } },
         },
     });
+
+    new Chart(document.getElementById('checkoutVolumeChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ checkout_volume | map(attribute=0) | list | tojson }},
+            datasets: [{
+                label: 'Checkouts',
+                data: {{ checkout_volume | map(attribute=1) | list | tojson }},
+                backgroundColor: '#D4A574',
+                borderColor: '#B8860B', borderWidth: 1, borderRadius: 4,
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { ticks: { color: mutedColor }, grid: { display: false } }, y: { ticks: { color: mutedColor, precision: 0 }, beginAtZero: true } },
+        },
+    });
+
+    {% if category_distribution %}
+    new Chart(document.getElementById('categoryDoughnutChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ category_distribution | map(attribute=0) | list | tojson }},
+            datasets: [{
+                data: {{ category_distribution | map(attribute=1) | list | tojson }},
+                backgroundColor: palette, borderWidth: 2,
+                borderColor: getComputedStyle(document.documentElement).getPropertyValue('--color-surface').trim(),
+            }],
+        },
+        options: { maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { color: mutedColor, boxWidth: 12 } } } },
+    });
+    {% endif %}
 });
 </script>
 {% endblock %}

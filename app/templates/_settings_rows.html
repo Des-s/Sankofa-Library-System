@@ -45,13 +45,26 @@
         <div class="settings-row-body">
             <form method="POST" action="{{ url_for('admin.settings') }}">
                 {{ library_policy_form.hidden_tag() }}
-                <div class="form-group">{{ library_policy_form.fine_rate_per_day.label }}{{ library_policy_form.fine_rate_per_day(class='form-control') }}</div>
+                <div class="form-group">{{ library_policy_form.fine_rate_per_day.label }}{{ library_policy_form.fine_rate_per_day(class='form-control') }}
+                    <small style="color:var(--color-muted);">Currency units charged per day a book is overdue.</small>
+                </div>
                 <div class="form-group">{{ library_policy_form.loan_period_days.label }}{{ library_policy_form.loan_period_days(class='form-control') }}</div>
                 <div class="form-group">{{ library_policy_form.max_active_checkouts.label }}{{ library_policy_form.max_active_checkouts(class='form-control') }}</div>
                 <div class="form-group">{{ library_policy_form.library_card_format.label }}{{ library_policy_form.library_card_format(class='form-control') }}
-                    <small style="color:var(--color-muted);">Use {year} and {student_id} placeholders</small>
+                    <small style="color:var(--color-muted);">Use {year} and {student_id} placeholders (e.g. <code>LIB-{year}-{student_id}</code>).</small>
                 </div>
-                {{ library_policy_form.submit(class='btn btn-primary btn-sm') }}
+                <div class="form-group">{{ library_policy_form.student_email_domain.label }}{{ library_policy_form.student_email_domain(class='form-control') }}
+                    <small style="color:var(--color-muted);">Required email domain for student self-registration.</small>
+                </div>
+                <div class="form-group">{{ library_policy_form.currency_symbol.label }}{{ library_policy_form.currency_symbol(class='form-control') }}
+                    <small style="color:var(--color-muted);">Symbol shown next to money values across the app (e.g. GHS, ₵, $).</small>
+                </div>
+                <div class="form-group">{{ library_policy_form.library_name.label }}{{ library_policy_form.library_name(class='form-control') }}</div>
+                <div class="form-group">{{ library_policy_form.library_address.label }}{{ library_policy_form.library_address(class='form-control') }}</div>
+                <button type="submit" class="btn btn-gradient"
+                        title="Save library policy — affects fines, loan periods, and checkout limits for all users">
+                    <i class="fa-solid fa-floppy-disk"></i> {{ library_policy_form.submit.label.text }}
+                </button>
             </form>
         </div>
     </div>

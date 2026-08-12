@@ -1,17 +1,42 @@
 {% if pagination and pagination.pages > 1 %}
 {% set args = request.args.to_dict() %}
 {% set _ = args.pop('page', None) %}
-<div class="pagination">
+<nav class="pagination" aria-label="Pagination" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-top:1.5rem;flex-wrap:wrap;">
     {% if pagination.has_prev %}
-    <a href="{{ url_for(request.endpoint, page=pagination.prev_num, **args) }}" class="btn btn-sm btn-outline">&laquo; Prev</a>
+    <a href="{{ url_for(request.endpoint, page=pagination.prev_num, **args) }}" class="btn btn-sm btn-outline" title="Previous page" aria-label="Previous page">
+        <i class="fa-solid fa-chevron-left"></i> Prev
+    </a>
     {% else %}
-    <span class="btn btn-sm btn-outline btn-disabled">&laquo; Prev</span>
+    <span class="btn btn-sm btn-outline btn-disabled" aria-disabled="true"><i class="fa-solid fa-chevron-left"></i> Prev</span>
     {% endif %}
-    <span class="pagination-info">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+
+    {% set p = pagination.page %}
+    {% set total = pagination.pages %}
+    {# Compute a window of pages around current page #}
+    {% set start_page = [1, p - 2] | max %}
+    {% set end_page = [total, p + 2] | min %}
+
+    {% if start_page > 1 %}
+    <a href="{{ url_for(request.endpoint, page=1, **args) }}" class="btn btn-sm {% if p == 1 %}btn-gradient{% else %}btn-outline{% endif %}" title="Page 1">1</a>
+    {% if start_page > 2 %}<span class="text-muted" aria-hidden="true">…</span>{% endif %}
+    {% endif %}
+
+    {% for i in range(start_page, end_page + 1) %}
+    <a href="{{ url_for(request.endpoint, page=i, **args) }}" class="btn btn-sm {% if i == p %}btn-gradient{% else %}btn-outline{% endif %}" title="Page {{ i }} of {{ total }}">{{ i }}</a>
+    {% endfor %}
+
+    {% if end_page < total %}
+    {% if end_page < total - 1 %}<span class="text-muted" aria-hidden="true">…</span>{% endif %}
+    <a href="{{ url_for(request.endpoint, page=total, **args) }}" class="btn btn-sm {% if p == total %}btn-gradient{% else %}btn-outline{% endif %}" title="Page {{ total }}">{{ total }}</a>
+    {% endif %}
+
     {% if pagination.has_next %}
-    <a href="{{ url_for(request.endpoint, page=pagination.next_num, **args) }}" class="btn btn-sm btn-outline">Next &raquo;</a>
+    <a href="{{ url_for(request.endpoint, page=pagination.next_num, **args) }}" class="btn btn-sm btn-outline" title="Next page" aria-label="Next page">
+        Next <i class="fa-solid fa-chevron-right"></i>
+    </a>
     {% else %}
-    <span class="btn btn-sm btn-outline btn-disabled">Next &raquo;</span>
+    <span class="btn btn-sm btn-outline btn-disabled" aria-disabled="true">Next <i class="fa-solid fa-chevron-right"></i></span>
     {% endif %}
-</div>
+</nav>
+<p class="text-muted" style="text-align:center;font-size:0.8rem;margin-top:0.5rem;">Page {{ pagination.page }} of {{ pagination.pages }}</p>
 {% endif %}

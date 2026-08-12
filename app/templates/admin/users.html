@@ -1,44 +1,114 @@
 {% extends 'base.html' %}
-{% block title %}User Management{% endblock %}
+{% block title %}User Management — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<a href="{{ url_for('admin.dashboard') }}">Dashboard</a><span>Users</span>{% endblock %}
 {% block content %}
-<div class="page-header">
-    <h1>User Management</h1>
-    <a href="{{ url_for('admin.user_form') }}" class="btn btn-primary">Add User</a>
+<div class="page-header page-header-split">
+    <div>
+        <h1>User Management</h1>
+        <p class="page-subtitle">Search and manage student, librarian, and administrator accounts.</p>
+    </div>
+    <a href="{{ url_for('admin.user_form') }}" class="btn btn-gradient" title="Add a new user account">
+        <i class="fa-solid fa-user-plus" aria-hidden="true"></i> Add User
+    </a>
 </div>
+
 <form method="GET" class="search-bar card">
-    <div class="form-group"><input type="text" name="q" class="form-control" value="{{ q }}" placeholder="Search users..."></div>
+    <div class="form-group" style="flex:1;min-width:200px;">
+        <label for="user-q" class="sr-only">Search</label>
+        <div class="auth-input-wrap">
+            <i class="fa-solid fa-magnifying-glass input-icon" aria-hidden="true"></i>
+            <input type="text" id="user-q" name="q" class="form-input" value="{{ q }}"
+                   placeholder="Search by name, email, or student ID..." autocomplete="off">
+        </div>
+    </div>
     <div class="form-group">
-        <select name="role" class="form-control">
+        <label for="user-role" class="sr-only">Filter by role</label>
+        <select id="user-role" name="role" class="form-control">
             <option value="">All Roles</option>
             <option value="student" {% if role == 'student' %}selected{% endif %}>Student</option>
             <option value="librarian" {% if role == 'librarian' %}selected{% endif %}>Librarian</option>
-            <option value="admin" {% if role == 'admin' %}selected{% endif %}>Admin</option>
+            <option value="admin" {% if role == 'admin' %}selected{% endif %}>Administrator</option>
         </select>
     </div>
-    <button type="submit" class="btn btn-primary">Filter</button>
+    <button type="submit" class="btn btn-gradient" title="Run the search with the current filters">
+        <i class="fa-solid fa-filter" aria-hidden="true"></i> Filter
+    </button>
+    {% if q or role %}
+    <a href="{{ url_for('admin.users') }}" class="btn btn-outline">Clear</a>
+    {% endif %}
 </form>
+
 <div class="card">
-    <div class="table-wrap"><table>
-        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody>
-        {% for u in users %}
-        <tr>
-            <td>{{ u.full_name }}</td>
-            <td>{{ u.email }}</td>
-            <td><span class="badge badge-{{ u.role }}">{{ u.role }}</span></td>
-            <td>{% if u.is_active %}Active{% else %}Inactive{% endif %}</td>
-            <td class="table-actions">
-                <a href="{{ url_for('admin.user_detail', user_id=u.user_id) }}" class="btn btn-sm btn-outline">View</a>
-                <a href="{{ url_for('admin.user_form', user_id=u.user_id) }}" class="btn btn-sm btn-outline">Edit</a>
-                <form method="POST" action="{{ url_for('admin.toggle_user', user_id=u.user_id) }}" class="inline-form">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-sm btn-danger">{% if u.is_active %}Deactivate{% else %}Activate{% endif %}</button>
-                </form>
-            </td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table></div>
+    {% if users %}
+    <div class="table-wrap fancy-scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th class="hide-on-mobile">Email</th>
+                    <th>Role</th>
+                    <th class="hide-on-mobile">Student ID</th>
+                    <th class="hide-on-mobile">Department</th>
+                    <th>Status</th>
+                    <th class="nowrap">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for u in users %}
+            <tr>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.6rem;">
+                        <span class="avatar-circle" style="width:32px;height:32px;font-size:0.75rem;background:var(--color-primary);color:#fff;">{{ u.initials }}</span>
+                        <div>
+                            <div style="font-weight:600;">{{ u.full_name }}</div>
+                            <div class="text-muted hide-on-mobile" style="font-size:0.75rem;">{{ u.email }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="hide-on-mobile text-muted">{{ u.email }}</td>
+                <td><span class="badge badge-{{ u.role }}">{{ u.role }}</span></td>
+                <td class="hide-on-mobile"><code>{{ u.student_id or '—' }}</code></td>
+                <td class="hide-on-mobile text-muted">{{ u.department or '—' }}</td>
+                <td>
+                    {% if u.is_active %}
+                    <span class="badge badge-active">Active</span>
+                    {% else %}
+                    <span class="badge badge-returned">Inactive</span>
+                    {% endif %}
+                    {% if u.approval_status == 'pending' %}
+                    <span class="badge badge-pending" style="margin-left:0.25rem;">Pending</span>
+                    {% elif u.approval_status == 'rejected' %}
+                    <span class="badge badge-rejected" style="margin-left:0.25rem;">Rejected</span>
+                    {% endif %}
+                </td>
+                <td class="table-actions">
+                    <a href="{{ url_for('admin.user_detail', user_id=u.user_id) }}" class="icon-action-btn" title="View {{ u.full_name }}'s profile, checkouts, and fines">
+                        <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                    </a>
+                    <a href="{{ url_for('admin.user_form', user_id=u.user_id) }}" class="icon-action-btn" title="Edit {{ u.full_name }} — name, role, password">
+                        <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                    </a>
+                    <form method="POST" action="{{ url_for('admin.toggle_user', user_id=u.user_id) }}" class="inline-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="icon-action-btn {% if u.is_active %}danger{% endif %}"
+                                title="{% if u.is_active %}Deactivate {{ u.full_name }} — they will not be able to sign in{% else %}Reactivate {{ u.full_name }}{% endif %}"
+                                data-confirm="{% if u.is_active %}Deactivate {{ u.full_name }}? They will no longer be able to sign in.{% else %}Reactivate {{ u.full_name }}?{% endif %}">
+                            <i class="fa-solid fa-{% if u.is_active %}circle-xmark{% else %}circle-check{% endif %}" aria-hidden="true"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state-component">
+        <i class="fa-solid fa-users-slash empty-icon" aria-hidden="true"></i>
+        <h3>No users found</h3>
+        <p>Try adjusting your search or filter criteria.</p>
+    </div>
+    {% endif %}
 </div>
 {% include '_pagination.html' %}
 {% endblock %}

@@ -1,40 +1,93 @@
 {% extends 'base.html' %}
 {% block title %}My Fines — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<span>Fines</span>{% endblock %}
 {% block content %}
-<div class="page-header"><h1>My Fines</h1></div>
-
-<div class="fines-summary-bar">
-    <div class="item">
-        <span class="value">GHS {{ '%.2f'|format(total_outstanding) }}</span>
-        <span class="label">Total Outstanding</span>
-    </div>
-    <div class="item">
-        <span class="value">{{ outstanding_count }}</span>
-        <span class="label">Unpaid Fine{{ 's' if outstanding_count != 1 }}</span>
-    </div>
+<div class="page-header">
+    <h1>My Fines</h1>
+    <p class="page-subtitle">Outstanding and historical fines. Pay outstanding fines at the circulation desk.</p>
 </div>
 
+<!-- Outstanding summary -->
+{% if total_outstanding > 0 %}
+<div class="card" style="margin-bottom:1.5rem;border-left:4px solid var(--adinkra);background:linear-gradient(135deg,rgba(139,26,26,0.05),rgba(212,165,116,0.05));">
+    <div class="grid-2">
+        <div>
+            <p class="text-muted" style="margin:0 0 0.25rem;">Total outstanding balance</p>
+            <div style="font-size:2.5rem;font-weight:800;color:var(--adinkra);font-family:'Outfit',sans-serif;line-height:1.1;">
+                {{ currency_symbol }} {{ '%.2f'|format(total_outstanding) }}
+            </div>
+            <p class="text-muted" style="margin:0.5rem 0 0;font-size:0.85rem;">
+                Across <strong>{{ outstanding_count }}</strong> unpaid fine{{ 's' if outstanding_count != 1 }}.
+                Online payment is coming soon — visit the circulation desk to settle.
+            </p>
+        </div>
+        <div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-end;gap:0.5rem;">
+            <a href="{{ url_for('student.dashboard') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Back to dashboard</a>
+            <p class="text-muted" style="font-size:0.75rem;text-align:right;">All fines are also visible to library staff.</p>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card" style="margin-bottom:1.5rem;border-left:4px solid var(--success);background:rgba(21,128,61,0.04);">
+    <div style="display:flex;align-items:center;gap:1rem;">
+        <i class="fa-solid fa-circle-check" style="font-size:2rem;color:var(--success);"></i>
+        <div>
+            <h2 style="margin:0;color:var(--success);">You're all caught up!</h2>
+            <p class="text-muted" style="margin:0;">No outstanding fines. Keep returning books on time!</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Fines table -->
 <div class="card">
+    <h2><i class="fa-solid fa-coins text-gold" aria-hidden="true"></i> Fine History</h2>
     {% if fines %}
-    <div class="table-wrap">
+    <div class="table-wrap fancy-scroll">
         <table>
-            <thead><tr><th>Book</th><th>Days Overdue</th><th>Rate/Day</th><th>Total</th><th>Status</th><th>Date</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>Book</th>
+                    <th>Days Overdue</th>
+                    <th>Rate/Day</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
             <tbody>
             {% for f in fines %}
             <tr>
-                <td>{{ f.checkout.book.title if f.checkout else 'N/A' }}</td>
+                <td>
+<div style="display:flex; align-items:center; gap:0.75rem;">
+    {% if f.checkout.book and f.checkout.book.cover_image %}
+        <img src="{{ url_for('static', filename='covers/' + f.checkout.book.cover_image) }}" alt="Cover" style="width:32px; height:48px; object-fit:cover; border-radius:4px; box-shadow:var(--shadow); flex-shrink:0;">
+    {% else %}
+        <div style="width:32px; height:48px; background:var(--color-surface-alt); border-radius:4px; display:flex; align-items:center; justify-content:center; color:var(--color-muted); font-size:0.75rem; flex-shrink:0;">
+            <i class="fa-solid fa-book"></i>
+        </div>
+    {% endif %}
+    <div>
+{{ f.checkout.book.title if f.checkout else 'N/A' }}
+</div>
+</div>
+</td>
                 <td>{{ f.days_overdue }}</td>
-                <td>GHS {{ '%.2f'|format(f.amount_per_day) }}</td>
-                <td>GHS {{ '%.2f'|format(f.total_amount) }}</td>
+                <td class="text-muted">{{ currency_symbol }} {{ '%.2f'|format(f.amount_per_day) }}</td>
+                <td><strong>{{ currency_symbol }} {{ '%.2f'|format(f.total_amount) }}</strong></td>
                 <td><span class="badge badge-{{ f.status }}">{{ f.status }}</span></td>
-                <td>{{ f.created_at.strftime('%Y-%m-%d') }}</td>
+                <td class="text-muted">{{ f.created_at.strftime('%Y-%m-%d') }}</td>
             </tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
     {% else %}
-    <div class="empty-state">No fines on your account. Keep returning books on time!</div>
+    <div class="empty-state-component">
+        <i class="fa-solid fa-receipt empty-icon" aria-hidden="true"></i>
+        <h3>No fines on your account</h3>
+        <p>Keep returning books on time to keep it that way!</p>
+    </div>
     {% endif %}
 </div>
 {% endblock %}

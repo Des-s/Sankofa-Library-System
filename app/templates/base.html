@@ -3,47 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sankofa Library System — academic library management for students, librarians, and administrators. Browse the catalog, borrow physical books, read digital titles online, and manage fines in one place.">
+    <meta name="theme-color" content="#1B4332">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{% block og_title %}Sankofa Library System{% endblock %}">
+    <meta property="og:description" content="Academic library management for students, librarians, and administrators.">
+    <meta property="og:site_name" content="Sankofa Library">
+
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
     <title>{% block title %}Sankofa Library{% endblock %}</title>
+
+    <!-- Google Fonts: Outfit (headings) + Inter (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    {% block head_extra %}{% endblock %}
 </head>
 <body>
+    <!-- Skip-to-content link for keyboard users -->
+    <a href="#main-content" class="skip-to-content">Skip to main content</a>
+
     {% if current_user.is_authenticated %}
     <header class="site-header">
         <div class="header-inner">
-            <a href="{{ url_for('auth.index') }}" class="logo">
-                 <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo-img">
-                  Sankofa <span>Library</span></a>
-            <nav class="main-nav">
+            <a href="{{ url_for('auth.index') }}" class="logo" title="Sankofa Library System — home">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo-img" alt="Sankofa Library logo">
+                Sankofa <span>Library</span>
+            </a>
+            <nav class="main-nav" aria-label="Primary navigation">
                 {% if current_user.is_student %}
-                    <a href="{{ url_for('student.dashboard') }}">{{ t('nav.dashboard') }}</a>
-                    <a href="{{ url_for('catalog.catalog') }}">{{ t('nav.catalog') }}</a>
-                    <a href="{{ url_for('student.borrowings') }}">{{ t('nav.my_collection') }}</a>
-                    <a href="{{ url_for('student.fines') }}">{{ t('nav.my_fines') }}</a>
+                    <a href="{{ url_for('student.dashboard') }}" title="Dashboard — your loans, fines, and reading history" class="{{ 'active' if request.endpoint == 'student.dashboard' }}"><i class="fa-solid fa-gauge-high nav-icon" aria-hidden="true"></i>{{ t('nav.dashboard') }}</a>
+                    <a href="{{ url_for('catalog.catalog') }}" title="Browse the full catalog of physical and digital books" class="{{ 'active' if request.blueprint == 'catalog' }}"><i class="fa-solid fa-book-open nav-icon" aria-hidden="true"></i>{{ t('nav.catalog') }}</a>
+                    <a href="{{ url_for('student.borrowings') }}" title="View your active and past loans" class="{{ 'active' if request.endpoint == 'student.borrowings' }}"><i class="fa-solid fa-book-bookmark nav-icon" aria-hidden="true"></i>{{ t('nav.my_collection') }}</a>
+                    <a href="{{ url_for('student.fines') }}" title="Outstanding and historical fines" class="{{ 'active' if request.endpoint == 'student.fines' }}"><i class="fa-solid fa-coins nav-icon" aria-hidden="true"></i>{{ t('nav.my_fines') }}</a>
                 {% elif current_user.is_librarian and not current_user.is_admin %}
-                    <a href="{{ url_for('librarian.dashboard') }}">{{ t('nav.dashboard') }}</a>
-                    <a href="{{ url_for('librarian.checkout') }}">{{ t('nav.checkout') }}</a>
-                    <a href="{{ url_for('librarian.fines') }}">{{ t('nav.fines') }}</a>
-                    <a href="{{ url_for('librarian.books') }}">{{ t('nav.books') }}</a>
-                    <a href="{{ url_for('librarian.students') }}">{{ t('nav.students') }}</a>
-                    <a href="{{ url_for('catalog.catalog') }}">{{ t('nav.catalog') }}</a>
-                    <a href="{{ url_for('librarian.analytics') }}">{{ t('nav.analytics') }}</a>
-                    <a href="{{ url_for('librarian.reports') }}">{{ t('nav.reports') }}</a>
+                    <a href="{{ url_for('librarian.dashboard') }}" title="Librarian dashboard — today's checkouts, overdues, and active loans" class="{{ 'active' if request.endpoint == 'librarian.dashboard' }}"><i class="fa-solid fa-gauge-high nav-icon" aria-hidden="true"></i>{{ t('nav.dashboard') }}</a>
+                    <a href="{{ url_for('librarian.checkout') }}" title="Check a book out to a student" class="{{ 'active' if request.endpoint == 'librarian.checkout' }}"><i class="fa-solid fa-hand-holding-heart nav-icon" aria-hidden="true"></i>{{ t('nav.checkout') }}</a>
+                    <a href="{{ url_for('librarian.fines') }}" title="Issue, waive, and mark-paid fines" class="{{ 'active' if request.endpoint == 'librarian.fines' }}"><i class="fa-solid fa-coins nav-icon" aria-hidden="true"></i>{{ t('nav.fines') }}</a>
+                    <a href="{{ url_for('librarian.books') }}" title="Add, edit, and deactivate books" class="{{ 'active' if request.endpoint == 'librarian.books' }}"><i class="fa-solid fa-book nav-icon" aria-hidden="true"></i>{{ t('nav.books') }}</a>
+                    <a href="{{ url_for('librarian.students') }}" title="Student lookup and pending approvals" class="{{ 'active' if request.endpoint == 'librarian.students' }}"><i class="fa-solid fa-user-graduate nav-icon" aria-hidden="true"></i>{{ t('nav.students') }}</a>
+                    <a href="{{ url_for('librarian.approvals') }}" title="Pending student approvals" class="{{ 'active' if request.endpoint == 'librarian.approvals' }}"><i class="fa-solid fa-user-check nav-icon" aria-hidden="true"></i>Approvals</a>
+                    <a href="{{ url_for('catalog.catalog') }}" title="Browse the full catalog" class="{{ 'active' if request.blueprint == 'catalog' }}"><i class="fa-solid fa-book-open nav-icon" aria-hidden="true"></i>{{ t('nav.catalog') }}</a>
+                    <a href="{{ url_for('librarian.analytics') }}" title="Catalog analytics" class="{{ 'active' if request.endpoint == 'librarian.analytics' }}"><i class="fa-solid fa-chart-line nav-icon" aria-hidden="true"></i>{{ t('nav.analytics') }}</a>
+                    <a href="{{ url_for('librarian.reports') }}" title="File and review reports" class="{{ 'active' if request.endpoint == 'librarian.reports' }}"><i class="fa-solid fa-file-lines nav-icon" aria-hidden="true"></i>{{ t('nav.reports') }}</a>
                 {% elif current_user.is_admin %}
-                    <a href="{{ url_for('admin.dashboard') }}">{{ t('nav.dashboard') }}</a>
-                    <a href="{{ url_for('catalog.catalog') }}">{{ t('nav.catalog') }}</a>
-                    <a href="{{ url_for('admin.users') }}">{{ t('nav.users') }}</a>
-                    <a href="{{ url_for('admin.audit') }}">{{ t('nav.audit_log') }}</a>
+                    <a href="{{ url_for('admin.dashboard') }}" title="Administrator dashboard with charts and metrics" class="{{ 'active' if request.endpoint == 'admin.dashboard' }}"><i class="fa-solid fa-gauge-high nav-icon" aria-hidden="true"></i>{{ t('nav.dashboard') }}</a>
+                    <a href="{{ url_for('catalog.catalog') }}" title="Browse the full catalog" class="{{ 'active' if request.blueprint == 'catalog' }}"><i class="fa-solid fa-book-open nav-icon" aria-hidden="true"></i>{{ t('nav.catalog') }}</a>
+                    <a href="{{ url_for('admin.users') }}" title="Manage user accounts" class="{{ 'active' if request.endpoint == 'admin.users' }}"><i class="fa-solid fa-users nav-icon" aria-hidden="true"></i>{{ t('nav.users') }}</a>
+                    <a href="{{ url_for('librarian.approvals') }}" title="Pending student approvals" class="{{ 'active' if request.endpoint == 'librarian.approvals' }}"><i class="fa-solid fa-user-check nav-icon" aria-hidden="true"></i>Approvals</a>
+                    <a href="{{ url_for('admin.settings') }}" title="Library-wide system settings" class="{{ 'active' if request.endpoint == 'admin.settings' }}"><i class="fa-solid fa-gear nav-icon" aria-hidden="true"></i>Settings</a>
+                    <a href="{{ url_for('admin.audit') }}" title="Searchable audit trail" class="{{ 'active' if request.endpoint == 'admin.audit' }}"><i class="fa-solid fa-scroll nav-icon" aria-hidden="true"></i>{{ t('nav.audit_log') }}</a>
                 {% endif %}
             </nav>
             <div class="header-actions">
-                <a href="{{ url_for(current_user.role + '.profile') }}" class="btn btn-sm btn-outline profile-btn">
-                    <span class="avatar-circle">{{ current_user.full_name.split()[0][0] }}{{ current_user.full_name.split()[-1][0] if current_user.full_name.split()|length > 1 else '' }}</span>
-                    {{ current_user.full_name }}
+                <a href="{{ url_for(current_user.role + '.settings') }}" class="icon-btn" title="Notifications &amp; alerts" aria-label="Notifications">
+                    <i class="fa-solid fa-bell" aria-hidden="true"></i>
+                    <span class="notif-dot" aria-hidden="true"></span>
                 </a>
-                <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-danger icon-btn" title="{{ t('nav.logout') }}" aria-label="{{ t('nav.logout') }}">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                </a>
+                <form method="POST" action="{{ url_for(current_user.role + '.update_theme') }}" class="inline-form" aria-label="Toggle dark mode">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="dark_mode" value="{{ 'false' if current_user.theme_preference == 'dark' else 'true' }}">
+                    <button type="submit" class="theme-toggle" title="Switch to {{ 'light' if current_user.theme_preference == 'dark' else 'dark' }} mode" aria-label="Toggle theme">
+                        <i class="fa-solid fa-sun sun-icon" aria-hidden="true"></i>
+                        <i class="fa-solid fa-moon moon-icon" aria-hidden="true"></i>
+                    </button>
+                </form>
+                <div class="user-menu" id="userMenu">
+                    <button type="button" class="profile-btn" title="Account menu — profile, settings, sign out" aria-label="User menu" onclick="document.getElementById('userMenu').classList.toggle('open')">
+                        <span class="avatar-circle">{{ current_user.initials }}</span>
+                        <span class="hide-on-mobile">{{ current_user.full_name.split()[0] }}</span>
+                        <i class="fa-solid fa-chevron-down" style="font-size:0.7rem;opacity:0.7;" aria-hidden="true"></i>
+                    </button>
+                    <div class="user-menu-dropdown" role="menu">
+                        <div class="user-menu-header">
+                            <div class="name">{{ current_user.full_name }}</div>
+                            <div class="email">{{ current_user.email }}</div>
+                            <span class="role-badge">{{ current_user.role }}</span>
+                        </div>
+                        <a href="{{ url_for(current_user.role + '.profile') }}" class="user-menu-item" role="menuitem">
+                            <i class="fa-solid fa-user" aria-hidden="true"></i> Profile
+                        </a>
+                        <a href="{{ url_for(current_user.role + '.settings') }}" class="user-menu-item" role="menuitem">
+                            <i class="fa-solid fa-gear" aria-hidden="true"></i> Settings
+                        </a>
+                        <div class="user-menu-divider"></div>
+                        <form method="POST" action="{{ url_for('auth.logout') }}" class="inline-form" aria-label="Sign out">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="user-menu-item danger" role="menuitem" style="border:none;background:none;cursor:pointer;width:100%;text-align:left;">
+                                <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Sign out
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
@@ -51,42 +108,72 @@
     <header class="public-header">
         <div class="public-header-inner">
             <a href="{{ url_for('auth.index') }}" class="public-logo">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo-img">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo-img" alt="Sankofa Library logo">
                 Sankofa <span>Library</span>
             </a>
-            <nav class="public-nav">
-                <a href="{{ url_for('auth.index') }}" class="{{ 'active' if request.endpoint == 'auth.index' }}">Home</a>
-                <a href="{{ url_for('auth.news') }}" class="{{ 'active' if request.endpoint == 'auth.news' }}">News</a>
-                <a href="{{ url_for('auth.faq') }}" class="{{ 'active' if request.endpoint == 'auth.faq' }}">FAQs</a>
-                <a href="{{ url_for('auth.contact') }}" class="{{ 'active' if request.endpoint == 'auth.contact' }}">Contact</a>
+            <nav class="public-nav" aria-label="Public navigation">
+                <a href="{{ url_for('auth.index') }}">Home</a>
+                <a href="{{ url_for('auth.index') }}#features">Features</a>
+                <a href="{{ url_for('auth.index') }}#how-it-works">How it works</a>
+                <a href="{{ url_for('auth.index') }}#news">News</a>
+                <a href="{{ url_for('auth.index') }}#faq">FAQs</a>
+                <a href="{{ url_for('auth.index') }}#contact">Contact</a>
             </nav>
             <div class="public-header-actions">
-                <a href="{{ url_for('auth.login') }}" class="btn-pill btn-pill-outline">Log In</a>
+                <a href="{{ url_for('auth.login') }}" class="btn-pill btn-pill-outline">Sign In</a>
                 <a href="{{ url_for('auth.register') }}" class="btn-pill btn-pill-solid">Register</a>
             </div>
         </div>
     </header>
     {% endif %}
 
-    <main>
+    <main id="main-content">
+        {% block breadcrumbs %}
+        {% if current_user.is_authenticated %}
+        <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <a href="{{ url_for('auth.index') }}">Home</a>
+            {% block breadcrumb_extra %}{% endblock %}
+        </nav>
+        {% endif %}
+        {% endblock %}
+
+        <!-- Toast notification system — replaces flash messages -->
+        <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="true"></div>
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
+            <noscript>
             <div class="flash-messages">
                 {% for category, message in messages %}
                 <div class="alert alert-{{ category }}">{{ message }}</div>
                 {% endfor %}
             </div>
+            </noscript>
+            <script>
+              window.__SANKOFA_FLASHES__ = [
+                {% for category, message in messages %}
+                  { category: "{{ category }}", message: {{ message|tojson }} }{% if not loop.last %},{% endif %}
+                {% endfor %}
+              ];
+            </script>
             {% endif %}
         {% endwith %}
 
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="site-footer">
-        &copy; 2026 Sankofa Library System &mdash; Academic Library Management
+    {% block footer %}
+    <footer class="site-footer no-print">
+        <div>&copy; {{ now.year if now else 2026 }} {{ library_name if library_name else 'Sankofa Library System' }} &mdash; Academic Library Management</div>
+        <div class="footer-status">
+            <span class="dot" aria-hidden="true"></span>
+            All systems operational
+        </div>
     </footer>
+    {% endblock %}
+
     <script>
   document.addEventListener('DOMContentLoaded', function() {
+    // Feature card accordion (resources page)
     document.querySelectorAll('.feature-card').forEach(function(card) {
       card.addEventListener('click', function() {
         const isOpen = this.classList.contains('open');
@@ -95,18 +182,21 @@
       });
     });
 
+    // News card toggle
     document.querySelectorAll('.news-card').forEach(function(card) {
       card.addEventListener('click', function() {
         this.classList.toggle('open');
       });
     });
 
+    // Settings row accordion
     document.querySelectorAll('.settings-row-header').forEach(function(header) {
       header.addEventListener('click', function() {
         header.closest('.settings-row').classList.toggle('open');
       });
     });
 
+    // Reveal-on-scroll via IntersectionObserver
     var revealEls = document.querySelectorAll('.reveal');
     if (revealEls.length) {
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) {
@@ -124,6 +214,7 @@
       }
     }
 
+    // Hero scroll cue
     var scrollCue = document.querySelector('.hero-scroll-cue');
     if (scrollCue) {
       scrollCue.addEventListener('click', function(e) {
@@ -134,8 +225,305 @@
         }
       });
     }
+
+    // Close user-menu on outside click
+    document.addEventListener('click', function(e) {
+      var menu = document.getElementById('userMenu');
+      if (menu && !menu.contains(e.target)) menu.classList.remove('open');
+    });
+
+    // ---- Toast notification system ----
+    var stack = document.getElementById('toast-stack');
+    function spawnToast(category, message) {
+      if (!stack) return;
+      var node = document.createElement('div');
+      node.className = 'toast toast-' + (category || 'info') + ' animate-fade-in-down';
+      var icon = { success: 'check-circle', danger: 'circle-exclamation', warning: 'triangle-exclamation', info: 'circle-info' }[category] || 'circle-info';
+      node.innerHTML = '<i class="fa-solid fa-' + icon + '" aria-hidden="true"></i>' +
+        '<span class="toast-text"></span>' +
+        '<button type="button" class="toast-close" aria-label="Dismiss">&times;</button>';
+      node.querySelector('.toast-text').textContent = message;
+      node.querySelector('.toast-close').addEventListener('click', function() { dismiss(node); });
+      stack.appendChild(node);
+      setTimeout(function() { dismiss(node); }, 6000);
+    }
+    function dismiss(node) {
+      if (!node || !node.parentNode) return;
+      node.classList.remove('animate-fade-in-down');
+      node.classList.add('toast-out');
+      setTimeout(function() { if (node.parentNode) node.parentNode.removeChild(node); }, 250);
+    }
+    (window.__SANKOFA_FLASHES__ || []).forEach(function(f) { spawnToast(f.category, f.message); });
+    window.sankofaToast = spawnToast;
+
+    // ---- Confirmation dialogs for destructive actions ----
+    // Any element with data-confirm="Are you sure?" gets a confirm() prompt before its action.
+    document.body.addEventListener('click', function(e) {
+      var trigger = e.target.closest('[data-confirm]');
+      if (!trigger) return;
+      if (!window.confirm(trigger.getAttribute('data-confirm') || 'Are you sure?')) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      // If it's a button inside a form, submit the form.
+      var form = trigger.closest('form');
+      if (form && trigger.type !== 'submit') {
+        e.preventDefault();
+        form.submit();
+      }
+    });
   });
 </script>
 {% block extra_scripts %}{% endblock %}
+
+<!-- Scroll-Linked Theme Transition (Enhanced Physics: Spring + Momentum + Bounce) -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var themeSentinel = document.querySelector('.theme-sentinel');
+    var beamScanner = document.querySelector('.light-beam-scanner');
+    var darkZone = document.querySelector('.dark-zone');
+
+    if (!themeSentinel || !beamScanner || !darkZone) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    // Create particle container
+    var particleContainer = document.createElement('div');
+    particleContainer.className = 'beam-particles';
+    document.body.appendChild(particleContainer);
+
+    // Create side progress rail
+    var progressRail = document.createElement('div');
+    progressRail.className = 'scroll-progress-rail';
+    var progressFill = document.createElement('div');
+    progressFill.className = 'scroll-progress-fill';
+    var progressDot = document.createElement('div');
+    progressDot.className = 'scroll-progress-dot';
+    progressRail.appendChild(progressFill);
+    progressRail.appendChild(progressDot);
+    document.body.appendChild(progressRail);
+
+    var userForcedTheme = localStorage.getItem('sankofa-forced-theme') || null;
+
+    setTimeout(function() { darkZone.classList.add('smooth-theme'); }, 500);
+
+    // =====================================================
+    // PHYSICS STATE
+    // =====================================================
+    var beamY = window.innerHeight;
+    var beamVel = 0;
+    var targetY = window.innerHeight;
+    var isTransitioning = false;
+    var isRunning = false;
+    var rafId = null;
+
+    var lastScrollY = window.scrollY;
+    var rawScrollVel = 0;
+    var scrollMomentum = 0;
+
+    // PHYSICS PARAMETERS — underdamped spring (3-4 visible bounces)
+    var STIFFNESS = 0.15;
+    var DAMPING = 0.12;
+    var MASS = 1.0;
+    var SCROLL_COUPLING = 0.35;
+    var MOMENTUM_DECAY = 0.90;
+    var BOUNCE_RESTITUTION = 0.65;
+    var SETTLE_THRESHOLD = 0.15;
+    var MAX_VELOCITY = 40;
+
+    var particles = [];
+    var MAX_PARTICLES = 35;
+
+    function spawnParticle(y, intensity) {
+        if (particles.length >= MAX_PARTICLES) return;
+        var el = document.createElement('div');
+        el.className = 'beam-particle';
+        particleContainer.appendChild(el);
+        var x = Math.random() * window.innerWidth;
+        var py = y + (Math.random() - 0.5) * 6;
+        var angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 0.8;
+        var speed = 0.8 + Math.random() * 2.5 * intensity;
+        var maxLife = 50 + Math.random() * 70;
+        particles.push({ el: el, x: x, y: py, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life: 0, maxLife: maxLife });
+    }
+
+    function updateParticles() {
+        for (var i = particles.length - 1; i >= 0; i--) {
+            var p = particles[i];
+            p.life++;
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.03;
+            p.vx *= 0.98;
+            p.vy *= 0.99;
+            var lifeRatio = p.life / p.maxLife;
+            var opacity = Math.max(0, 1 - lifeRatio);
+            var scale = Math.max(0.2, 1 - lifeRatio * 0.6);
+            p.el.style.transform = 'translate(' + p.x + 'px, ' + p.y + 'px) scale(' + scale + ')';
+            p.el.style.opacity = String(opacity * 0.85);
+            if (p.life >= p.maxLife) {
+                p.el.remove();
+                particles.splice(i, 1);
+            }
+        }
+    }
+
+    var revealElements = darkZone.querySelectorAll('.beam-reveal');
+    function updateReveals(currentBeamY) {
+        for (var i = 0; i < revealElements.length; i++) {
+            var rect = revealElements[i].getBoundingClientRect();
+            // Reveal elements when they enter the bottom of the viewport
+            if (rect.top < window.innerHeight - 50) {
+                revealElements[i].classList.add('beam-revealed');
+            }
+        }
+    }
+
+    function updateOnScroll() {
+        var currentScrollY = window.scrollY;
+        rawScrollVel = currentScrollY - lastScrollY;
+        lastScrollY = currentScrollY;
+        scrollMomentum += rawScrollVel * SCROLL_COUPLING;
+
+        var rect = themeSentinel.getBoundingClientRect();
+        targetY = rect.top;
+        var h = window.innerHeight;
+        var progress = 1 - (targetY / h);
+
+        if (progress > 0 && progress < 1) {
+            isTransitioning = true;
+            if (darkZone.getAttribute('data-theme') !== 'dark') {
+                darkZone.setAttribute('data-theme', 'dark');
+                var pubFooter = document.querySelector('.public-footer');
+                if (pubFooter) pubFooter.setAttribute('data-theme', 'dark');
+            }
+            beamScanner.style.opacity = '1';
+            particleContainer.style.opacity = '1';
+            progressRail.style.opacity = '1';
+            var railHeight = progress * 100;
+            progressFill.style.height = railHeight + '%';
+            progressDot.style.top = railHeight + '%';
+            if (!isRunning) {
+                isRunning = true;
+                rafId = window.requestAnimationFrame(physicsLoop);
+            }
+        } else {
+            isTransitioning = false;
+            if (progress >= 1) {
+                if (darkZone.getAttribute('data-theme') !== 'dark') {
+                    darkZone.setAttribute('data-theme', 'dark');
+                    var pubFooter = document.querySelector('.public-footer');
+                    if (pubFooter) pubFooter.setAttribute('data-theme', 'dark');
+                }
+                // Force-reveal all beam-reveal sections
+                for (var i = 0; i < revealElements.length; i++) {
+                    revealElements[i].classList.add('beam-revealed');
+                }
+                beamScanner.style.opacity = '0';
+                particleContainer.style.opacity = '0';
+                progressRail.style.opacity = '0';
+            } else if (progress <= 0) {
+                if (userForcedTheme !== 'dark') {
+                    darkZone.removeAttribute('data-theme');
+                    var pubFooter = document.querySelector('.public-footer');
+                    if (pubFooter) pubFooter.removeAttribute('data-theme');
+                }
+                beamScanner.style.opacity = '0';
+                particleContainer.style.opacity = '0';
+                progressRail.style.opacity = '0';
+            }
+        }
+    }
+
+    function physicsLoop() {
+        if (!isTransitioning) {
+            beamVel *= 0.7;
+            beamY += beamVel;
+            if (particles.length > 0) {
+                updateParticles();
+                rafId = window.requestAnimationFrame(physicsLoop);
+            } else {
+                isRunning = false;
+            }
+            return;
+        }
+
+        // Inject scroll momentum into beam velocity
+        beamVel += scrollMomentum;
+        scrollMomentum *= MOMENTUM_DECAY;
+
+        // Clamp velocity
+        beamVel = Math.max(-MAX_VELOCITY, Math.min(MAX_VELOCITY, beamVel));
+
+        // Damped spring force: F = -k(x - target) - c*v
+        var displacement = beamY - targetY;
+        var springForce = -STIFFNESS * displacement;
+        var dampingForce = -DAMPING * beamVel;
+        var acceleration = (springForce + dampingForce) / MASS;
+
+        // Velocity-Verlet integration
+        beamY += beamVel + 0.5 * acceleration;
+        beamVel += acceleration;
+
+        // Elastic collision boundary with bounce margin
+        var BOUNCE_MARGIN = 15;
+        if (beamY < targetY - BOUNCE_MARGIN) {
+            beamY = targetY - BOUNCE_MARGIN;
+            if (beamVel < 0) {
+                beamVel = -beamVel * BOUNCE_RESTITUTION;
+                var bounceIntensity = Math.min(2, Math.abs(beamVel) / 3);
+                if (bounceIntensity > 0.3) {
+                    var burstCount = Math.floor(2 + bounceIntensity * 4);
+                    for (var i = 0; i < burstCount; i++) {
+                        spawnParticle(beamY, bounceIntensity);
+                    }
+                }
+            }
+        } else if (beamY < targetY && beamVel < 0) {
+            beamVel = -beamVel * BOUNCE_RESTITUTION;
+            if (Math.abs(beamVel) > 1) {
+                spawnParticle(targetY, Math.min(1, Math.abs(beamVel) / 3));
+            }
+        }
+
+        // Clamp at bottom of viewport
+        var maxBeamY = window.innerHeight + 50;
+        if (beamY > maxBeamY) {
+            beamY = maxBeamY;
+            if (beamVel > 0) beamVel = -beamVel * 0.3;
+        }
+
+        // Beam tilt based on beam velocity
+        var tilt = Math.max(-4, Math.min(4, beamVel * 0.8));
+        beamScanner.style.transform = 'translateY(' + beamY + 'px) rotate(' + tilt + 'deg)';
+
+        // Spawn particles when beam is moving fast
+        var speed = Math.abs(beamVel);
+        if (speed > 0.8) {
+            var intensity = Math.min(2, speed / 4);
+            var spawnCount = Math.min(4, Math.floor(speed / 2) + 1);
+            for (var i = 0; i < spawnCount; i++) {
+                spawnParticle(beamY, intensity);
+            }
+        }
+
+        updateParticles();
+        updateReveals(beamY);
+
+        if (Math.abs(beamVel) > SETTLE_THRESHOLD || particles.length > 0 || Math.abs(scrollMomentum) > 0.1) {
+            rafId = window.requestAnimationFrame(physicsLoop);
+        } else {
+            isRunning = false;
+        }
+    }
+
+    window.addEventListener('scroll', updateOnScroll, { passive: true });
+    window.addEventListener('resize', updateOnScroll, { passive: true });
+    var initialRect = themeSentinel.getBoundingClientRect();
+    targetY = initialRect.top;
+    beamY = targetY;
+    updateOnScroll();
+});
+</script>
 </body>
 </html>

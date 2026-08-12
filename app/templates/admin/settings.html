@@ -1,7 +1,11 @@
 {% extends 'base.html' %}
-{% block title %}Settings — Sankofa Library{% endblock %}
+{% block title %}Admin Settings — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<a href="{{ url_for('admin.dashboard') }}">Dashboard</a><span>Settings</span>{% endblock %}
 {% block content %}
-<div class="page-header"><h1>{{ t('page.settings') }}</h1></div>
+<div class="page-header">
+    <h1>Settings</h1>
+    <p class="page-subtitle">Configure library policies, system information, and your personal preferences.</p>
+</div>
 {% set role = 'admin' %}
 {% set library_policy_form = form %}
 {% include '_settings_rows.html' %}

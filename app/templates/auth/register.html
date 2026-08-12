@@ -1,96 +1,158 @@
-{% extends "base.html" %}
-{% block content %}
+{% extends 'base.html' %}
+{% block title %}Create Account &mdash; Sankofa Library{% endblock %}
+{% block og_title %}Register &mdash; Sankofa Library{% endblock %}
 
+{% block content %}
 <div class="auth-wrapper">
   <div class="auth-card">
 
-    <!-- LEFT: Book photo panel -->
+    <!-- LEFT: Register Form -->
+    <div class="auth-form-side">
+      <h2>Create your account</h2>
+      <p class="lead">Register with your student email. Your account will be reviewed by library staff before you can sign in.</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          {% if category in ['danger', 'warning', 'info'] %}
+          <div class="alert alert-{{ category }}" style="margin-bottom:1rem;display:flex;gap:0.5rem;align-items:flex-start;">
+            <i class="fa-solid fa-{% if category == 'danger' %}circle-exclamation{% elif category == 'warning' %}triangle-exclamation{% else %}circle-info{% endif %}" aria-hidden="true" style="margin-top:0.15rem;"></i>
+            <span>{{ message }}</span>
+          </div>
+          {% endif %}
+        {% endfor %}
+      {% endwith %}
+
+      <form method="POST" action="{{ url_for('auth.register') }}" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="form-group">
+          <label for="name">Full name</label>
+          <div class="auth-input-wrap">
+            <i class="fa-solid fa-user input-icon" aria-hidden="true"></i>
+            {{ form.name(id='name', placeholder='Kwame Mensah', autocomplete='name') }}
+          </div>
+          {% for error in form.name.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="student_id">Student ID</label>
+          <div class="auth-input-wrap">
+            <i class="fa-solid fa-id-card input-icon" aria-hidden="true"></i>
+            {{ form.student_id(id='student_id', placeholder='STU2024001') }}
+          </div>
+          {% for error in form.student_id.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="username">Username</label>
+          <div class="auth-input-wrap">
+            <i class="fa-solid fa-at input-icon" aria-hidden="true"></i>
+            {{ form.username(id='username', placeholder='kwame.mensah', autocomplete='username') }}
+          </div>
+          {% for error in form.username.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="email">Student email</label>
+          <div class="auth-input-wrap">
+            <i class="fa-solid fa-envelope input-icon" aria-hidden="true"></i>
+            {{ form.email(id='email', placeholder='you@st.knust.edu.gh', autocomplete='email') }}
+          </div>
+          {% for error in form.email.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="department">Department</label>
+          <div class="auth-input-wrap">
+            <i class="fa-solid fa-building input-icon" aria-hidden="true"></i>
+            {{ form.department(id='department', placeholder='Computer Science') }}
+          </div>
+          {% for error in form.department.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="year_of_study">Year of study</label>
+          <div class="auth-input-wrap">
+            <i class="fa-solid fa-graduation-cap input-icon" aria-hidden="true"></i>
+            {{ form.year_of_study(id='year_of_study', placeholder='1', type='number', min='1', max='6') }}
+          </div>
+          {% for error in form.year_of_study.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="auth-input-wrap">
+            <i class="fa-solid fa-lock input-icon" aria-hidden="true"></i>
+            {{ form.password(id='password', placeholder='At least 8 characters', autocomplete='new-password') }}
+            <button type="button" class="toggle-pwd" title="Show or hide password" aria-label="Show or hide password" onclick="
+              var i = this.parentElement.querySelector('input');
+              var ic = this.querySelector('i');
+              if (i.type === 'password') { i.type = 'text'; ic.classList.replace('fa-eye','fa-eye-slash'); }
+              else { i.type = 'password'; ic.classList.replace('fa-eye-slash','fa-eye'); }
+            "><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
+          </div>
+          <small>At least 8 characters, with a letter and a number.</small>
+          {% for error in form.password.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </div>
+
+        <div class="form-group">
+          <label for="confirm_password">Confirm password</label>
+          <div class="auth-input-wrap">
+            <i class="fa-solid fa-lock input-icon" aria-hidden="true"></i>
+            {{ form.confirm_password(id='confirm_password', placeholder='Re-enter your password', autocomplete='new-password') }}
+            <button type="button" class="toggle-pwd" title="Show or hide password" aria-label="Show or hide password" onclick="
+              var i = this.parentElement.querySelector('input');
+              var ic = this.querySelector('i');
+              if (i.type === 'password') { i.type = 'text'; ic.classList.replace('fa-eye','fa-eye-slash'); }
+              else { i.type = 'password'; ic.classList.replace('fa-eye-slash','fa-eye'); }
+            "><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
+          </div>
+          {% for error in form.confirm_password.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </div>
+
+        <button type="submit" class="btn-submit" title="Create your Sankofa Library account">
+          <i class="fa-solid fa-user-plus" aria-hidden="true"></i> Create Account
+        </button>
+      </form>
+
+      <a href="{{ url_for('auth.login') }}" class="auth-back-link">
+        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Already have an account? Sign in
+      </a>
+    </div>
+
+    <!-- RIGHT: Library photo panel -->
     <div class="auth-image-side">
       <div class="image-overlay">
-        <h2>Welcome Back!</h2>
-        <p>Already have an account? Sign in and continue your journey.</p>
-        <a href="{{ url_for('auth.login') }}" class="btn-outline">SIGN IN</a>
+        <span class="badge-line">
+          <span class="dot" aria-hidden="true"></span>
+          Join a community of readers
+        </span>
+        <h2>
+          <span class="quote">&ldquo;San ko fa&rdquo;</span><br>
+          <span class="gradient-gold-text">&mdash; return and fetch it.</span>
+        </h2>
+        <p>
+          The Akan Adinkra symbol reminds us that true progress knows where it
+          comes from. Sankofa Library preserves and shares knowledge for
+          generations of scholars.
+        </p>
+        <div class="image-stats">
+          <div class="image-stat">
+            <div class="num">15+</div>
+            <div class="label">Curated titles</div>
+          </div>
+          <div class="image-stat">
+            <div class="num">6</div>
+            <div class="label">Categories</div>
+          </div>
+          <div class="image-stat">
+            <div class="num">24/7</div>
+            <div class="label">Digital access</div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- RIGHT: Register Form -->
-    <div class="auth-form-side">
-      <h2>Create Account</h2>
-
-      <!-- Social buttons -->
-      <div class="social-buttons">
-        <button class="social-btn" title="Google">G</button>
-        <button class="social-btn" title="Facebook">f</button>
-        <button class="social-btn" title="Twitter">𝕏</button>
-        <button class="social-btn" title="LinkedIn">in</button>
-      </div>
-
-      <p class="divider-text">or register with e-mail</p>
-
-      <form method="POST" action="{{ url_for('auth.register') }}">
-  {{ form.hidden_tag() }}
-
-  <div class="form-group">
-    {{ form.student_id(placeholder="Student ID", class="form-input") }}
-    {% for error in form.student_id.errors %}
-      <span class="form-error">{{ error }}</span>
-    {% endfor %}
-  </div>
-
-  <div class="form-group">
-    {{ form.name(placeholder="Full Name", class="form-input") }}
-    {% for error in form.name.errors %}
-      <span class="form-error">{{ error }}</span>
-    {% endfor %}
-  </div>
-
-  <div class="form-group">
-    {{ form.username(placeholder="Username", class="form-input") }}
-    {% for error in form.username.errors %}
-      <span class="form-error">{{ error }}</span>
-    {% endfor %}
-  </div>
-
-  <div class="form-group">
-    {{ form.email(placeholder="Student Email (@st.knust.edu.gh)", class="form-input") }}
-    {% for error in form.email.errors %}
-      <span class="form-error">{{ error }}</span>
-    {% endfor %}
-  </div>
-
-  <div class="form-group">
-    {{ form.department(placeholder="Department", class="form-input") }}
-    {% for error in form.department.errors %}
-      <span class="form-error">{{ error }}</span>
-    {% endfor %}
-  </div>
-
-  <div class="form-group">
-    {{ form.year_of_study(placeholder="Year of Study", class="form-input") }}
-    {% for error in form.year_of_study.errors %}
-      <span class="form-error">{{ error }}</span>
-    {% endfor %}
-  </div>
-
-  <div class="form-group">
-    {{ form.password(placeholder="Password", class="form-input") }}
-    <small style="color:#888;font-size:0.78rem;">At least 8 characters, with a letter and a number.</small>
-    {% for error in form.password.errors %}
-      <span class="form-error">{{ error }}</span>
-    {% endfor %}
-  </div>
-
-  <div class="form-group">
-    {{ form.confirm_password(placeholder="Confirm Password", class="form-input") }}
-    {% for error in form.confirm_password.errors %}
-      <span class="form-error">{{ error }}</span>
-    {% endfor %}
-  </div>
-
-  <button type="submit" class="btn-primary">SIGN UP</button>
-</form>
-
   </div>
 </div>
-
 {% endblock %}

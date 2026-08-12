@@ -1,41 +1,185 @@
 {% extends 'base.html' %}
-{% block title %}Librarian Dashboard{% endblock %}
+{% block title %}Librarian Dashboard — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<span>Dashboard</span>{% endblock %}
 {% block content %}
+<div class="page-header">
+    <h1>Librarian Dashboard</h1>
+    <p class="page-subtitle">Today's circulation, overdue alerts, and active loans at a glance.</p>
+</div>
+<div class="kente-bar" style="height:4px;border-radius:var(--radius);margin-bottom:1.5rem;"></div>
 
-<div class="page-header"><h1>Librarian Dashboard</h1></div>
-
-<div class="grid-3">
-  <div class="stat-card"><div class="stat-value">{{ checked_out_today }}</div><div class="stat-label">Checked Out Today</div></div>
-  <div class="stat-card"><div class="stat-value">{{ overdue_count }}</div><div class="stat-label">Overdue Items</div></div>
-  <div class="stat-card"><div class="stat-value">{{ active_loans_count }}</div><div class="stat-label">Active Loans</div></div>
+<!-- 4 stat cards -->
+<div class="stats-grid">
+    <div class="stat-card lift-on-hover animate-fade-in-up stagger-1">
+        <div class="stat-text">
+            <div class="stat-value">{{ checked_out_today }}</div>
+            <div class="stat-label">Checked Out Today</div>
+            <div class="stat-hint">Books issued today</div>
+        </div>
+        <i class="fa-solid fa-hand-holding-heart stat-icon kente" aria-hidden="true"></i>
+    </div>
+    <div class="stat-card lift-on-hover animate-fade-in-up stagger-2">
+        <div class="stat-text">
+            <div class="stat-value">{{ active_loans_count }}</div>
+            <div class="stat-label">Active Loans</div>
+            <div class="stat-hint">Books currently on loan</div>
+        </div>
+        <i class="fa-solid fa-book-bookmark stat-icon forest" aria-hidden="true"></i>
+    </div>
+    <div class="stat-card lift-on-hover animate-fade-in-up stagger-3">
+        <div class="stat-text">
+            <div class="stat-value">{{ overdue_count }}</div>
+            <div class="stat-label">Overdue Items</div>
+            <div class="stat-hint">Past their due date</div>
+        </div>
+        <i class="fa-solid fa-triangle-exclamation stat-icon adinkra" aria-hidden="true"></i>
+    </div>
+    <div class="stat-card lift-on-hover animate-fade-in-up stagger-4">
+        <div class="stat-text">
+            <div class="stat-value">{{ available_books }}</div>
+            <div class="stat-label">Books Available</div>
+            <div class="stat-hint">Titles on the shelf</div>
+        </div>
+        <i class="fa-solid fa-book stat-icon gold" aria-hidden="true"></i>
+    </div>
 </div>
 
-<div style="display: flex; gap: 16px; margin-bottom: 1.5rem;">
-  <a href="{{ url_for('librarian.checkout') }}" class="btn btn-primary">Check Out Book</a>
-  <a href="{{ url_for('librarian.return_book') }}" class="btn btn-accent">Return Book</a>
-  <a href="{{ url_for('librarian.overdue') }}" class="btn btn-outline">View Overdue</a>
+<!-- Quick actions -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <h2><i class="fa-solid fa-bolt text-gold" aria-hidden="true"></i> Quick Actions</h2>
+    <div class="quick-action-grid">
+        <a href="{{ url_for('librarian.checkout') }}" class="quick-action-card lift-on-hover" title="Check a book out to a student">
+            <div class="quick-action-icon" style="background:rgba(27,67,50,0.10);color:var(--color-primary);"><i class="fa-solid fa-hand-holding-heart"></i></div>
+            <div><h3>Check Out Book</h3><p>Issue a book to a student</p></div>
+        </a>
+        <a href="{{ url_for('librarian.return_book') }}" class="quick-action-card lift-on-hover" title="Process a book return">
+            <div class="quick-action-icon" style="background:rgba(184,134,11,0.10);color:var(--gold);"><i class="fa-solid fa-rotate-left"></i></div>
+            <div><h3>Return Book</h3><p>Process a return</p></div>
+        </a>
+        <a href="{{ url_for('librarian.overdue') }}" class="quick-action-card lift-on-hover" title="View overdue items">
+            <div class="quick-action-icon" style="background:rgba(139,26,26,0.10);color:var(--adinkra);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div><h3>View Overdue</h3><p>{{ overdue_count }} item{{ 's' if overdue_count != 1 }} to chase</p></div>
+        </a>
+    </div>
 </div>
 
-<div class="card">
-  <h2>Recent Checkouts</h2>
-  {% if recent_checkouts %}
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>Student</th><th>Book</th><th>Date</th><th>Due</th><th>Status</th></tr></thead>
-      <tbody>
-      {% for c in recent_checkouts %}
-      <tr>
-        <td>{{ c.student.full_name }}</td>
-        <td>{{ c.book.title }}</td>
-        <td>{{ c.checkout_date }}</td>
-        <td>{{ c.expected_return_date }}</td>
-        <td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
-      </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}<div class="empty-state">No recent activity.</div>{% endif %}
+<!-- Overdue alert -->
+{% if overdue_alerts %}
+<div class="card" style="border-left:4px solid var(--adinkra);margin-bottom:1.5rem;">
+    <h2 style="color:var(--adinkra);"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Top Overdue Alerts</h2>
+    <div class="table-wrap fancy-scroll" style="max-height:18rem;">
+        <table>
+            <thead><tr><th>Student</th><th>Book</th><th>Due</th><th>Days Overdue</th><th>Accrued Fine</th><th></th></tr></thead>
+            <tbody>
+            {% for c, fine in overdue_alerts %}
+            <tr>
+                <td>{{ c.student.full_name }} <span class="text-muted" style="font-size:0.75rem;">({{ c.student.student_id }})</span></td>
+                <td>
+<div style="display:flex; align-items:center; gap:0.75rem;">
+    {% if c.book and c.book.cover_image %}
+        <img src="{{ url_for('static', filename='covers/' + c.book.cover_image) }}" alt="Cover" style="width:32px; height:48px; object-fit:cover; border-radius:4px; box-shadow:var(--shadow); flex-shrink:0;">
+    {% else %}
+        <div style="width:32px; height:48px; background:var(--color-surface-alt); border-radius:4px; display:flex; align-items:center; justify-content:center; color:var(--color-muted); font-size:0.75rem; flex-shrink:0;">
+            <i class="fa-solid fa-book"></i>
+        </div>
+    {% endif %}
+    <div>
+{{ c.book.title }}
 </div>
+</div>
+</td>
+                <td class="text-muted">{{ c.expected_return_date }}</td>
+                <td><span class="badge badge-overdue">{{ c.days_overdue }} day{{ 's' if c.days_overdue != 1 }}</span></td>
+                <td><strong style="color:var(--adinkra);">{{ currency_symbol }} {{ '%.2f'|format(fine) }}</strong></td>
+                <td>
+<div style="display:flex; align-items:center; gap:0.75rem;">
+    {% if c.book and c.book.cover_image %}
+        <img src="{{ url_for('static', filename='covers/' + c.book.cover_image) }}" alt="Cover" style="width:32px; height:48px; object-fit:cover; border-radius:4px; box-shadow:var(--shadow); flex-shrink:0;">
+    {% else %}
+        <div style="width:32px; height:48px; background:var(--color-surface-alt); border-radius:4px; display:flex; align-items:center; justify-content:center; color:var(--color-muted); font-size:0.75rem; flex-shrink:0;">
+            <i class="fa-solid fa-book"></i>
+        </div>
+    {% endif %}
+    <div>
+<a href="mailto:{{ c.student.email }}?subject=Overdue%20library%20book&body=Dear%20{{ c.student.full_name }},%0A%0AYour%20book%20%22{{ c.book.title }}%22%20was%20due%20on%20{{ c.expected_return_date }}.%20Please%20return%20it%20to%20the%20library%20as%20soon%20as%20possible." class="icon-action-btn" title="Send a reminder email to {{ c.student.full_name }}"><i class="fa-solid fa-envelope"></i></a>
+</div>
+</div>
+</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <a href="{{ url_for('librarian.overdue') }}" class="btn btn-sm btn-outline" style="margin-top:0.75rem;">View all overdue</a>
+</div>
+{% endif %}
 
+<!-- Recent checkouts + 7-day trend -->
+<div class="grid-2">
+    <div class="card">
+        <h2><i class="fa-solid fa-clock-rotate-left text-primary" aria-hidden="true"></i> Recent Checkouts <span class="text-muted" style="font-size:0.85rem;font-weight:400;">— last 10</span></h2>
+        {% if recent_checkouts %}
+        <div class="table-wrap fancy-scroll" style="max-height:24rem;">
+            <table>
+                <thead><tr><th>Student</th><th>Book</th><th>Date</th><th>Due</th><th>Status</th></tr></thead>
+                <tbody>
+                {% for c in recent_checkouts %}
+                <tr>
+                    <td>{{ c.student.full_name }}</td>
+                    <td>
+<div style="display:flex; align-items:center; gap:0.75rem;">
+    {% if c.book and c.book.cover_image %}
+        <img src="{{ url_for('static', filename='covers/' + c.book.cover_image) }}" alt="Cover" style="width:32px; height:48px; object-fit:cover; border-radius:4px; box-shadow:var(--shadow); flex-shrink:0;">
+    {% else %}
+        <div style="width:32px; height:48px; background:var(--color-surface-alt); border-radius:4px; display:flex; align-items:center; justify-content:center; color:var(--color-muted); font-size:0.75rem; flex-shrink:0;">
+            <i class="fa-solid fa-book"></i>
+        </div>
+    {% endif %}
+    <div>
+{{ c.book.title }}
+</div>
+</div>
+</td>
+                    <td class="text-muted">{{ c.checkout_date }}</td>
+                    <td class="text-muted">{{ c.expected_return_date }}</td>
+                    <td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}<div class="empty-state">No recent activity.</div>{% endif %}
+    </div>
+
+    <div class="card">
+        <h2><i class="fa-solid fa-chart-column text-gold" aria-hidden="true"></i> 7-Day Checkout Trend</h2>
+        <div class="chart-box"><canvas id="sevenDayChart" aria-label="7-day checkout trend bar chart"></canvas></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const mutedColor = getComputedStyle(document.documentElement).getPropertyValue('--color-muted').trim();
+    new Chart(document.getElementById('sevenDayChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ seven_day_trend | map(attribute=0) | list | tojson }},
+            datasets: [{
+                label: 'Checkouts',
+                data: {{ seven_day_trend | map(attribute=1) | list | tojson }},
+                backgroundColor: '#1B4332',
+                borderRadius: 4,
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { ticks: { color: mutedColor }, grid: { display: false } }, y: { ticks: { color: mutedColor, precision: 0 }, beginAtZero: true } },
+        },
+    });
+});
+</script>
 {% endblock %}

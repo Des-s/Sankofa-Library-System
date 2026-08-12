@@ -1,31 +1,175 @@
 {% extends 'base.html' %}
-{% block title %}{{ user.full_name }}{% endblock %}
+{% block title %}{{ user.full_name }} — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<a href="{{ url_for('admin.dashboard') }}">Dashboard</a><a href="{{ url_for('admin.users') }}">Users</a><span>{{ user.full_name }}</span>{% endblock %}
 {% block content %}
-<div class="page-header">
-    <h1>{{ user.full_name }}</h1>
-    <p>{{ user.email }} &mdash; <span class="badge badge-{{ user.role }}">{{ user.role }}</span></p>
+<div class="page-header page-header-split">
+    <div style="display:flex;align-items:center;gap:1rem;">
+        <span class="avatar-circle" style="width:64px;height:64px;font-size:1.5rem;background:var(--color-primary);color:#fff;">{{ user.initials }}</span>
+        <div>
+            <h1>{{ user.full_name }}</h1>
+            <p class="page-subtitle">
+                {{ user.email }} &nbsp;&middot;&nbsp;
+                <span class="badge badge-{{ user.role }}">{{ user.role }}</span>
+                {% if user.is_active %}<span class="badge badge-active">Active</span>{% else %}<span class="badge badge-returned">Inactive</span>{% endif %}
+                {% if user.approval_status == 'pending' %}<span class="badge badge-pending">Pending Approval</span>{% elif user.approval_status == 'rejected' %}<span class="badge badge-rejected">Rejected</span>{% endif %}
+            </p>
+        </div>
+    </div>
     <div class="btn-group">
-        <a href="{{ url_for('admin.user_form', user_id=user.user_id) }}" class="btn btn-outline">Edit User</a>
+        <a href="{{ url_for('admin.user_form', user_id=user.user_id) }}" class="btn btn-outline" title="Edit {{ user.full_name }} — name, role, password"><i class="fa-solid fa-pen"></i> Edit</a>
+        <a href="{{ url_for('admin.users') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</a>
     </div>
 </div>
-<div class="card" style="max-width:500px;">
-    <h2>Details</h2>
-    <p><strong>Status:</strong> {{ 'Active' if user.is_active else 'Inactive' }}</p>
-    {% if user.student_id %}<p><strong>Student ID:</strong> {{ user.student_id }}</p>{% endif %}
-    {% if user.department %}<p><strong>Department:</strong> {{ user.department }}</p>{% endif %}
-    {% if user.year_of_study %}<p><strong>Year of Study:</strong> {{ user.year_of_study }}</p>{% endif %}
-    <p><strong>Approval Status:</strong> <span class="badge badge-{{ 'issued' if user.approval_status == 'pending' else ('overdue' if user.approval_status == 'rejected' else 'active') }}">{{ user.approval_status }}</span></p>
-    <p><strong>Joined:</strong> {{ user.created_at.strftime('%Y-%m-%d') }}</p>
+
+<div class="grid-2">
+    <!-- Profile details -->
+    <div class="card">
+        <h2><i class="fa-solid fa-id-badge" aria-hidden="true"></i> Profile Details</h2>
+        <dl class="book-detail-meta-grid">
+            <div class="meta-row"><dt><i class="fa-solid fa-user"></i> Full name</dt><dd>{{ user.full_name }}</dd></div>
+            <div class="meta-row"><dt><i class="fa-solid fa-envelope"></i> Email</dt><dd>{{ user.email }}</dd></div>
+            {% if user.username %}<div class="meta-row"><dt><i class="fa-solid fa-at"></i> Username</dt><dd>{{ user.username }}</dd></div>{% endif %}
+            {% if user.student_id %}<div class="meta-row"><dt><i class="fa-solid fa-id-card"></i> Student ID</dt><dd><code>{{ user.student_id }}</code></dd></div>{% endif %}
+            {% if user.department %}<div class="meta-row"><dt><i class="fa-solid fa-building"></i> Department</dt><dd>{{ user.department }}</dd></div>{% endif %}
+            {% if user.year_of_study %}<div class="meta-row"><dt><i class="fa-solid fa-graduation-cap"></i> Year of study</dt><dd>{{ user.year_of_study }}</dd></div>{% endif %}
+            <div class="meta-row"><dt><i class="fa-solid fa-calendar"></i> Joined</dt><dd>{{ user.created_at.strftime('%Y-%m-%d') }}</dd></div>
+            {% if user.last_login_at %}<div class="meta-row"><dt><i class="fa-solid fa-right-to-bracket"></i> Last login</dt><dd>{{ user.last_login_at.strftime('%Y-%m-%d %H:%M') }}</dd></div>{% endif %}
+        </dl>
+        <form method="POST" action="{{ url_for('admin.toggle_user', user_id=user.user_id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-sm {% if user.is_active %}btn-danger{% else %}btn-primary{% endif %}"
+                    data-confirm="{% if user.is_active %}Deactivate {{ user.full_name }}?{% else %}Reactivate {{ user.full_name }}?{% endif %}">
+                <i class="fa-solid fa-{% if user.is_active %}circle-xmark{% else %}circle-check{% endif %}"></i>
+                {% if user.is_active %}Deactivate User{% else %}Reactivate User{% endif %}
+            </button>
+        </form>
+    </div>
+
+    <!-- Library card -->
+    <div class="card">
+        <h2><i class="fa-solid fa-id-card" aria-hidden="true"></i> Library Card</h2>
+        {% if user.library_card %}
+        <div class="library-card-display">
+            <div class="kente-bar" style="height:4px;margin-bottom:1rem;"></div>
+            <div class="card-label">Sankofa Library Card</div>
+            <div class="card-number">{{ user.library_card.card_number }}</div>
+            <div class="card-holder">{{ user.full_name }}</div>
+            <div class="card-bottom">
+                <span>Issued: {{ user.library_card.issued_date.strftime('%Y-%m-%d') }}</span>
+                <span>{% if user.library_card.is_valid %}Valid{% else %}Invalid{% endif %}</span>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">No library card on file.</div>
+        {% endif %}
+
+        <h2 style="margin-top:1.5rem;"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i> Activity Summary</h2>
+        <div class="grid-3">
+            <div class="stat-card"><div class="stat-value">{{ user.checkouts.filter_by(status='active').count() + user.checkouts.filter_by(status='overdue').count() }}</div><div class="stat-label">Active loans</div></div>
+            <div class="stat-card"><div class="stat-value">{{ user.checkouts.count() }}</div><div class="stat-label">Total checkouts</div></div>
+            <div class="stat-card">
+                <div class="stat-value">{{ user.fines.filter_by(status='issued').count() + user.fines.filter_by(status='pending').count() }}</div>
+                <div class="stat-label">Outstanding fines</div>
+            </div>
+        </div>
+    </div>
 </div>
 
+<div class="grid-2">
+    <!-- Recent checkouts -->
+    <div class="card">
+        <h2><i class="fa-solid fa-book-bookmark" aria-hidden="true"></i> Recent Checkouts</h2>
+        {% set user_checkouts = user.checkouts.all() | sort(attribute='checkout_date', reverse=True) %}
+        {% if user_checkouts %}
+        <div class="table-wrap fancy-scroll" style="max-height:20rem;">
+            <table>
+                <thead><tr><th>Book</th><th>Checked Out</th><th>Due</th><th>Status</th></tr></thead>
+                <tbody>
+                {% for c in user_checkouts[:10] %}
+                <tr>
+                    <td>
+<div style="display:flex; align-items:center; gap:0.75rem;">
+    {% if c.book and c.book.cover_image %}
+        <img src="{{ url_for('static', filename='covers/' + c.book.cover_image) }}" alt="Cover" style="width:32px; height:48px; object-fit:cover; border-radius:4px; box-shadow:var(--shadow); flex-shrink:0;">
+    {% else %}
+        <div style="width:32px; height:48px; background:var(--color-surface-alt); border-radius:4px; display:flex; align-items:center; justify-content:center; color:var(--color-muted); font-size:0.75rem; flex-shrink:0;">
+            <i class="fa-solid fa-book"></i>
+        </div>
+    {% endif %}
+    <div>
+{{ c.book.title }}
+</div>
+</div>
+</td>
+                    <td class="text-muted">{{ c.checkout_date }}</td>
+                    <td class="text-muted">{{ c.expected_return_date }}</td>
+                    <td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}<div class="empty-state">No checkouts on record.</div>{% endif %}
+    </div>
+
+    <!-- Fines -->
+    <div class="card">
+        <h2><i class="fa-solid fa-coins" aria-hidden="true"></i> Fines</h2>
+        {% set user_fines = user.fines.all() | sort(attribute='created_at', reverse=True) %}
+        {% if user_fines %}
+        <div class="table-wrap fancy-scroll" style="max-height:20rem;">
+            <table>
+                <thead><tr><th>Book</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+                <tbody>
+                {% for f in user_fines[:10] %}
+                <tr>
+                    <td>
+<div style="display:flex; align-items:center; gap:0.75rem;">
+    {% if f.checkout.book and f.checkout.book.cover_image %}
+        <img src="{{ url_for('static', filename='covers/' + f.checkout.book.cover_image) }}" alt="Cover" style="width:32px; height:48px; object-fit:cover; border-radius:4px; box-shadow:var(--shadow); flex-shrink:0;">
+    {% else %}
+        <div style="width:32px; height:48px; background:var(--color-surface-alt); border-radius:4px; display:flex; align-items:center; justify-content:center; color:var(--color-muted); font-size:0.75rem; flex-shrink:0;">
+            <i class="fa-solid fa-book"></i>
+        </div>
+    {% endif %}
+    <div>
+{{ f.checkout.book.title if f.checkout else '—' }}
+</div>
+</div>
+</td>
+                    <td>{{ currency_symbol }} {{ '%.2f'|format(f.total_amount) }}</td>
+                    <td><span class="badge badge-{{ f.status }}">{{ f.status }}</span></td>
+                    <td class="text-muted">{{ f.created_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}<div class="empty-state">No fines on record.</div>{% endif %}
+    </div>
+</div>
+
+<!-- Reports filed about this user -->
 <div class="card">
-    <h2>Reports Filed About This User</h2>
+    <h2><i class="fa-solid fa-file-lines" aria-hidden="true"></i> Reports Filed About This User</h2>
     {% if reports %}
-    <div class="table-wrap"><table>
-        <thead><tr><th>Title</th><th>Type</th><th>Severity</th><th>Filed</th><th>Filed By</th><th>Description</th></tr></thead>
-        <tbody>{% for r in reports %}<tr><td>{{ r.title }}</td><td>{{ r.report_type }}</td><td><span class="badge badge-{{ 'overdue' if r.severity == 'high' else ('issued' if r.severity == 'medium' else 'active') }}">{{ r.severity }}</span></td><td>{{ r.date_filed.strftime('%Y-%m-%d') if r.date_filed else '—' }}</td><td>{{ r.filer.full_name if r.filer else '—' }}</td><td>{{ r.description }}</td></tr>{% endfor %}</tbody>
-    </table></div>
+    <div class="table-wrap fancy-scroll" style="max-height:20rem;">
+        <table>
+            <thead><tr><th>Title</th><th>Type</th><th>Severity</th><th>Filed</th><th>Filed By</th><th>Description</th></tr></thead>
+            <tbody>
+            {% for r in reports %}
+            <tr>
+                <td>{{ r.title }}</td>
+                <td>{{ r.report_type }}</td>
+                <td><span class="badge badge-{{ r.severity }}">{{ r.severity }}</span></td>
+                <td class="text-muted">{{ r.date_filed.strftime('%Y-%m-%d') if r.date_filed else '—' }}</td>
+                <td>{{ r.filer.full_name if r.filer else '—' }}</td>
+                <td class="text-muted">{{ r.description }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
     {% else %}<div class="empty-state">No reports filed about this user.</div>{% endif %}
 </div>
-<a href="{{ url_for('admin.users') }}" class="btn btn-outline">Back to Users</a>
 {% endblock %}

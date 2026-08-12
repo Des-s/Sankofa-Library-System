@@ -1,23 +1,81 @@
 {% extends 'base.html' %}
-{% block title %}Overdue Items{% endblock %}
+{% block title %}Overdue Items — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<a href="{{ url_for('librarian.dashboard') }}">Dashboard</a><span>Overdue</span>{% endblock %}
 {% block content %}
-<div class="page-header"><h1>Overdue Items</h1></div>
+<div class="page-header">
+    <h1><i class="fa-solid fa-triangle-exclamation text-adinkra" aria-hidden="true"></i> Overdue Items</h1>
+    <p class="page-subtitle">Books past their due date, with live-accrued fines. Send a reminder email with one click.</p>
+</div>
+
+<div class="grid-2" style="margin-bottom:1.5rem;">
+    <div class="stat-card accent-adinkra">
+        <div class="stat-text"><div class="stat-value">{{ checkouts|length }}</div><div class="stat-label">Overdue Item{{ 's' if checkouts|length != 1 }}</div></div>
+        <i class="fa-solid fa-triangle-exclamation stat-icon" style="background:rgba(255,255,255,0.15);color:#fff;" aria-hidden="true"></i>
+    </div>
+    <div class="stat-card accent-gold">
+        <div class="stat-text"><div class="stat-value">{{ currency_symbol }} {{ '%.2f'|format(total_accrued) }}</div><div class="stat-label">Total Accrued Fines</div></div>
+        <span class="stat-icon cedis-icon" style="background:rgba(255,255,255,0.15);color:#fff;" aria-hidden="true">₵</span>
+    </div>
+</div>
+
 <div class="card">
     {% if checkouts %}
-    <div class="table-wrap"><table>
-        <thead><tr><th>Student</th><th>Book</th><th>Due Date</th><th>Days Overdue</th><th>Accrued Fine</th></tr></thead>
-        <tbody>
-        {% for c in checkouts %}
-        <tr>
-            <td>{{ c.student.full_name }} ({{ c.student.student_id }})</td>
-            <td>{{ c.book.title }}</td>
-            <td>{{ c.expected_return_date }}</td>
-            <td>{{ c.days_overdue }}</td>
-            <td>GHS {{ '%.2f'|format(accrued[c.checkout_id]) }}</td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table></div>
-    {% else %}<div class="empty-state">No overdue items.</div>{% endif %}
+    <div class="table-wrap fancy-scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Book</th>
+                    <th>Due Date</th>
+                    <th>Days Overdue</th>
+                    <th>Accrued Fine</th>
+                    <th class="nowrap">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for c in checkouts %}
+            <tr>
+                <td>
+                    <div style="font-weight:600;">{{ c.student.full_name }}</div>
+                    <div class="text-muted" style="font-size:0.75rem;">{{ c.student.student_id }} &middot; {{ c.student.email }}</div>
+                </td>
+                <td>
+<div style="display:flex; align-items:center; gap:0.75rem;">
+    {% if c.book and c.book.cover_image %}
+        <img src="{{ url_for('static', filename='covers/' + c.book.cover_image) }}" alt="Cover" style="width:32px; height:48px; object-fit:cover; border-radius:4px; box-shadow:var(--shadow); flex-shrink:0;">
+    {% else %}
+        <div style="width:32px; height:48px; background:var(--color-surface-alt); border-radius:4px; display:flex; align-items:center; justify-content:center; color:var(--color-muted); font-size:0.75rem; flex-shrink:0;">
+            <i class="fa-solid fa-book"></i>
+        </div>
+    {% endif %}
+    <div>
+{{ c.book.title }}
+</div>
+</div>
+</td>
+                <td class="text-muted nowrap">{{ c.expected_return_date }}</td>
+                <td><span class="badge badge-overdue">{{ c.days_overdue }} day{{ 's' if c.days_overdue != 1 }}</span></td>
+                <td><strong style="color:var(--adinkra);">{{ currency_symbol }} {{ '%.2f'|format(accrued[c.checkout_id]) }}</strong></td>
+                <td class="table-actions">
+                    <a href="mailto:{{ c.student.email }}?subject=Overdue%20library%20book&body=Dear%20{{ c.student.full_name }},%0A%0AYour%20book%20%22{{ c.book.title }}%22%20was%20due%20on%20{{ c.expected_return_date }}%20and%20is%20now%20{{ c.days_overdue }}%20day(s)%20overdue.%0A%0APlease%20return%20it%20to%20the%20library%20as%20soon%20as%20possible%20to%20avoid%20additional%20fines.%0A%0AThanks,%0A{{ library_name }}"
+                       class="icon-action-btn" title="Send {{ c.student.full_name }} an overdue reminder email">
+                        <i class="fa-solid fa-envelope" aria-hidden="true"></i>
+                    </a>
+                    <a href="{{ url_for('librarian.student_detail', user_id=c.student.user_id) }}" class="icon-action-btn" title="View {{ c.student.full_name }}'s full record">
+                        <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state-component">
+        <i class="fa-solid fa-circle-check empty-icon" style="color:var(--success);" aria-hidden="true"></i>
+        <h3>All caught up!</h3>
+        <p>There are no overdue items right now. Great work keeping the library on schedule.</p>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

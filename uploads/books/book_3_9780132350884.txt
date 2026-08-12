@@ -1,4 +1,4 @@
-CLEAN CODE - SAMPLE DIGITAL BOOK
+CLEAN CODE — SAMPLE DIGITAL BOOK
 ============================================
 
 This is a sample digital book for demonstration purposes.

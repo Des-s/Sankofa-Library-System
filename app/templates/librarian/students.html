@@ -1,53 +1,107 @@
 {% extends 'base.html' %}
-{% block title %}Student Lookup{% endblock %}
+{% block title %}Student Lookup — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<a href="{{ url_for('librarian.dashboard') }}">Dashboard</a><span>Students</span>{% endblock %}
 {% block content %}
-<div class="page-header"><h1>Student Lookup</h1></div>
+<div class="page-header">
+    <h1>Student Lookup</h1>
+    <p class="page-subtitle">Search and manage students. Approve pending registrations from the &ldquo;Pending&rdquo; tab.</p>
+</div>
 
 <div class="tab-bar">
-    <a href="{{ url_for('librarian.students', q=q) }}" class="tab-link {% if tab == 'all' %}active{% endif %}">All Students</a>
+    <a href="{{ url_for('librarian.students', q=q) }}" class="tab-link {% if tab == 'all' %}active{% endif %}">
+        All Students
+    </a>
     <a href="{{ url_for('librarian.students', tab='pending') }}" class="tab-link {% if tab == 'pending' %}active{% endif %}">
-        Pending Approval {% if pending_count %}<span class="badge badge-issued">{{ pending_count }}</span>{% endif %}
+        Pending Approval
+        {% if pending_count %}<span class="badge badge-issued" style="margin-left:0.4rem;">{{ pending_count }}</span>{% endif %}
     </a>
 </div>
 
 <form method="GET" class="search-bar card">
     <input type="hidden" name="tab" value="{{ tab }}">
-    <div class="form-group"><input type="text" name="q" class="form-control" value="{{ q }}" placeholder="Student ID, name, or email..."></div>
-    <button type="submit" class="btn btn-primary">Search</button>
+    <div class="form-group" style="flex:1;min-width:200px;">
+        <label for="student-q" class="sr-only">Search</label>
+        <div class="auth-input-wrap">
+            <i class="fa-solid fa-magnifying-glass input-icon" aria-hidden="true"></i>
+            <input type="text" id="student-q" name="q" class="form-input" value="{{ q }}"
+                   placeholder="Student ID, name, or email..." autocomplete="off">
+        </div>
+    </div>
+    <button type="submit" class="btn btn-gradient"><i class="fa-solid fa-filter"></i> Search</button>
+    {% if q %}<a href="{{ url_for('librarian.students', tab=tab) }}" class="btn btn-outline">Clear</a>{% endif %}
 </form>
+
 <div class="card">
-    <div class="table-wrap">
+    {% if students %}
+    <div class="table-wrap fancy-scroll">
         <table>
-            <thead><tr><th>Name</th><th>Student ID</th><th>Email</th><th>Department</th><th>Card</th><th>Status</th><th></th></tr></thead>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th class="hide-on-mobile">Student ID</th>
+                    <th class="hide-on-mobile">Email</th>
+                    <th class="hide-on-mobile">Department</th>
+                    <th>Status</th>
+                    <th class="nowrap">Actions</th>
+                </tr>
+            </thead>
             <tbody>
             {% for s in students %}
             <tr>
-                <td>{{ s.full_name }}</td>
-                <td>{{ s.student_id }}</td>
-                <td>{{ s.email }}</td>
-                <td>{{ s.department }}</td>
-                <td>{{ s.library_card.card_number if s.library_card else '—' }}</td>
-                <td><span class="badge badge-{{ 'issued' if s.approval_status == 'pending' else ('overdue' if s.approval_status == 'rejected' else 'active') }}">{{ s.approval_status }}</span></td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <span class="avatar-circle" style="width:32px;height:32px;font-size:0.7rem;background:var(--color-primary);color:#fff;">{{ s.initials }}</span>
+                        <div>
+                            <div style="font-weight:600;">{{ s.full_name }}</div>
+                            <div class="hide-on-mobile text-muted" style="font-size:0.72rem;">{{ s.library_card.card_number if s.library_card else '—' }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="hide-on-mobile"><code>{{ s.student_id or '—' }}</code></td>
+                <td class="hide-on-mobile text-muted">{{ s.email }}</td>
+                <td class="hide-on-mobile text-muted">{{ s.department or '—' }}{% if s.year_of_study %}<div style="font-size:0.7rem;">Year {{ s.year_of_study }}</div>{% endif %}</td>
+                <td>
+                    <span class="badge badge-{{ 'issued' if s.approval_status == 'pending' else ('overdue' if s.approval_status == 'rejected' else 'active') }}">{{ s.approval_status }}</span>
+                    {% if not s.is_active %}<span class="badge badge-returned" style="margin-left:0.25rem;">inactive</span>{% endif %}
+                </td>
                 <td class="table-actions">
-                    <a href="{{ url_for('librarian.student_detail', user_id=s.user_id) }}" class="btn btn-sm btn-outline">View</a>
+                    <a href="{{ url_for('librarian.student_detail', user_id=s.user_id) }}" class="icon-action-btn" title="View {{ s.full_name }}'s full record">
+                        <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                    </a>
+                    <a href="{{ url_for('librarian.edit_student', user_id=s.user_id) }}" class="icon-action-btn" title="Edit {{ s.full_name }}'s department and year">
+                        <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                    </a>
                     {% if s.approval_status == 'pending' %}
                     <form method="POST" action="{{ url_for('librarian.approve_student', user_id=s.user_id) }}" class="inline-form">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-sm btn-primary">Approve</button>
+                        <button type="submit" class="icon-action-btn" title="Approve {{ s.full_name }} — grants library access immediately"
+                                data-confirm="Approve {{ s.full_name }}? They will be able to sign in immediately.">
+                            <i class="fa-solid fa-check" aria-hidden="true" style="color:var(--success);"></i>
+                        </button>
                     </form>
                     <form method="POST" action="{{ url_for('librarian.reject_student', user_id=s.user_id) }}" class="inline-form">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                        <button type="submit" class="icon-action-btn danger" title="Reject {{ s.full_name }} — denies access permanently"
+                                data-confirm="Reject {{ s.full_name }}? They will not be able to sign in. This is logged in the audit trail.">
+                            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                        </button>
                     </form>
                     {% endif %}
                 </td>
             </tr>
             {% else %}
-            <tr><td colspan="7" class="empty-state">No students found.</td></tr>
+            <tr><td colspan="6" class="empty-state">No students found.</td></tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
+    {% else %}
+    <div class="empty-state-component">
+        <i class="fa-solid fa-user-graduate empty-icon" aria-hidden="true"></i>
+        <h3>No students found</h3>
+        <p>Try adjusting your search or filter.</p>
+    </div>
+    {% endif %}
 </div>
 {% include '_pagination.html' %}
 {% endblock %}

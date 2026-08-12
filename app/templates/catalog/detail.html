@@ -1,52 +1,158 @@
 {% extends 'base.html' %}
 {% block title %}{{ book.title }} — Sankofa Library{% endblock %}
+{% block og_title %}{{ book.title }} by {{ book.author }}{% endblock %}
 {% block content %}
-<div class="page-header">
-    <h1>{{ book.title }}</h1>
-    <p>by {{ book.author }}</p>
-</div>
+{% block breadcrumb_extra %}
+<a href="{{ url_for('catalog.catalog') }}">Catalog</a>
+<span>{{ book.title }}</span>
+{% endblock %}
 
-<div class="grid-2">
-    <div class="grid-2">
-    <!-- Cover image card -->
-    <div class="card" style="text-align:center; padding: 1.5rem;">
-        {% if book.cover_image %}
-        <img src="{{ url_for('static', filename='covers/' + book.cover_image) }}"
-             alt="{{ book.title }}" class="book-cover-large">
+<a href="{{ url_for('catalog.catalog') }}" class="btn btn-sm btn-outline" style="margin-bottom:1rem;">
+    <i class="fa-solid fa-arrow-left"></i> Back to Catalog
+</a>
+
+<div class="book-detail-layout">
+    <!-- Cover + quick actions -->
+    <div class="book-detail-cover-col">
+        <div class="book-detail-cover-wrap">
+            {% if book.cover_image %}
+            <img src="{{ url_for('static', filename='covers/' + book.cover_image) }}"
+                 alt="Cover of {{ book.title }}" class="book-cover-large">
+            {% else %}
+            <div class="book-cover-placeholder large gradient-sankofa" style="display:flex;flex-direction:column;align-items:center;justify-content:center;color:#FDF8F0;">
+                <i class="fa-solid fa-book-open" style="font-size:2.5rem;opacity:0.7;"></i>
+                <p style="margin-top:0.5rem;font-family:var(--font-heading);font-weight:600;text-align:center;padding:0 1rem;">{{ book.title }}</p>
+            </div>
+            {% endif %}
+        </div>
+        <div class="book-detail-actions">
+            {% if book.has_digital and current_user.is_student %}
+            <a href="{{ url_for('student.read_book', book_id=book.book_id) }}"
+               class="btn btn-gradient"
+               title="Read this book in your browser — library card verification required"
+               style="width:100%;text-align:center;">
+                <i class="fa-solid fa-book-open"></i> Read Online
+            </a>
+            <p class="text-muted" style="font-size:0.8rem;">Library card verification required before reading.</p>
+            {% elif book.has_digital %}
+            <div class="alert alert-success" style="font-size:0.85rem;">
+                <i class="fa-solid fa-circle-info"></i> Digital edition available. Students can read online after card verification.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Details -->
+    <div class="book-detail-info-col">
+        <div class="book-detail-badges">
+            {% if book.category %}<span class="badge badge-active">{{ book.category }}</span>{% endif %}
+            {% if book.subcategory %}<span class="badge badge-issued">{{ book.subcategory }}</span>{% endif %}
+            <span class="text-muted" style="font-size:0.8rem;">Year published: {{ book.year_published or '—' }}</span>
+        </div>
+
+        <h1 class="gradient-sankofa-text" style="font-size:2rem;line-height:1.15;">{{ book.title }}</h1>
+        <p class="text-muted" style="font-size:1.05rem;">by {{ book.author }}</p>
+
+        <!-- Availability card -->
+        <div class="card" style="margin-top:1.25rem;">
+            <h2 style="font-size:0.85rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-muted);">Availability</h2>
+            <div class="book-detail-availability-grid">
+                <div class="book-detail-availability-cell">
+                    <div class="availability-icon {{ 'success' if book.available_physical_copies > 0 else 'danger' }}">
+                        <i class="fa-solid fa-{{ 'circle-check' if book.available_physical_copies > 0 else 'circle-xmark' }}"></i>
+                    </div>
+                    <div>
+                        <div class="availability-title">Physical copies</div>
+                        <div class="text-muted" style="font-size:0.8rem;">
+                            {{ book.available_physical_copies }} of {{ book.total_physical_copies }} available at the library
+                        </div>
+                    </div>
+                </div>
+                <div class="book-detail-availability-cell">
+                    <div class="availability-icon {{ 'success' if book.has_digital else 'muted' }}">
+                        <i class="fa-solid fa-book-open"></i>
+                    </div>
+                    <div>
+                        <div class="availability-title">Digital edition</div>
+                        <div class="text-muted" style="font-size:0.8rem;">
+                            {% if book.has_digital %}Available — read online with a valid library card{% else %}Not available{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bibliographic details -->
+        <div class="card" style="margin-top:1rem;">
+            <h2 style="font-size:0.85rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--color-muted);">Bibliographic Details</h2>
+            <dl class="book-detail-meta-grid">
+                <div class="meta-row">
+                    <dt><i class="fa-solid fa-user" aria-hidden="true"></i> Author</dt>
+                    <dd>{{ book.author }}</dd>
+                </div>
+                <div class="meta-row">
+                    <dt><i class="fa-solid fa-hashtag" aria-hidden="true"></i> ISBN</dt>
+                    <dd><code>{{ book.isbn }}</code></dd>
+                </div>
+                <div class="meta-row">
+                    <dt><i class="fa-solid fa-building" aria-hidden="true"></i> Publisher</dt>
+                    <dd>{{ book.publisher or '—' }}</dd>
+                </div>
+                <div class="meta-row">
+                    <dt><i class="fa-solid fa-calendar" aria-hidden="true"></i> Year published</dt>
+                    <dd>{{ book.year_published or '—' }}</dd>
+                </div>
+                <div class="meta-row">
+                    <dt><i class="fa-solid fa-tag" aria-hidden="true"></i> Category</dt>
+                    <dd>{{ book.category or '—' }}{% if book.subcategory %} &raquo; {{ book.subcategory }}{% endif %}</dd>
+                </div>
+                <div class="meta-row">
+                    <dt><i class="fa-solid fa-box" aria-hidden="true"></i> Inventory</dt>
+                    <dd>{{ book.total_physical_copies }} total copies ({{ book.copies_checked_out }} checked out)</dd>
+                </div>
+            </dl>
+        </div>
+
+        {% if book.available_physical_copies > 0 %}
+        <div class="alert alert-info" style="margin-top:1rem;">
+            <i class="fa-solid fa-circle-info"></i> Physical copies available. Visit the library to borrow in person.
+        </div>
         {% else %}
-        <div class="book-cover-placeholder large">
-            <i class="fa-solid fa-book-open"></i>
+        <div class="alert alert-danger" style="margin-top:1rem;">
+            <i class="fa-solid fa-circle-xmark"></i> No physical copies currently available.
         </div>
         {% endif %}
-        <h2 style="margin-top:1rem;">{{ book.title }}</h2>
-        <p style="color:var(--color-muted);">by {{ book.author }}</p>
     </div>
 </div>
-    <div class="card">
-        <h2>Book Details</h2>
-        <table>
-            <tr><th>ISBN</th><td>{{ book.isbn }}</td></tr>
-            <tr><th>Publisher</th><td>{{ book.publisher or '—' }}</td></tr>
-            <tr><th>Year</th><td>{{ book.year_published or '—' }}</td></tr>
-            <tr><th>Category</th><td>{{ book.category or '—' }}</td></tr>
-            <tr><th>Physical Copies</th><td>{{ book.available_physical_copies }} of {{ book.total_physical_copies }} available</td></tr>
-            <tr><th>Digital</th><td>{% if book.has_digital %}Available{% else %}Not available{% endif %}</td></tr>
-        </table>
+
+{% if related_books %}
+<section class="related-books-section">
+    <div class="related-books-header">
+        <div>
+            <h2>More from {{ book.category }}</h2>
+            <p class="text-muted" style="font-size:0.9rem;">Related books you might enjoy</p>
+        </div>
+        <a href="{{ url_for('catalog.catalog') }}" class="btn btn-sm btn-outline">View all</a>
     </div>
-    <div class="card">
-        <h2>Actions</h2>
-        {% if book.has_digital and current_user.is_student %}
-        <a href="{{ url_for('student.read_book', book_id=book.book_id) }}" class="btn btn-primary" style="width:100%;text-align:center;margin-bottom:0.75rem;">Read Online</a>
-        <p style="font-size:0.85rem;color:var(--color-muted);">Library card verification required before reading.</p>
-        {% elif book.has_digital %}
-        <p style="color:var(--color-muted);">Digital version available for students.</p>
-        {% endif %}
-        {% if book.available_physical_copies > 0 %}
-        <p style="margin-top:1rem;font-size:0.9rem;">Physical copies available. Visit the library to borrow in person.</p>
-        {% else %}
-        <p style="margin-top:1rem;color:var(--color-danger);">No physical copies currently available.</p>
-        {% endif %}
-        <a href="{{ url_for('catalog.catalog') }}" class="btn btn-outline" style="margin-top:1rem;">Back to Catalog</a>
+    <div class="related-books-grid">
+        {% for r in related_books %}
+        <a href="{{ url_for('catalog.book_detail', book_id=r.book_id) }}" class="related-book-card lift-on-hover">
+            <div class="related-book-cover">
+                {% if r.cover_image %}
+                <img src="{{ url_for('static', filename='covers/' + r.cover_image) }}"
+                     alt="Cover of {{ r.title }}" loading="lazy">
+                {% else %}
+                <div class="related-book-cover-placeholder gradient-sankofa">
+                    <i class="fa-solid fa-book-open"></i>
+                    <span>{{ r.title }}</span>
+                </div>
+                {% endif %}
+            </div>
+            <h3>{{ r.title }}</h3>
+            <p class="text-muted">{{ r.author }}</p>
+        </a>
+        {% endfor %}
     </div>
-</div>
+</section>
+{% endif %}
 {% endblock %}

@@ -1,16 +1,44 @@
 {% extends 'base.html' %}
-{% block title %}Return Book{% endblock %}
+{% block title %}Process Return — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<a href="{{ url_for('librarian.dashboard') }}">Dashboard</a><span>Return Book</span>{% endblock %}
 {% block content %}
-<div class="page-header"><h1>Return Book</h1></div>
-<div class="card" style="max-width:600px;">
-    {% if form.checkout_id.choices %}
+<div class="page-header">
+    <h1>Process a Book Return</h1>
+    <p class="page-subtitle">Select the active checkout to mark as returned. Overdue returns automatically generate a fine.</p>
+</div>
+
+{% if form.checkout_id.choices %}
+<div class="card" style="max-width:680px;">
+    <h2><i class="fa-solid fa-rotate-left text-gold" aria-hidden="true"></i> Active checkouts awaiting return</h2>
     <form method="POST">
         {{ form.hidden_tag() }}
-        <div class="form-group">{{ form.checkout_id.label }}{{ form.checkout_id(class='form-control') }}</div>
-        {{ form.submit(class='btn btn-primary') }}
+        <div class="form-group">
+            <label for="checkout_id">{{ form.checkout_id.label.text }}</label>
+            {{ form.checkout_id(id='checkout_id', class='form-control', size=15) }}
+        </div>
+        <button type="submit" class="btn btn-gradient" title="Mark this checkout as returned — overdue items auto-generate a fine"
+                data-confirm="Mark this book as returned? Overdue items will automatically receive a fine.">
+            <i class="fa-solid fa-rotate-left"></i> {{ form.submit.label.text }}
+        </button>
     </form>
-    {% else %}
-    <div class="empty-state">No active checkouts to return.</div>
-    {% endif %}
 </div>
+
+<div class="card">
+    <h2><i class="fa-solid fa-circle-info text-muted" aria-hidden="true"></i> Tip</h2>
+    <p class="text-muted" style="font-size:0.9rem;margin:0;">
+        Each active checkout is listed in the dropdown above with the student name, book title, and due date.
+        Select one and click <strong>Record return</strong> to process it. If the book is overdue, a fine
+        will be issued automatically and logged in the audit trail.
+    </p>
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state-component">
+        <i class="fa-solid fa-circle-check empty-icon" style="color:var(--success);" aria-hidden="true"></i>
+        <h3>No active checkouts</h3>
+        <p>There are no books currently on loan to return. Visit the catalog or check out a book first.</p>
+        <a href="{{ url_for('librarian.checkout') }}" class="btn btn-gradient" style="margin-top:1rem;"><i class="fa-solid fa-hand-holding-heart"></i> Check out a book</a>
+    </div>
+</div>
+{% endif %}
 {% endblock %}

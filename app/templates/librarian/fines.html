@@ -1,37 +1,110 @@
 {% extends 'base.html' %}
-{% block title %}Fine Management{% endblock %}
+{% block title %}Fine Management — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<a href="{{ url_for('librarian.dashboard') }}">Dashboard</a><span>Fines</span>{% endblock %}
 {% block content %}
-<div class="page-header"><h1>Fine Management</h1></div>
+<div class="page-header">
+    <h1><i class="fa-solid fa-coins text-gold" aria-hidden="true"></i> Fine Management</h1>
+    <p class="page-subtitle">Issue, waive, and mark-paid fines. All actions are audit-logged.</p>
+</div>
+
+<!-- Summary -->
+<div class="grid-3" style="margin-bottom:1.5rem;">
+    <div class="stat-card accent-adinkra">
+        <div class="stat-text"><div class="stat-value">{{ currency_symbol }} {{ '%.2f'|format(outstanding) }}</div><div class="stat-label">Outstanding</div></div>
+        <span class="stat-icon cedis-icon" style="background:rgba(255,255,255,0.15);color:#fff;" aria-hidden="true">₵</span>
+    </div>
+    <div class="stat-card accent-success">
+        <div class="stat-text"><div class="stat-value">{{ currency_symbol }} {{ '%.2f'|format(paid_this_month) }}</div><div class="stat-label">Collected (Total Paid)</div></div>
+        <span class="stat-icon cedis-icon" style="background:rgba(255,255,255,0.15);color:#fff;" aria-hidden="true">₵</span>
+    </div>
+    <div class="stat-card accent-gold">
+        <div class="stat-text"><div class="stat-value">{{ currency_symbol }} {{ '%.2f'|format(total_issued) }}</div><div class="stat-label">Total Issued</div></div>
+        <span class="stat-icon cedis-icon" style="background:rgba(255,255,255,0.15);color:#fff;" aria-hidden="true">₵</span>
+    </div>
+</div>
+
 <div class="card">
-    <div class="table-wrap"><table>
-        <thead><tr><th>Student</th><th>Book</th><th>Days</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody>
-        {% for f in fines %}
-        <tr>
-            <td>{{ f.student.full_name }}</td>
-            <td>{{ f.checkout.book.title if f.checkout else 'N/A' }}</td>
-            <td>{{ f.days_overdue }}</td>
-            <td>GHS {{ '%.2f'|format(f.total_amount) }}</td>
-            <td><span class="badge badge-{{ f.status }}">{{ f.status }}</span></td>
-            <td>
-                {% if f.status == 'issued' %}
-                <form method="POST" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-                    {{ form.hidden_tag() }}
-                    <input type="hidden" name="fine_id" value="{{ f.fine_id }}">
-                    <select name="action" class="form-control" style="width:auto;">
-                        <option value="paid">Mark Paid</option>
-                        <option value="waived">Waive</option>
-                    </select>
-                    <input type="text" name="waiver_reason" class="form-control" placeholder="Reason (for waiver)" style="width:150px;">
-                    <button type="submit" class="btn btn-sm btn-primary">Submit</button>
-                </form>
-                {% else %}—{% endif %}
-            </td>
-        </tr>
-        {% else %}
-        <tr><td colspan="6" class="empty-state">No fines recorded.</td></tr>
-        {% endfor %}
-        </tbody>
-    </table></div>
+    {% if fines %}
+    <div class="table-wrap fancy-scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Book</th>
+                    <th>Days</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th class="nowrap">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for f in fines %}
+            <tr>
+                <td>
+                    <div style="font-weight:600;">{{ f.student.full_name }}</div>
+                    <div class="text-muted" style="font-size:0.75rem;">{{ f.student.student_id or '—' }}</div>
+                </td>
+                <td>
+<div style="display:flex; align-items:center; gap:0.75rem;">
+    {% if f.checkout.book and f.checkout.book.cover_image %}
+        <img src="{{ url_for('static', filename='covers/' + f.checkout.book.cover_image) }}" alt="Cover" style="width:32px; height:48px; object-fit:cover; border-radius:4px; box-shadow:var(--shadow); flex-shrink:0;">
+    {% else %}
+        <div style="width:32px; height:48px; background:var(--color-surface-alt); border-radius:4px; display:flex; align-items:center; justify-content:center; color:var(--color-muted); font-size:0.75rem; flex-shrink:0;">
+            <i class="fa-solid fa-book"></i>
+        </div>
+    {% endif %}
+    <div>
+{{ f.checkout.book.title if f.checkout else '—' }}
+</div>
+</div>
+</td>
+                <td>{{ f.days_overdue }}</td>
+                <td><strong>{{ currency_symbol }} {{ '%.2f'|format(f.total_amount) }}</strong></td>
+                <td>
+                    <span class="badge badge-{{ f.status }}">{{ f.status }}</span>
+                    {% if f.waiver_reason %}<div class="text-muted" style="font-size:0.72rem;margin-top:0.15rem;">&ldquo;{{ f.waiver_reason }}&rdquo;</div>{% endif %}
+                </td>
+                <td>
+                    {% if f.status in ('issued', 'pending') %}
+                    <form method="POST" style="display:flex;gap:0.4rem;flex-wrap:wrap;align-items:center;">
+                        {{ form.hidden_tag() }}
+                        <input type="hidden" name="fine_id" value="{{ f.fine_id }}">
+                        <button type="submit" name="action" value="paid" class="btn btn-sm btn-primary"
+                                title="Mark fine #{{ f.fine_id }} as paid"
+                                data-confirm="Mark this {{ currency_symbol }} {{ '%.2f'|format(f.total_amount) }} fine as paid?">
+                            <i class="fa-solid fa-circle-check"></i> Mark Paid
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="document.getElementById('waive-{{ f.fine_id }}').style.display='block';">
+                            <i class="fa-solid fa-circle-minus"></i> Waive
+                        </button>
+                    </form>
+                    <div id="waive-{{ f.fine_id }}" style="display:none;margin-top:0.5rem;border-top:1px dashed var(--color-border);padding-top:0.5rem;">
+                        <form method="POST">
+                            {{ form.hidden_tag() }}
+                            <input type="hidden" name="fine_id" value="{{ f.fine_id }}">
+                            <input type="hidden" name="action" value="waived">
+                            <textarea name="waiver_reason" class="form-control" rows="2" placeholder="Reason for waiving (required)" required></textarea>
+                            <button type="submit" class="btn btn-sm btn-danger" style="margin-top:0.35rem;"
+                                    data-confirm="Waive this {{ currency_symbol }} {{ '%.2f'|format(f.total_amount) }} fine? This is logged in the audit trail.">
+                                <i class="fa-solid fa-gavel"></i> Confirm Waive
+                            </button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <span class="text-muted" style="font-size:0.85rem;">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state-component">
+        <i class="fa-solid fa-circle-check empty-icon" style="color:var(--success);" aria-hidden="true"></i>
+        <h3>No fines on record</h3>
+        <p>Fines appear here when books are returned late.</p>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

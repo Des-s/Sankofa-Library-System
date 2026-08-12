@@ -1,67 +1,166 @@
 {% extends 'base.html' %}
-{% block title %}{{ student.full_name }}{% endblock %}
+{% block title %}{{ student.full_name }} — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<a href="{{ url_for('librarian.dashboard') }}">Dashboard</a><a href="{{ url_for('librarian.students') }}">Students</a><span>{{ student.full_name }}</span>{% endblock %}
 {% block content %}
-<div class="page-header">
-    <h1>{{ student.full_name }}</h1>
-    <p>{{ student.student_id }} &mdash; {{ student.department }}, Year {{ student.year_of_study }}</p>
+<div class="page-header page-header-split">
+    <div style="display:flex;align-items:center;gap:1rem;">
+        <span class="avatar-circle" style="width:64px;height:64px;font-size:1.5rem;background:var(--color-primary);color:#fff;">{{ student.initials }}</span>
+        <div>
+            <h1>{{ student.full_name }}</h1>
+            <p class="page-subtitle">
+                {{ student.student_id }} &middot; {{ student.email }}
+                {% if student.department %}<br>{{ student.department }}{% if student.year_of_study %} &middot; Year {{ student.year_of_study }}{% endif %}{% endif %}
+            </p>
+        </div>
+    </div>
     <div class="btn-group">
-        <a href="{{ url_for('librarian.edit_student', user_id=student.user_id) }}" class="btn btn-outline">Edit Student</a>
+        <a href="{{ url_for('librarian.edit_student', user_id=student.user_id) }}" class="btn btn-outline"><i class="fa-solid fa-pen"></i> Edit</a>
+        <a href="{{ url_for('librarian.students') }}" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</a>
     </div>
 </div>
+
+<!-- Summary tiles -->
+<div class="grid-4" style="margin-bottom:1.5rem;">
+    <div class="stat-card">
+        <div class="stat-text"><div class="stat-value">{{ checkouts | selectattr('status', 'in', ['active','overdue']) | list | length }}</div><div class="stat-label">Active loans</div></div>
+        <i class="fa-solid fa-book-bookmark stat-icon forest" aria-hidden="true"></i>
+    </div>
+    <div class="stat-card">
+        <div class="stat-text"><div class="stat-value">{{ checkouts | length }}</div><div class="stat-label">Total checkouts</div></div>
+        <i class="fa-solid fa-book stat-icon gold" aria-hidden="true"></i>
+    </div>
+    <div class="stat-card">
+        <div class="stat-text"><div class="stat-value">{{ currency_symbol }} {{ '%.2f'|format(fines | selectattr('status', 'in', ['issued','pending']) | map(attribute='total_amount') | sum) }}</div><div class="stat-label">Outstanding fines</div></div>
+        <span class="stat-icon cedis-icon" aria-hidden="true">₵</span>
+    </div>
+    <div class="stat-card">
+        <div class="stat-text"><div class="stat-value">{{ currency_symbol }} {{ '%.2f'|format(fines | map(attribute='total_amount') | sum) }}</div><div class="stat-label">Total fines issued</div></div>
+        <span class="stat-icon cedis-icon" aria-hidden="true">₵</span>
+    </div>
+</div>
+
 <div class="grid-2">
+    <!-- Library card visual -->
     <div class="card">
-        <h2>Library Card</h2>
+        <h2><i class="fa-solid fa-id-card text-primary" aria-hidden="true"></i> Library Card</h2>
         {% if student.library_card %}
-<div class="library-card-display" style="background:#0a3d2e;border-radius:14px;padding:1.5rem;color:#fff;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;border-bottom:1px solid rgba(255,255,255,0.2);padding-bottom:0.75rem;">
-    <span style="font-weight:500;font-size:15px;letter-spacing:0.5px;">SANKOFA LIBRARY</span>
-  </div>
-  <div style="display:flex;gap:14px;align-items:flex-start;">
-    <div style="width:72px;height:88px;border-radius:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
-      {% if student.profile_photo %}
-        <img src="{{ url_for('static', filename='uploads/profile_photos/' + student.profile_photo) }}" alt="" style="width:100%;height:100%;object-fit:cover;">
-      {% else %}
-        <span style="font-size:24px;font-weight:500;color:#e8b84b;">{{ student.full_name.split()[0][0] }}{{ student.full_name.split()[-1][0] if student.full_name.split()|length > 1 else '' }}</span>
-      {% endif %}
+        <div class="library-card-display">
+            <div class="kente-bar" style="height:4px;margin-bottom:1rem;"></div>
+            <div class="card-label">Sankofa Library Card</div>
+            <div class="card-number">{{ student.library_card.card_number }}</div>
+            <div class="card-holder">{{ student.full_name }}</div>
+            <div class="card-bottom">
+                <span>Issued: {{ student.library_card.issued_date.strftime('%Y-%m-%d') }}</span>
+                <span>{% if student.library_card.is_valid %}<i class="fa-solid fa-circle-check" style="color:var(--success);"></i> Valid{% else %}<i class="fa-solid fa-circle-xmark" style="color:var(--adinkra);"></i> Invalid{% endif %}</span>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">No library card on file.</div>
+        {% endif %}
+
+        <h2 style="margin-top:1.5rem;"><i class="fa-solid fa-user" aria-hidden="true"></i> Profile Details</h2>
+        <dl class="book-detail-meta-grid">
+            <div class="meta-row"><dt><i class="fa-solid fa-id-card"></i> Student ID</dt><dd><code>{{ student.student_id or '—' }}</code></dd></div>
+            <div class="meta-row"><dt><i class="fa-solid fa-envelope"></i> Email</dt><dd>{{ student.email }}</dd></div>
+            <div class="meta-row"><dt><i class="fa-solid fa-building"></i> Department</dt><dd>{{ student.department or '—' }}</dd></div>
+            <div class="meta-row"><dt><i class="fa-solid fa-graduation-cap"></i> Year</dt><dd>{{ student.year_of_study or '—' }}</dd></div>
+            <div class="meta-row"><dt><i class="fa-solid fa-calendar"></i> Joined</dt><dd>{{ student.created_at.strftime('%Y-%m-%d') }}</dd></div>
+            {% if student.last_login_at %}<div class="meta-row"><dt><i class="fa-solid fa-right-to-bracket"></i> Last login</dt><dd>{{ student.last_login_at.strftime('%Y-%m-%d %H:%M') }}</dd></div>{% endif %}
+        </dl>
     </div>
-    <div style="flex:1;min-width:0;">
-      <p style="margin:0 0 2px;font-size:11px;letter-spacing:0.5px;color:rgba(255,255,255,0.55);">CARD NUMBER</p>
-      <p style="margin:0 0 12px;font-size:17px;font-weight:500;color:#e8b84b;">{{ student.library_card.card_number }}</p>
-      <p style="margin:0 0 2px;font-size:11px;letter-spacing:0.5px;color:rgba(255,255,255,0.55);">STUDENT</p>
-      <p style="margin:0 0 8px;font-size:15px;font-weight:500;">{{ student.full_name }}</p>
-      <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.6);">{{ student.department }}{% if student.year_of_study %} • Year {{ student.year_of_study }}{% endif %}</p>
-    </div>
-  </div>
-</div>
-{% else %}
-<p>No library card found.</p>
-{% endif %}
-    </div>
+
+    <!-- Fines -->
     <div class="card">
-        <h2>Fines</h2>
+        <h2><i class="fa-solid fa-coins text-gold" aria-hidden="true"></i> Fines</h2>
         {% if fines %}
-        <div class="table-wrap"><table>
-            <thead><tr><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
-            <tbody>{% for f in fines %}<tr><td>GHS {{ '%.2f'|format(f.total_amount) }}</td><td><span class="badge badge-{{ f.status }}">{{ f.status }}</span></td><td>{{ f.created_at.strftime('%Y-%m-%d') }}</td></tr>{% endfor %}</tbody>
-        </table></div>
-        {% else %}<p>No fines.</p>{% endif %}
+        <div class="table-wrap fancy-scroll" style="max-height:24rem;">
+            <table>
+                <thead><tr><th>Book</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+                <tbody>
+                {% for f in fines %}
+                <tr>
+                    <td>
+<div style="display:flex; align-items:center; gap:0.75rem;">
+    {% if f.checkout.book and f.checkout.book.cover_image %}
+        <img src="{{ url_for('static', filename='covers/' + f.checkout.book.cover_image) }}" alt="Cover" style="width:32px; height:48px; object-fit:cover; border-radius:4px; box-shadow:var(--shadow); flex-shrink:0;">
+    {% else %}
+        <div style="width:32px; height:48px; background:var(--color-surface-alt); border-radius:4px; display:flex; align-items:center; justify-content:center; color:var(--color-muted); font-size:0.75rem; flex-shrink:0;">
+            <i class="fa-solid fa-book"></i>
+        </div>
+    {% endif %}
+    <div>
+{{ f.checkout.book.title if f.checkout else '—' }}
+</div>
+</div>
+</td>
+                    <td><strong>{{ currency_symbol }} {{ '%.2f'|format(f.total_amount) }}</strong></td>
+                    <td><span class="badge badge-{{ f.status }}">{{ f.status }}</span></td>
+                    <td class="text-muted">{{ f.created_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}<div class="empty-state">No fines on record.</div>{% endif %}
     </div>
 </div>
+
+<!-- Borrowing history -->
 <div class="card">
-    <h2>Borrowing History</h2>
-    <div class="table-wrap"><table>
-        <thead><tr><th>Book</th><th>Checked Out</th><th>Due</th><th>Returned</th><th>Status</th></tr></thead>
-        <tbody>{% for c in checkouts %}<tr><td>{{ c.book.title }}</td><td>{{ c.checkout_date }}</td><td>{{ c.expected_return_date }}</td><td>{{ c.actual_return_date or '—' }}</td><td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td></tr>{% endfor %}</tbody>
-    </table></div>
+    <h2><i class="fa-solid fa-clock-rotate-left text-primary" aria-hidden="true"></i> Borrowing History</h2>
+    {% if checkouts %}
+    <div class="table-wrap fancy-scroll" style="max-height:24rem;">
+        <table>
+            <thead><tr><th>Book</th><th>Checked Out</th><th>Due</th><th>Returned</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for c in checkouts %}
+            <tr>
+                <td>
+<div style="display:flex; align-items:center; gap:0.75rem;">
+    {% if c.book and c.book.cover_image %}
+        <img src="{{ url_for('static', filename='covers/' + c.book.cover_image) }}" alt="Cover" style="width:32px; height:48px; object-fit:cover; border-radius:4px; box-shadow:var(--shadow); flex-shrink:0;">
+    {% else %}
+        <div style="width:32px; height:48px; background:var(--color-surface-alt); border-radius:4px; display:flex; align-items:center; justify-content:center; color:var(--color-muted); font-size:0.75rem; flex-shrink:0;">
+            <i class="fa-solid fa-book"></i>
+        </div>
+    {% endif %}
+    <div>
+{{ c.book.title }}
 </div>
+</div>
+</td>
+                <td class="text-muted">{{ c.checkout_date }}</td>
+                <td class="text-muted">{{ c.expected_return_date }}</td>
+                <td class="text-muted">{{ c.actual_return_date or '—' }}</td>
+                <td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}<div class="empty-state">No checkouts on record.</div>{% endif %}
+</div>
+
+<!-- Reports filed about this student -->
 <div class="card">
-    <h2>Reports Filed About This Student</h2>
+    <h2><i class="fa-solid fa-file-lines text-gold" aria-hidden="true"></i> Reports Filed About This Student</h2>
     {% if reports %}
-    <div class="table-wrap"><table>
-        <thead><tr><th>Title</th><th>Type</th><th>Severity</th><th>Filed</th><th>Description</th></tr></thead>
-        <tbody>{% for r in reports %}<tr><td>{{ r.title }}</td><td>{{ r.report_type }}</td><td><span class="badge badge-{{ 'overdue' if r.severity == 'high' else ('issued' if r.severity == 'medium' else 'active') }}">{{ r.severity }}</span></td><td>{{ r.date_filed.strftime('%Y-%m-%d') if r.date_filed else '—' }}</td><td>{{ r.description }}</td></tr>{% endfor %}</tbody>
-    </table></div>
+    <div class="table-wrap fancy-scroll" style="max-height:24rem;">
+        <table>
+            <thead><tr><th>Title</th><th>Type</th><th>Severity</th><th>Filed</th><th>Description</th></tr></thead>
+            <tbody>
+            {% for r in reports %}
+            <tr>
+                <td>{{ r.title }}</td>
+                <td>{{ r.report_type }}</td>
+                <td><span class="badge badge-{{ r.severity }}">{{ r.severity }}</span></td>
+                <td class="text-muted">{{ r.date_filed.strftime('%Y-%m-%d') if r.date_filed else '—' }}</td>
+                <td class="text-muted">{{ r.description }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
     {% else %}<div class="empty-state">No reports filed about this student.</div>{% endif %}
 </div>
-<a href="{{ url_for('librarian.students') }}" class="btn btn-outline">Back to Students</a>
 {% endblock %}

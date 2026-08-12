@@ -1,6 +1,116 @@
 {% extends 'base.html' %}
-{% block title %}Profile — Sankofa Library{% endblock %}
+{% block title %}My Profile — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<span>Profile</span>{% endblock %}
 {% block content %}
-{% set role = 'student' %}
-{% include '_profile_content.html' %}
+<div class="page-header page-header-split">
+    <div>
+        <h1>Profile &amp; Security</h1>
+        <p class="page-subtitle">Manage your account, password, and profile photo.</p>
+    </div>
+    <a href="{{ url_for('student.settings') }}" class="btn btn-outline"><i class="fa-solid fa-gear"></i> Settings</a>
+</div>
+
+<div class="grid-2">
+    <!-- Profile card -->
+    <div class="card">
+        <h2><i class="fa-solid fa-user" aria-hidden="true"></i> Account</h2>
+        <div class="avatar-upload" style="margin-bottom:1rem;">
+            <form method="POST" action="{{ url_for('student.update_photo') }}" enctype="multipart/form-data" id="photoForm">
+                {{ photo_form.hidden_tag() }}
+                <div class="avatar-upload-circle" style="width:96px;height:96px;font-size:1.75rem;">
+                    {% if current_user.profile_photo %}
+                    <img src="{{ url_for('static', filename='uploads/profile_photos/' + current_user.profile_photo) }}" alt="">
+                    {% else %}
+                    <span>{{ current_user.initials }}</span>
+                    {% endif %}
+                    <label for="photoInput" class="avatar-upload-btn" title="Change photo">
+                        <i class="fa-solid fa-camera"></i>
+                    </label>
+                    {{ photo_form.profile_photo(id="photoInput", style="display:none;", onchange="document.getElementById('photoForm').submit()") }}
+                </div>
+            </form>
+        </div>
+        {% if photo_form.profile_photo.errors %}
+        <p style="color:var(--color-danger);text-align:center;font-size:0.85rem;">{{ photo_form.profile_photo.errors[0] }}</p>
+        {% endif %}
+
+        <dl class="book-detail-meta-grid">
+            <div class="meta-row"><dt><i class="fa-solid fa-user"></i> Name</dt><dd>{{ current_user.full_name }}</dd></div>
+            <div class="meta-row"><dt><i class="fa-solid fa-envelope"></i> Email</dt><dd>{{ current_user.email }}</dd></div>
+            {% if current_user.username %}<div class="meta-row"><dt><i class="fa-solid fa-at"></i> Username</dt><dd>{{ current_user.username }}</dd></div>{% endif %}
+            {% if current_user.student_id %}<div class="meta-row"><dt><i class="fa-solid fa-id-card"></i> Student ID</dt><dd><code>{{ current_user.student_id }}</code></dd></div>{% endif %}
+            {% if current_user.department %}<div class="meta-row"><dt><i class="fa-solid fa-building"></i> Department</dt><dd>{{ current_user.department }}</dd></div>{% endif %}
+            {% if current_user.year_of_study %}<div class="meta-row"><dt><i class="fa-solid fa-graduation-cap"></i> Year</dt><dd>{{ current_user.year_of_study }}</dd></div>{% endif %}
+            <div class="meta-row"><dt><i class="fa-solid fa-calendar"></i> Joined</dt><dd>{{ current_user.created_at.strftime('%Y-%m-%d') }}</dd></div>
+            {% if current_user.last_login_at %}<div class="meta-row"><dt><i class="fa-solid fa-right-to-bracket"></i> Last login</dt><dd>{{ current_user.last_login_at.strftime('%Y-%m-%d %H:%M') }}</dd></div>{% endif %}
+        </dl>
+
+        {% if card %}
+        <div class="library-card-display" style="margin-top:1rem;">
+            <div class="kente-bar" style="height:4px;margin-bottom:0.75rem;"></div>
+            <div class="card-label">Sankofa Library Card</div>
+            <div class="card-number">{{ card.card_number }}</div>
+            <div class="card-holder">{{ current_user.full_name }}</div>
+            <div class="card-bottom">
+                <span>Issued: {{ card.issued_date.strftime('%Y-%m-%d') }}</span>
+                <span>{% if card.is_valid %}<i class="fa-solid fa-circle-check" style="color:var(--success);"></i> Valid{% else %}<i class="fa-solid fa-circle-xmark" style="color:var(--adinkra);"></i> Invalid{% endif %}</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Change password -->
+    <div class="card">
+        <h2><i class="fa-solid fa-key" aria-hidden="true"></i> Change Password</h2>
+        <form method="POST" action="{{ url_for('student.change_password') }}">
+            {{ password_form.hidden_tag() }}
+            <div class="form-group">
+                <label for="current_password">Current password</label>
+                <div class="auth-input-wrap">
+                    <i class="fa-solid fa-lock input-icon" aria-hidden="true"></i>
+                    {{ password_form.current_password(id='current_password', class='form-input', placeholder='Enter current password', autocomplete='current-password', required=True) }}
+                    <button type="button" class="toggle-pwd" title="Show or hide password" aria-label="Show or hide password" onclick="
+                        var i = this.parentElement.querySelector('input');
+                        var ic = this.querySelector('i');
+                        if (i.type === 'password') { i.type = 'text'; ic.classList.replace('fa-eye','fa-eye-slash'); }
+                        else { i.type = 'password'; ic.classList.replace('fa-eye-slash','fa-eye'); }
+                    "><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
+                </div>
+                {% for error in password_form.current_password.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                <label for="new_password">New password</label>
+                <div class="auth-input-wrap">
+                    <i class="fa-solid fa-lock input-icon" aria-hidden="true"></i>
+                    {{ password_form.new_password(id='new_password', class='form-input', placeholder='At least 8 characters', autocomplete='new-password', required=True) }}
+                    <button type="button" class="toggle-pwd" title="Show or hide password" aria-label="Show or hide password" onclick="
+                        var i = this.parentElement.querySelector('input');
+                        var ic = this.querySelector('i');
+                        if (i.type === 'password') { i.type = 'text'; ic.classList.replace('fa-eye','fa-eye-slash'); }
+                        else { i.type = 'password'; ic.classList.replace('fa-eye-slash','fa-eye'); }
+                    "><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
+                </div>
+                <small>At least 8 characters, with a letter and a number.</small>
+                {% for error in password_form.new_password.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                <label for="confirm_new_password">Confirm new password</label>
+                <div class="auth-input-wrap">
+                    <i class="fa-solid fa-lock input-icon" aria-hidden="true"></i>
+                    {{ password_form.confirm_new_password(id='confirm_new_password', class='form-input', placeholder='Re-enter new password', autocomplete='new-password', required=True) }}
+                    <button type="button" class="toggle-pwd" title="Show or hide password" aria-label="Show or hide password" onclick="
+                        var i = this.parentElement.querySelector('input');
+                        var ic = this.querySelector('i');
+                        if (i.type === 'password') { i.type = 'text'; ic.classList.replace('fa-eye','fa-eye-slash'); }
+                        else { i.type = 'password'; ic.classList.replace('fa-eye-slash','fa-eye'); }
+                    "><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
+                </div>
+                {% for error in password_form.confirm_new_password.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+            <button type="submit" class="btn btn-gradient" title="Update your password — you will need to sign in again">
+                <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> {{ password_form.submit.label.text }}
+            </button>
+        </form>
+    </div>
+</div>
 {% endblock %}

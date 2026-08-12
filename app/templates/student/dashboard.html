@@ -1,57 +1,100 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard — Sankofa Library{% endblock %}
+{% block title %}My Dashboard — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<span>Dashboard</span>{% endblock %}
 {% block content %}
-<div class="page-header">
-    <h1>Welcome, {{ current_user.full_name }}</h1>
-    <p>Your library dashboard</p>
+<div class="page-header page-header-split">
+    <div>
+        <h1>Welcome, {{ current_user.full_name.split()[0] }}</h1>
+        <p class="page-subtitle">Your library at a glance — loans, fines, and reading activity.</p>
+    </div>
+    <a href="{{ url_for('catalog.catalog') }}" class="btn btn-gradient" title="Browse the full library catalog">
+        <i class="fa-solid fa-book-open" aria-hidden="true"></i> Browse Catalog
+    </a>
 </div>
+<div class="kente-bar" style="height:4px;border-radius:var(--radius);margin-bottom:1.5rem;"></div>
 
 <div class="grid-2">
+    <!-- Library card visual -->
     <div class="card">
-        <h2>Your Library Card</h2>
+        <h2><i class="fa-solid fa-id-card text-primary" aria-hidden="true"></i> Your Library Card</h2>
         {% if card %}
         <div class="library-card-display">
+            <div class="kente-bar" style="height:4px;margin-bottom:1rem;"></div>
             <div class="card-label">Sankofa Library Card</div>
             <div class="card-number">{{ card.card_number }}</div>
             <div class="card-holder">{{ current_user.full_name }}</div>
-            <div style="font-size:0.8rem;opacity:0.7;margin-top:0.5rem;">Issued: {{ card.issued_date }}</div>
+            <div class="card-bottom">
+                <span>Issued: {{ card.issued_date.strftime('%Y-%m-%d') }}</span>
+                <span>{% if card.is_valid %}<i class="fa-solid fa-circle-check" style="color:var(--success);"></i> Valid{% else %}<i class="fa-solid fa-circle-xmark" style="color:var(--adinkra);"></i> Invalid{% endif %}</span>
+            </div>
         </div>
         {% else %}
-        <p>No library card found. Contact the library.</p>
+        <div class="empty-state">No library card on file. Contact the library.</div>
         {% endif %}
     </div>
 
+    <!-- Quick stats + actions -->
     <div class="card">
-        <h2>Quick Summary</h2>
+        <h2><i class="fa-solid fa-chart-simple text-gold" aria-hidden="true"></i> Quick Summary</h2>
         <div class="grid-2">
             <div class="stat-card">
-                <div class="stat-value">{{ active_checkouts|length }}</div>
-                <div class="stat-label">Active Borrowings</div>
+                <div class="stat-text"><div class="stat-value">{{ active_checkouts | length }}</div><div class="stat-label">Active Borrowings</div></div>
+                <i class="fa-solid fa-book-bookmark stat-icon forest" aria-hidden="true"></i>
             </div>
             <div class="stat-card">
-                <div class="stat-value">{{ outstanding_fines|length }}</div>
-                <div class="stat-label">Outstanding Fines</div>
+                <div class="stat-text"><div class="stat-value">{{ currency_symbol }} {{ '%.2f'|format(outstanding_fines | map(attribute='total_amount') | sum) }}</div><div class="stat-label">Outstanding Fines</div></div>
+                <span class="stat-icon cedis-icon" aria-hidden="true">₵</span>
+            </div>
+            <div class="stat-card">
+                <div class="stat-text"><div class="stat-value">{{ recent_sessions | length }}</div><div class="stat-label">Recent Sessions</div></div>
+                <i class="fa-solid fa-glasses stat-icon gold" aria-hidden="true"></i>
+            </div>
+            <div class="stat-card">
+                <div class="stat-text"><div class="stat-value">{{ active_checkouts | selectattr('status', 'equalto', 'overdue') | list | length }}</div><div class="stat-label">Overdue Books</div></div>
+                <i class="fa-solid fa-triangle-exclamation stat-icon adinkra" aria-hidden="true"></i>
             </div>
         </div>
         <div class="btn-group" style="margin-top:1rem;">
-            <a href="{{ url_for('catalog.catalog') }}" class="btn btn-primary">Browse Catalog</a>
-            <a href="{{ url_for('student.borrowings') }}" class="btn btn-outline">My Borrowings</a>
+            <a href="{{ url_for('student.borrowings') }}" class="btn btn-outline" title="View your active and past loans"><i class="fa-solid fa-book-bookmark"></i> My Borrowings</a>
+            <a href="{{ url_for('student.fines') }}" class="btn btn-outline" title="Outstanding and historical fines"><i class="fa-solid fa-coins"></i> My Fines</a>
         </div>
     </div>
 </div>
 
+<!-- Active borrowings -->
 {% if active_checkouts %}
 <div class="card">
-    <h2>Active Borrowings</h2>
-    <div class="table-wrap">
+    <h2><i class="fa-solid fa-book-bookmark text-primary" aria-hidden="true"></i> Active Borrowings</h2>
+    <div class="table-wrap fancy-scroll" style="max-height:24rem;">
         <table>
             <thead><tr><th>Book</th><th>Checked Out</th><th>Due Date</th><th>Status</th></tr></thead>
             <tbody>
             {% for c in active_checkouts %}
             <tr>
-                <td>{{ c.book.title }}</td>
-                <td>{{ c.checkout_date }}</td>
-                <td>{{ c.expected_return_date }}</td>
+                <td>
+                    <div style="display:flex; align-items:center; gap:0.75rem;">
+                        {% if c.book.cover_image %}
+                            <img src="{{ url_for('static', filename='covers/' + c.book.cover_image) }}" alt="Cover" style="width:32px; height:48px; object-fit:cover; border-radius:4px; box-shadow:var(--shadow); flex-shrink:0;">
+                        {% else %}
+                            <div style="width:32px; height:48px; background:var(--color-surface-alt); border-radius:4px; display:flex; align-items:center; justify-content:center; color:var(--color-muted); font-size:0.75rem; flex-shrink:0;">
+                                <i class="fa-solid fa-book"></i>
+                            </div>
+                        {% endif %}
+                        <div>
+                            <a href="{{ url_for('catalog.book_detail', book_id=c.book.book_id) }}" style="font-weight:600;color:var(--color-primary);">{{ c.book.title }}</a>
+                            <div class="text-muted" style="font-size:0.72rem;">{{ c.book.author }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="text-muted">{{ c.checkout_date }}</td>
+                <td>
+                    <div class="text-muted">{{ c.expected_return_date }}</div>
+                    {% if c.status == 'overdue' %}
+                    <span class="badge badge-overdue" style="margin-top:0.2rem;">{{ c.days_overdue }} days overdue</span>
+                    {% else %}
+                    <div class="text-muted" style="font-size:0.7rem;">Due in {{ c.days_until_due }} day{{ 's' if c.days_until_due != 1 }}</div>
+                    {% endif %}
+                </td>
                 <td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
             </tr>
             {% endfor %}
@@ -61,39 +104,51 @@
 </div>
 {% endif %}
 
+<!-- Outstanding fines summary -->
 {% if outstanding_fines %}
-<div class="card">
-    <h2>Outstanding Fines</h2>
-    <div class="table-wrap">
-        <table>
-            <thead><tr><th>Book</th><th>Days Overdue</th><th>Amount</th><th>Status</th></tr></thead>
-            <tbody>
-            {% for f in outstanding_fines %}
-            <tr>
-                <td>{{ f.checkout.book.title if f.checkout else 'N/A' }}</td>
-                <td>{{ f.days_overdue }}</td>
-                <td>GHS {{ '%.2f'|format(f.total_amount) }}</td>
-                <td><span class="badge badge-{{ f.status }}">{{ f.status }}</span></td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+<div class="card" style="border-left:4px solid var(--adinkra);">
+    <h2 style="color:var(--adinkra);"><i class="fa-solid fa-coins" aria-hidden="true"></i> Outstanding Fines</h2>
+    <div class="grid-2">
+        <div>
+            <p class="text-muted" style="margin:0 0 0.5rem;">You have <strong>{{ outstanding_fines|length }}</strong> outstanding fine{{ 's' if outstanding_fines|length != 1 }} totaling:</p>
+            <div style="font-size:2rem;font-weight:800;color:var(--adinkra);font-family:'Outfit',sans-serif;">{{ currency_symbol }} {{ '%.2f'|format(outstanding_fines | map(attribute='total_amount') | sum) }}</div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:flex-end;">
+            <a href="{{ url_for('student.fines') }}" class="btn btn-gradient" title="View and resolve your outstanding fines">
+                <i class="fa-solid fa-arrow-right"></i> View Fines
+            </a>
+        </div>
     </div>
 </div>
 {% endif %}
 
+<!-- Recently read -->
 {% if recent_sessions %}
 <div class="card">
-    <h2>Recent Reading Activity</h2>
-    <div class="table-wrap">
+    <h2><i class="fa-solid fa-glasses text-gold" aria-hidden="true"></i> Recently Read</h2>
+    <div class="table-wrap fancy-scroll" style="max-height:18rem;">
         <table>
-            <thead><tr><th>Book</th><th>Started</th><th>Verified</th></tr></thead>
+            <thead><tr><th>Book</th><th>Started</th><th>Ended</th><th>Verified</th></tr></thead>
             <tbody>
             {% for s in recent_sessions %}
             <tr>
-                <td>{{ s.book.title }}</td>
-                <td>{{ s.session_start.strftime('%Y-%m-%d %H:%M') }}</td>
-                <td>{% if s.card_verified %}Yes{% else %}No{% endif %}</td>
+                <td>
+<div style="display:flex; align-items:center; gap:0.75rem;">
+    {% if s.book and s.book.cover_image %}
+        <img src="{{ url_for('static', filename='covers/' + s.book.cover_image) }}" alt="Cover" style="width:32px; height:48px; object-fit:cover; border-radius:4px; box-shadow:var(--shadow); flex-shrink:0;">
+    {% else %}
+        <div style="width:32px; height:48px; background:var(--color-surface-alt); border-radius:4px; display:flex; align-items:center; justify-content:center; color:var(--color-muted); font-size:0.75rem; flex-shrink:0;">
+            <i class="fa-solid fa-book"></i>
+        </div>
+    {% endif %}
+    <div>
+<a href="{{ url_for('catalog.book_detail', book_id=s.book.book_id) }}" style="color:var(--color-primary);">{{ s.book.title }}</a>
+</div>
+</div>
+</td>
+                <td class="text-muted">{{ s.session_start.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td class="text-muted">{{ s.session_end.strftime('%Y-%m-%d %H:%M') if s.session_end else '<span class=\"badge badge-active\">in progress</span>'|safe }}</td>
+                <td>{% if s.card_verified %}<i class="fa-solid fa-circle-check" style="color:var(--success);"></i>{% else %}<i class="fa-solid fa-circle-xmark" style="color:var(--adinkra);"></i>{% endif %}</td>
             </tr>
             {% endfor %}
             </tbody>

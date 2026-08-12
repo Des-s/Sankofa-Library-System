@@ -1,15 +1,38 @@
 {% extends 'base.html' %}
-{% block title %}Edit {{ student.full_name }}{% endblock %}
+{% block title %}Edit {{ student.full_name }} — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<a href="{{ url_for('librarian.dashboard') }}">Dashboard</a><a href="{{ url_for('librarian.students') }}">Students</a><a href="{{ url_for('librarian.student_detail', user_id=student.user_id) }}">{{ student.full_name }}</a><span>Edit</span>{% endblock %}
 {% block content %}
-<div class="page-header"><h1>Edit {{ student.full_name }}</h1><p>{{ student.student_id }} &mdash; {{ student.email }}</p></div>
-<div class="card" style="max-width:500px;">
+<div class="page-header">
+    <h1>Edit {{ student.full_name }}</h1>
+    <p class="page-subtitle">{{ student.student_id }} &mdash; {{ student.email }}</p>
+</div>
+
+<div class="card" style="max-width:560px;">
     <form method="POST">
         {{ form.hidden_tag() }}
-        <div class="form-group">{{ form.department.label }}{{ form.department(class='form-control') }}</div>
-        <div class="form-group">{{ form.year_of_study.label }}{{ form.year_of_study(class='form-control') }}</div>
-        <div class="form-group checkbox-group">{{ form.is_active() }} {{ form.is_active.label }}</div>
-        {{ form.submit(class='btn btn-primary') }}
+        <div class="form-group">
+            <label for="department">{{ form.department.label.text }}</label>
+            {{ form.department(id='department', class='form-control', placeholder='Computer Science') }}
+            {% for error in form.department.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </div>
+        <div class="form-group">
+            <label for="year_of_study">{{ form.year_of_study.label.text }}</label>
+            {{ form.year_of_study(id='year_of_study', class='form-control', placeholder='1', type='number', min='1', max='6') }}
+            {% for error in form.year_of_study.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </div>
+        <div class="form-group checkbox-group">
+            <label class="toggle-switch">
+                {{ form.is_active() }}
+                <span class="toggle-slider"></span>
+            </label>
+            <span>{{ form.is_active.label.text }}</span>
+        </div>
+        <div class="btn-group">
+            <button type="submit" class="btn btn-gradient" title="Save changes to {{ student.full_name }}'s record">
+                <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> {{ form.submit.label.text }}
+            </button>
+            <a href="{{ url_for('librarian.student_detail', user_id=student.user_id) }}" class="btn btn-outline">Cancel</a>
+        </div>
     </form>
 </div>
-<a href="{{ url_for('librarian.student_detail', user_id=student.user_id) }}" class="btn btn-outline" style="margin-top:1rem;">Back</a>
 {% endblock %}

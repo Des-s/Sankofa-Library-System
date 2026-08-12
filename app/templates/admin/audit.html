@@ -1,26 +1,90 @@
 {% extends 'base.html' %}
-{% block title %}Audit Log{% endblock %}
+{% block title %}Audit Log — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<a href="{{ url_for('admin.dashboard') }}">Dashboard</a><span>Audit Log</span>{% endblock %}
 {% block content %}
-<div class="page-header"><h1>Audit Log</h1></div>
-<form method="GET" class="search-bar card">
-    <div class="form-group"><input type="text" name="q" class="form-control" value="{{ q }}" placeholder="Search actions..."></div>
-    <button type="submit" class="btn btn-primary">Search</button>
-</form>
-<div class="card">
-    <div class="table-wrap"><table>
-        <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Description</th></tr></thead>
-        <tbody>
-        {% for log in logs %}
-        <tr>
-            <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-            <td>{{ log.actor.full_name if log.actor else 'System' }}</td>
-            <td>{{ log.action_type }}</td>
-            <td>{{ log.description }}</td>
-        </tr>
-        {% else %}
-        <tr><td colspan="4" class="empty-state">No audit entries found.</td></tr>
-        {% endfor %}
-        </tbody>
-    </table></div>
+<div class="page-header">
+    <h1><i class="fa-solid fa-scroll text-primary" aria-hidden="true"></i> Audit Log</h1>
+    <p class="page-subtitle">A complete trail of every action performed in the library system — search, filter, and review.</p>
 </div>
+
+<form method="GET" class="search-bar card">
+    <div class="form-group" style="flex:1;min-width:200px;">
+        <label for="audit-q" class="sr-only">Search</label>
+        <div class="auth-input-wrap">
+            <i class="fa-solid fa-magnifying-glass input-icon" aria-hidden="true"></i>
+            <input type="text" id="audit-q" name="q" class="form-input" value="{{ q }}" placeholder="Search actions or descriptions..." autocomplete="off">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="audit-action" class="sr-only">Filter by action type</label>
+        <select id="audit-action" name="action_type" class="form-control">
+            <option value="">All action types</option>
+            {% for at in action_types %}
+            <option value="{{ at }}" {{ 'selected' if action_type == at }}>{{ at }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="audit-table" class="sr-only">Filter by target table</label>
+        <select id="audit-table" name="target_table" class="form-control">
+            <option value="">All targets</option>
+            {% for tt in target_tables %}
+            <option value="{{ tt }}" {{ 'selected' if target_table == tt }}>{{ tt }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-gradient" title="Run the audit-log search with the current filters">
+        <i class="fa-solid fa-filter"></i> Filter
+    </button>
+    {% if q or action_type or target_table %}
+    <a href="{{ url_for('admin.audit') }}" class="btn btn-outline">Clear</a>
+    {% endif %}
+</form>
+
+<div class="card">
+    {% if logs %}
+    <div class="table-container fancy-scroll" style="max-height:70vh;">
+        <table>
+            <thead style="position:sticky;top:0;background:var(--color-surface);z-index:1;">
+                <tr>
+                    <th class="nowrap">Timestamp</th>
+                    <th>Actor</th>
+                    <th>Action</th>
+                    <th>Target</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for log in logs %}
+            <tr>
+                <td class="nowrap text-muted">{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>
+                    {% if log.actor %}
+                    <div style="font-weight:500;">{{ log.actor.full_name }}</div>
+                    <div class="text-muted" style="font-size:0.72rem;">{{ log.actor.email }}</div>
+                    {% else %}
+                    <span class="text-muted">System</span>
+                    {% endif %}
+                </td>
+                <td><span class="badge badge-active" style="font-family:monospace;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;">{{ log.action_type }}</span></td>
+                <td>
+                    {% if log.target_table %}
+                    <code style="font-size:0.75rem;">{{ log.target_table }}{% if log.target_id %}#{{ log.target_id }}{% endif %}</code>
+                    {% else %}—{% endif %}
+                </td>
+                <td>{{ log.description }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state-component">
+        <i class="fa-solid fa-magnifying-glass empty-icon" aria-hidden="true"></i>
+        <h3>No audit entries found</h3>
+        <p>Try adjusting your filters to see more results.</p>
+    </div>
+    {% endif %}
+</div>
+{% include '_pagination.html' %}
 {% endblock %}

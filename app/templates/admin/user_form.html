@@ -1,21 +1,75 @@
 {% extends 'base.html' %}
-{% block title %}{% if user %}Edit User{% else %}Add User{% endif %}{% endblock %}
+{% block title %}{% if user %}Edit User{% else %}Add User{% endif %} — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<a href="{{ url_for('admin.dashboard') }}">Dashboard</a><a href="{{ url_for('admin.users') }}">Users</a><span>{% if user %}Edit {{ user.full_name }}{% else %}Add User{% endif %}</span>{% endblock %}
 {% block content %}
-<div class="page-header"><h1>{% if user %}Edit User{% else %}Add User{% endif %}</h1></div>
-<div class="card" style="max-width:640px;">
+<div class="page-header">
+    <h1>{% if user %}Edit {{ user.full_name }}{% else %}Add New User{% endif %}</h1>
+    <p class="page-subtitle">{% if user %}Update user details, role, and password.{% else %}Create a new student, librarian, or administrator account.{% endif %}</p>
+</div>
+
+<div class="card" style="max-width:680px;">
     <form method="POST">
         {{ form.hidden_tag() }}
-        <div class="form-group">{{ form.name.label }}{{ form.name(class='form-control') }}</div>
-        <div class="form-group">{{ form.email.label }}{{ form.email(class='form-control') }}</div>
-        <div class="form-group">{{ form.role.label }}{{ form.role(class='form-control') }}</div>
-        <div class="form-group">{{ form.student_id.label }}{{ form.student_id(class='form-control') }}</div>
-        <div class="grid-2">
-            <div class="form-group">{{ form.department.label }}{{ form.department(class='form-control') }}</div>
-            <div class="form-group">{{ form.year_of_study.label }}{{ form.year_of_study(class='form-control') }}</div>
+
+        <div class="form-group">
+            <label for="name">Full name</label>
+            {{ form.name(id='name', class='form-control', placeholder='e.g. Adwoa Boateng') }}
+            {% for error in form.name.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
         </div>
-        <div class="form-group">{{ form.password.label }}{{ form.password(class='form-control') }}{% if user %}<small style="color:var(--color-muted);">Leave blank to keep current password</small>{% endif %}</div>
-        <div class="form-group checkbox-group">{{ form.is_active() }} {{ form.is_active.label }}</div>
-        {{ form.submit(class='btn btn-primary') }}
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label for="email">Email</label>
+                {{ form.email(id='email', class='form-control', placeholder='user@sankofa.edu') }}
+                {% for error in form.email.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                <label for="role">Role</label>
+                {{ form.role(id='role', class='form-control') }}
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label for="student_id">Student ID <span class="text-muted" style="font-weight:400;">(students only)</span></label>
+                {{ form.student_id(id='student_id', class='form-control', placeholder='STU2024001') }}
+                {% for error in form.student_id.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                <label for="department">Department</label>
+                {{ form.department(id='department', class='form-control', placeholder='Computer Science') }}
+                {% for error in form.department.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label for="year_of_study">Year of study</label>
+                {{ form.year_of_study(id='year_of_study', class='form-control', placeholder='1', type='number', min='1', max='6') }}
+                {% for error in form.year_of_study.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                {{ form.password(id='password', class='form-control', placeholder='At least 8 characters') }}
+                {% if user %}<small>Leave blank to keep the current password.</small>{% else %}<small>At least 8 characters with a letter and a number.</small>{% endif %}
+                {% for error in form.password.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+        </div>
+
+        <div class="form-group checkbox-group">
+            <label class="toggle-switch">
+                {{ form.is_active() }}
+                <span class="toggle-slider"></span>
+            </label>
+            <span>{{ form.is_active.label.text }}</span>
+        </div>
+
+        <div class="btn-group">
+            <button type="submit" class="btn btn-gradient" title="Save this user account">
+                <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> {{ form.submit.label.text }}
+            </button>
+            <a href="{{ url_for('admin.users') }}" class="btn btn-outline">Cancel</a>
+        </div>
     </form>
 </div>
 {% endblock %}

@@ -1,80 +1,153 @@
 {% extends 'base.html' %}
-{% block title %}My Collection — Sankofa Library{% endblock %}
+{% block title %}My Borrowings — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<span>Borrowings</span>{% endblock %}
 {% block content %}
-<div class="page-header"><h1>My Collection</h1></div>
+{% set borrowed_count = checkouts | selectattr('status', 'in', ['active', 'overdue']) | list | length %}
+{% set history_count = checkouts | selectattr('status', 'equalto', 'returned') | list | length %}
+{% set reading_count = reading_sessions | length %}
+
+<div class="page-header">
+    <h1>My Collection</h1>
+    <p class="page-subtitle">Books you currently have out, your reading history, and digital reading sessions.</p>
+</div>
 
 <div class="tab-bar">
-    <a href="{{ url_for('student.borrowings', tab='borrowed') }}" class="tab-link {% if tab == 'borrowed' %}active{% endif %}">Currently Borrowed</a>
-    <a href="{{ url_for('student.borrowings', tab='reading') }}" class="tab-link {% if tab == 'reading' %}active{% endif %}">Recent Reading</a>
-    <a href="{{ url_for('student.borrowings', tab='history') }}" class="tab-link {% if tab == 'history' %}active{% endif %}">Full History</a>
+    <a href="{{ url_for('student.borrowings', tab='borrowed') }}" class="tab-link {% if tab == 'borrowed' %}active{% endif %}">
+        Currently Borrowed
+        {% if borrowed_count %}<span class="badge badge-active" style="margin-left:0.4rem;">{{ borrowed_count }}</span>{% endif %}
+    </a>
+    <a href="{{ url_for('student.borrowings', tab='reading') }}" class="tab-link {% if tab == 'reading' %}active{% endif %}">
+        Recent Reading
+        {% if reading_count %}<span class="badge badge-issued" style="margin-left:0.4rem;">{{ reading_count }}</span>{% endif %}
+    </a>
+    <a href="{{ url_for('student.borrowings', tab='history') }}" class="tab-link {% if tab == 'history' %}active{% endif %}">
+        Full History
+        {% if history_count %}<span class="badge" style="margin-left:0.4rem;">{{ history_count }}</span>{% endif %}
+    </a>
 </div>
 
 {% if tab == 'borrowed' %}
     {% set active_list = checkouts | selectattr('status', 'in', ['active', 'overdue']) | list %}
     {% if active_list %}
-    <div class="collection-grid">
+    <div class="book-grid">
         {% for c in active_list %}
-        <div class="collection-item">
+        <div class="book-card lift-on-hover">
             <a href="{{ url_for('catalog.book_detail', book_id=c.book.book_id) }}">
                 {% if c.book.cover_image %}
-                <img src="{{ url_for('static', filename='covers/' + c.book.cover_image) }}" alt="{{ c.book.title }}" class="book-cover">
+                <img src="{{ url_for('static', filename='covers/' + c.book.cover_image) }}" alt="Cover of {{ c.book.title }}" class="book-cover">
                 {% else %}
-                <div class="book-cover-placeholder"><i class="fa-solid fa-book-open"></i></div>
+                <div class="book-cover-placeholder gradient-sankofa">
+                    <i class="fa-solid fa-book-open"></i>
+                </div>
                 {% endif %}
             </a>
-            <div class="title">{{ c.book.title }}</div>
-            <div class="meta">Due {{ c.expected_return_date }}</div>
-            <span class="badge badge-{{ c.status }}">{{ c.status }}</span>
+            <h3 style="margin-top:0.5rem;"><a href="{{ url_for('catalog.book_detail', book_id=c.book.book_id) }}">{{ c.book.title }}</a></h3>
+            <div class="author">{{ c.book.author }}</div>
+            <div class="book-meta">
+                <span class="tag">Due {{ c.expected_return_date }}</span>
+                {% if c.status == 'overdue' %}
+                <span class="tag" style="background:rgba(185,28,28,0.12);color:var(--adinkra);"><i class="fa-solid fa-triangle-exclamation"></i> {{ c.days_overdue }} days overdue</span>
+                {% else %}
+                <span class="tag" style="background:rgba(21,128,61,0.10);color:var(--success);">Due in {{ c.days_until_due }} day{{ 's' if c.days_until_due != 1 }}</span>
+                {% endif %}
+            </div>
         </div>
         {% endfor %}
     </div>
     {% else %}
-    <div class="empty-state">You have no books currently checked out.</div>
+    <div class="card">
+        <div class="empty-state-component">
+            <i class="fa-solid fa-book-bookmark empty-icon" aria-hidden="true"></i>
+            <h3>No books currently checked out</h3>
+            <p>Browse the catalog to find your next read. Visit the library with your card to borrow.</p>
+            <a href="{{ url_for('catalog.catalog') }}" class="btn btn-gradient" style="margin-top:1rem;"><i class="fa-solid fa-book-open"></i> Browse Catalog</a>
+        </div>
+    </div>
     {% endif %}
 
 {% elif tab == 'reading' %}
     {% if reading_sessions %}
-    <div class="collection-grid">
-        {% for s in reading_sessions %}
-        <div class="collection-item">
-            <a href="{{ url_for('catalog.book_detail', book_id=s.book.book_id) }}">
-                {% if s.book.cover_image %}
-                <img src="{{ url_for('static', filename='covers/' + s.book.cover_image) }}" alt="{{ s.book.title }}" class="book-cover">
-                {% else %}
-                <div class="book-cover-placeholder"><i class="fa-solid fa-book-open"></i></div>
-                {% endif %}
-            </a>
-            <div class="title">{{ s.book.title }}</div>
-            <div class="meta">{{ s.session_start.strftime('%Y-%m-%d') }}{% if not s.session_end %} &middot; in progress{% endif %}</div>
+    <div class="card">
+        <div class="table-wrap fancy-scroll">
+            <table>
+                <thead><tr><th>Book</th><th>Started</th><th>Ended</th><th>Status</th></tr></thead>
+                <tbody>
+                {% for s in reading_sessions %}
+                <tr>
+                    <td>
+<div style="display:flex; align-items:center; gap:0.75rem;">
+    {% if s.book and s.book.cover_image %}
+        <img src="{{ url_for('static', filename='covers/' + s.book.cover_image) }}" alt="Cover" style="width:32px; height:48px; object-fit:cover; border-radius:4px; box-shadow:var(--shadow); flex-shrink:0;">
+    {% else %}
+        <div style="width:32px; height:48px; background:var(--color-surface-alt); border-radius:4px; display:flex; align-items:center; justify-content:center; color:var(--color-muted); font-size:0.75rem; flex-shrink:0;">
+            <i class="fa-solid fa-book"></i>
         </div>
-        {% endfor %}
+    {% endif %}
+    <div>
+<a href="{{ url_for('catalog.book_detail', book_id=s.book.book_id) }}" style="color:var(--color-primary);font-weight:600;">{{ s.book.title }}</a><div class="text-muted" style="font-size:0.75rem;">{{ s.book.author }}</div>
+</div>
+</div>
+</td>
+                    <td class="text-muted">{{ s.session_start.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td class="text-muted">{% if s.session_end %}{{ s.session_end.strftime('%Y-%m-%d %H:%M') }}{% else %}<span class="badge badge-active">in progress</span>{% endif %}</td>
+                    <td>{% if s.card_verified %}<span class="badge badge-active"><i class="fa-solid fa-circle-check"></i> Card verified</span>{% else %}<span class="badge badge-returned">Not verified</span>{% endif %}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
     {% else %}
-    <div class="empty-state">No reading activity yet. Browse the catalog to start reading a digital book.</div>
+    <div class="card">
+        <div class="empty-state-component">
+            <i class="fa-solid fa-glasses empty-icon" aria-hidden="true"></i>
+            <h3>No reading activity yet</h3>
+            <p>Find a digital book in the catalog and start reading — your sessions are logged here.</p>
+            <a href="{{ url_for('catalog.catalog', availability='digital') }}" class="btn btn-gradient" style="margin-top:1rem;"><i class="fa-solid fa-book-open"></i> Find digital books</a>
+        </div>
+    </div>
     {% endif %}
 
 {% else %}
     <div class="card">
-        {% if checkouts %}
-        <div class="table-wrap">
+        {% set history_list = checkouts | selectattr('status', 'equalto', 'returned') | list %}
+        {% if history_list %}
+        <div class="table-wrap fancy-scroll">
             <table>
-                <thead><tr><th>Book</th><th>Author</th><th>Checked Out</th><th>Due Date</th><th>Returned</th><th>Status</th></tr></thead>
+                <thead><tr><th>Book</th><th>Author</th><th>Checked Out</th><th>Due</th><th>Returned</th><th>Status</th></tr></thead>
                 <tbody>
-                {% for c in checkouts %}
+                {% for c in history_list %}
                 <tr>
-                    <td>{{ c.book.title }}</td>
-                    <td>{{ c.book.author }}</td>
-                    <td>{{ c.checkout_date }}</td>
-                    <td>{{ c.expected_return_date }}</td>
-                    <td>{{ c.actual_return_date or '—' }}</td>
-                    <td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
+                    <td>
+<div style="display:flex; align-items:center; gap:0.75rem;">
+    {% if c.book and c.book.cover_image %}
+        <img src="{{ url_for('static', filename='covers/' + c.book.cover_image) }}" alt="Cover" style="width:32px; height:48px; object-fit:cover; border-radius:4px; box-shadow:var(--shadow); flex-shrink:0;">
+    {% else %}
+        <div style="width:32px; height:48px; background:var(--color-surface-alt); border-radius:4px; display:flex; align-items:center; justify-content:center; color:var(--color-muted); font-size:0.75rem; flex-shrink:0;">
+            <i class="fa-solid fa-book"></i>
+        </div>
+    {% endif %}
+    <div>
+<a href="{{ url_for('catalog.book_detail', book_id=c.book.book_id) }}" style="color:var(--color-primary);font-weight:600;">{{ c.book.title }}</a>
+</div>
+</div>
+</td>
+                    <td class="text-muted">{{ c.book.author }}</td>
+                    <td class="text-muted">{{ c.checkout_date }}</td>
+                    <td class="text-muted">{{ c.expected_return_date }}</td>
+                    <td class="text-muted">{{ c.actual_return_date or '—' }}</td>
+                    <td><span class="badge badge-returned">returned</span></td>
                 </tr>
                 {% endfor %}
                 </tbody>
             </table>
         </div>
         {% else %}
-        <div class="empty-state">No borrowing history yet. Visit the library to borrow a book!</div>
+        <div class="empty-state-component">
+            <i class="fa-solid fa-clock-rotate-left empty-icon" aria-hidden="true"></i>
+            <h3>No borrowing history yet</h3>
+            <p>Visit the library to borrow a book — your full history will appear here.</p>
+        </div>
         {% endif %}
     </div>
 {% endif %}

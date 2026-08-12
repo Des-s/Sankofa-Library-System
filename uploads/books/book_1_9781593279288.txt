@@ -1,4 +1,4 @@
-INTRODUCTION TO PYTHON PROGRAMMING - SAMPLE DIGITAL BOOK
+INTRODUCTION TO PYTHON PROGRAMMING — SAMPLE DIGITAL BOOK
 ============================================
 
 This is a sample digital book for demonstration purposes.

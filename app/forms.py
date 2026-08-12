@@ -1,18 +1,39 @@
+"""All WTForms used across the app — faithful port of the Next.js form
+schemas (zod in src/lib/validators.ts).
+
+Every form is CSRF-protected via Flask-WTF (globally enabled in
+app/__init__.py via csrf.init_app(app)).
+
+Forms:
+- LoginForm, ForgotPasswordForm, RegistrationForm
+- ContactForm
+- BookForm (ISBN validation, cover/image upload)
+- CheckoutForm, ReturnForm, FineActionForm (waiver reason required)
+- CardVerificationForm
+- UserForm, StudentEditForm, ChangePasswordForm, ProfilePhotoForm
+- SystemSettingsForm
+- NotificationSettingsForm, ThemeForm, LanguageForm
+- SupportRequestForm, ReportForm
+- CatalogSearchForm
+"""
 import re
 from datetime import date
 
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileAllowed
+from flask_wtf.file import FileAllowed, FileField
 from wtforms import (
     BooleanField, DecimalField, HiddenField, IntegerField,
     PasswordField, SelectField, StringField, SubmitField, TextAreaField,
 )
-from wtforms.validators import DataRequired, Email, EqualTo, Length, NumberRange, Optional, ValidationError
+from wtforms.validators import (
+    DataRequired, Email, EqualTo, Length, NumberRange, Optional, ValidationError,
+)
 
-from app.models import Book, User
+from app.models import User
+from app.utils.helpers import get_student_email_domain
 
-STUDENT_EMAIL_DOMAIN = 'st.knust.edu.gh'
 
+# ---- Validation regexes (mirror zod schemas in src/lib/validators.ts) ----
 NAME_RE = re.compile(r"^[A-Za-z][A-Za-z '.-]*$")
 DEPARTMENT_RE = re.compile(r"^[A-Za-z][A-Za-z &/.,-]*$")
 STUDENT_ID_RE = re.compile(r'^[A-Za-z0-9]+$')
@@ -20,19 +41,32 @@ CARD_NUMBER_RE = re.compile(r'^[A-Za-z0-9-]+$')
 ISBN_RE = re.compile(r'^(?:\d{9}[\dXx]|\d{13})$')
 
 
+# ---------------------------------------------------------------------------
+# Field validators
+# ---------------------------------------------------------------------------
 def validate_password_strength(form, field):
-    if field.data and not (re.search(r'[A-Za-z]', field.data) and re.search(r'\d', field.data)):
-        raise ValidationError('Password must contain at least one letter and one number.')
+    """Mirror Next.js password schema: at least one letter AND one digit."""
+    if field.data and not (
+        re.search(r'[A-Za-z]', field.data) and re.search(r'\d', field.data)
+    ):
+        raise ValidationError(
+            'Password must contain at least one letter and one number.'
+        )
 
 
 def validate_name_format(form, field):
     if field.data and not NAME_RE.match(field.data.strip()):
-        raise ValidationError('Name may only contain letters, spaces, apostrophes, periods and hyphens.')
+        raise ValidationError(
+            'Name may only contain letters, spaces, apostrophes, '
+            'periods and hyphens.'
+        )
 
 
 def validate_department_format(form, field):
     if field.data and not DEPARTMENT_RE.match(field.data.strip()):
-        raise ValidationError('Department may only contain letters, spaces, and & / , - characters.')
+        raise ValidationError(
+            'Department may only contain letters, spaces, and & / , - characters.'
+        )
 
 
 def validate_student_id_format(form, field):
@@ -41,26 +75,58 @@ def validate_student_id_format(form, field):
 
 
 def _coerce_optional_int(value):
-    if value in (None, ''):
+    if value in (None, '', 'None'):
         return None
     return int(value)
 
 
-class RegistrationForm(FlaskForm):
-    name = StringField('Full Name', validators=[DataRequired(), Length(min=2, max=150), validate_name_format])
-    username = StringField('Username', validators=[DataRequired(), Length(min=3, max=50)])
-    student_id = StringField('Student ID', validators=[DataRequired(), Length(min=4, max=50)])
+# ---------------------------------------------------------------------------
+# Auth forms (mirror src/app/api/auth/*/route.ts zod schemas)
+# ---------------------------------------------------------------------------
+class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email(), Length(max=150)])
-    department = StringField('Department', validators=[DataRequired(), Length(max=100), validate_department_format])
-    year_of_study = IntegerField('Year of Study', validators=[DataRequired(), NumberRange(min=1, max=6)])
-    password = PasswordField('Password', validators=[DataRequired(), Length(min=8), validate_password_strength])
-    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
-    submit = SubmitField('Register')
+    password = PasswordField('Password', validators=[DataRequired()])
+    submit = SubmitField('Sign in')
+
+
+class ForgotPasswordForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email(), Length(max=150)])
+    submit = SubmitField('Send temporary password')
+
+
+class RegistrationForm(FlaskForm):
+    name = StringField('Full Name', validators=[
+        DataRequired(), Length(min=2, max=150), validate_name_format,
+    ])
+    username = StringField('Username', validators=[
+        DataRequired(), Length(min=3, max=50),
+    ])
+    student_id = StringField('Student ID', validators=[
+        DataRequired(), Length(min=4, max=50),
+    ])
+    email = StringField('Email', validators=[
+        DataRequired(), Email(), Length(max=150),
+    ])
+    department = StringField('Department', validators=[
+        DataRequired(), Length(max=100), validate_department_format,
+    ])
+    year_of_study = IntegerField('Year of Study', validators=[
+        DataRequired(), NumberRange(min=1, max=6),
+    ])
+    password = PasswordField('Password', validators=[
+        DataRequired(), Length(min=8), validate_password_strength,
+    ])
+    confirm_password = PasswordField('Confirm Password', validators=[
+        DataRequired(), EqualTo('password'),
+    ])
+    submit = SubmitField('Create account')
 
     def validate_username(self, field):
         username = field.data.strip().lower()
         if not re.match(r'^[a-zA-Z0-9_.]+$', username):
-            raise ValidationError('Username may only contain letters, numbers, dots and underscores.')
+            raise ValidationError(
+                'Username may only contain letters, numbers, dots and underscores.'
+            )
         if User.query.filter(User.username.ilike(username)).first():
             raise ValidationError('This username is already taken.')
 
@@ -72,50 +138,67 @@ class RegistrationForm(FlaskForm):
 
     def validate_email(self, field):
         email = field.data.strip().lower()
-        if not email.endswith('@' + STUDENT_EMAIL_DOMAIN):
-            raise ValidationError(f'You must register with your student email address (@{STUDENT_EMAIL_DOMAIN}).')
+        domain = get_student_email_domain()
+        # Mirror src/lib/library.ts student email domain check.
+        if not email.endswith('@' + domain):
+            raise ValidationError(
+                f'You must register with your student email address (@{domain}).'
+            )
         if User.query.filter_by(email=email).first():
             raise ValidationError('This email is already registered.')
 
 
-class LoginForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    submit = SubmitField('Log In')
-
-
-class ForgotPasswordForm(FlaskForm):
+class ContactForm(FlaskForm):
+    name = StringField('Full name', validators=[DataRequired(), Length(max=150)])
     email = StringField('Email', validators=[DataRequired(), Email(), Length(max=150)])
-    submit = SubmitField('Send Temporary Password')
+    subject = StringField('Subject', validators=[DataRequired(), Length(max=200)])
+    message = TextAreaField('Message', validators=[DataRequired(), Length(max=3000)])
+    submit = SubmitField('Send message')
 
 
-class CardVerificationForm(FlaskForm):
-    card_number = StringField('Library Card Number', validators=[DataRequired(), Length(max=50)])
-    submit = SubmitField('Verify & Read')
-
-    def validate_card_number(self, field):
-        if not CARD_NUMBER_RE.match(field.data.strip()):
-            raise ValidationError('Enter a valid library card number.')
-
-
+# ---------------------------------------------------------------------------
+# Book / circulation forms (mirror src/app/api/librarian/books/route.ts)
+# ---------------------------------------------------------------------------
 class BookForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired(), Length(max=255)])
     author = StringField('Author', validators=[DataRequired(), Length(max=255)])
     isbn = StringField('ISBN', validators=[DataRequired(), Length(max=20)])
     publisher = StringField('Publisher', validators=[Optional(), Length(max=150)])
-    year_published = IntegerField('Year Published', validators=[Optional(), NumberRange(min=1000)])
-    category = StringField('Category (e.g. Science)', validators=[Optional(), Length(max=100)])
-    subcategory = StringField('Subcategory (e.g. Biology)', validators=[Optional(), Length(max=100)])
-    has_physical = SelectField('Physical Copies Available?', choices=[('yes', 'Yes'), ('no', 'No — digital only')], default='yes')
-    total_physical_copies = IntegerField('Number of Physical Copies', validators=[Optional(), NumberRange(min=0)])
+    year_published = IntegerField(
+        'Year Published', validators=[Optional(), NumberRange(min=1000)]
+    )
+    category = StringField(
+        'Category (e.g. Science)', validators=[Optional(), Length(max=100)]
+    )
+    subcategory = StringField(
+        'Subcategory (e.g. Biology)', validators=[Optional(), Length(max=100)]
+    )
+    description = TextAreaField(
+        'Description', validators=[Optional(), Length(max=2000)]
+    )
+    has_physical = SelectField(
+        'Physical Copies Available?',
+        choices=[('yes', 'Yes'), ('no', 'No — digital only')],
+        default='yes',
+    )
+    total_physical_copies = IntegerField(
+        'Number of Physical Copies',
+        validators=[Optional(), NumberRange(min=0)],
+    )
     digital_file = FileField('Digital File (PDF/TXT/HTML)')
-    cover_image = FileField('Cover Image (leave blank to auto-fetch by ISBN)', validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Images only')])
+    cover_image = FileField(
+        'Cover Image (leave blank to auto-fetch by ISBN)',
+        validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Images only')],
+    )
     is_active = BooleanField('Active in Catalog', default=True)
-    submit = SubmitField('Save Book')
+    submit = SubmitField('Save book')
 
     def validate_total_physical_copies(self, field):
         if self.has_physical.data == 'yes' and not field.data:
-            raise ValidationError('Enter the number of physical copies, or set "Physical Copies Available?" to No.')
+            raise ValidationError(
+                'Enter the number of physical copies, or set "Physical Copies '
+                'Available?" to No.'
+            )
 
     def validate_isbn(self, field):
         cleaned = field.data.replace('-', '').replace(' ', '').strip()
@@ -124,18 +207,20 @@ class BookForm(FlaskForm):
 
     def validate_year_published(self, field):
         if field.data is not None and field.data > date.today().year + 1:
-            raise ValidationError(f'Year published cannot be later than {date.today().year + 1}.')
+            raise ValidationError(
+                f'Year published cannot be later than {date.today().year + 1}.'
+            )
 
 
 class CheckoutForm(FlaskForm):
     student_search = StringField('Student ID or Name', validators=[DataRequired()])
     book_id = SelectField('Book', coerce=int, validators=[DataRequired()])
-    submit = SubmitField('Check Out Book')
+    submit = SubmitField('Check out book')
 
 
 class ReturnForm(FlaskForm):
     checkout_id = SelectField('Active Checkout', coerce=int, validators=[DataRequired()])
-    submit = SubmitField('Record Return')
+    submit = SubmitField('Record return')
 
 
 class FineActionForm(FlaskForm):
@@ -147,69 +232,138 @@ class FineActionForm(FlaskForm):
     waiver_reason = TextAreaField('Reason (required for waiver)', validators=[Optional()])
     submit = SubmitField('Submit')
 
+    def validate_waiver_reason(self, field):
+        """Waiver requires a reason — mirrors Next.js waive endpoint check."""
+        if self.action.data == 'waived' and not (field.data and field.data.strip()):
+            raise ValidationError('A reason is required to waive a fine.')
 
+
+class CardVerificationForm(FlaskForm):
+    card_number = StringField(
+        'Library Card Number', validators=[DataRequired(), Length(max=50)]
+    )
+    submit = SubmitField('Verify & Read')
+
+    def validate_card_number(self, field):
+        if not CARD_NUMBER_RE.match(field.data.strip()):
+            raise ValidationError('Enter a valid library card number.')
+
+
+# ---------------------------------------------------------------------------
+# User / settings forms
+# ---------------------------------------------------------------------------
 class UserForm(FlaskForm):
-    name = StringField('Full Name', validators=[DataRequired(), Length(min=2, max=150), validate_name_format])
-    email = StringField('Email', validators=[DataRequired(), Email(), Length(max=150)])
+    name = StringField('Full Name', validators=[
+        DataRequired(), Length(min=2, max=150), validate_name_format,
+    ])
+    email = StringField('Email', validators=[
+        DataRequired(), Email(), Length(max=150),
+    ])
     role = SelectField('Role', choices=[
         ('student', 'Student'),
         ('librarian', 'Librarian'),
         ('admin', 'Administrator'),
     ], validators=[DataRequired()])
-    student_id = StringField('Student ID', validators=[Optional(), Length(min=4, max=50), validate_student_id_format])
-    department = StringField('Department', validators=[Optional(), Length(max=100), validate_department_format])
-    year_of_study = IntegerField('Year of Study', validators=[Optional(), NumberRange(min=1, max=6)])
-    password = PasswordField('Password', validators=[Optional(), Length(min=8), validate_password_strength])
+    student_id = StringField('Student ID', validators=[
+        Optional(), Length(min=4, max=50), validate_student_id_format,
+    ])
+    department = StringField('Department', validators=[
+        Optional(), Length(max=100), validate_department_format,
+    ])
+    year_of_study = IntegerField('Year of Study', validators=[
+        Optional(), NumberRange(min=1, max=6),
+    ])
+    password = PasswordField('Password', validators=[
+        Optional(), Length(min=8), validate_password_strength,
+    ])
     is_active = BooleanField('Active', default=True)
-    submit = SubmitField('Save User')
+    submit = SubmitField('Save user')
 
 
-class SystemSettingsForm(FlaskForm):
-    fine_rate_per_day = DecimalField('Fine Rate (GHS/day)', places=2, validators=[DataRequired(), NumberRange(min=0)])
-    loan_period_days = IntegerField('Loan Period (days)', validators=[DataRequired(), NumberRange(min=1, max=90)])
-    library_card_format = StringField('Card Format', validators=[DataRequired(), Length(max=100)])
-    max_active_checkouts = IntegerField('Max Active Checkouts per Student', validators=[DataRequired(), NumberRange(min=1, max=50)])
-    submit = SubmitField('Save Settings')
+class StudentEditForm(FlaskForm):
+    department = StringField('Department', validators=[
+        DataRequired(), Length(max=100), validate_department_format,
+    ])
+    year_of_study = IntegerField('Year of Study', validators=[
+        DataRequired(), NumberRange(min=1, max=6),
+    ])
+    is_active = BooleanField('Active', default=True)
+    submit = SubmitField('Save changes')
 
 
 class ChangePasswordForm(FlaskForm):
     current_password = PasswordField('Current Password', validators=[DataRequired()])
-    new_password = PasswordField('New Password', validators=[DataRequired(), Length(min=8), validate_password_strength])
-    confirm_new_password = PasswordField('Confirm New Password', validators=[DataRequired(), EqualTo('new_password')])
-    submit = SubmitField('Change Password')
+    new_password = PasswordField('New Password', validators=[
+        DataRequired(), Length(min=8), validate_password_strength,
+    ])
+    confirm_new_password = PasswordField('Confirm New Password', validators=[
+        DataRequired(), EqualTo('new_password'),
+    ])
+    submit = SubmitField('Update password')
+
+
+class ProfilePhotoForm(FlaskForm):
+    profile_photo = FileField(
+        'Profile Photo',
+        validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Images only')],
+    )
+    submit = SubmitField('Upload photo')
+
+
+class SystemSettingsForm(FlaskForm):
+    fine_rate_per_day = DecimalField(
+        'Fine Rate (per day)', places=2,
+        validators=[DataRequired(), NumberRange(min=0)],
+    )
+    loan_period_days = IntegerField(
+        'Loan Period (days)',
+        validators=[DataRequired(), NumberRange(min=1, max=90)],
+    )
+    library_card_format = StringField(
+        'Card Format', validators=[DataRequired(), Length(max=100)]
+    )
+    max_active_checkouts = IntegerField(
+        'Max Active Checkouts per Student',
+        validators=[DataRequired(), NumberRange(min=1, max=50)],
+    )
+    student_email_domain = StringField(
+        'Student Email Domain', validators=[DataRequired(), Length(max=150)]
+    )
+    currency_symbol = StringField(
+        'Currency Symbol', validators=[DataRequired(), Length(max=10)]
+    )
+    library_name = StringField(
+        'Library Name', validators=[DataRequired(), Length(max=200)]
+    )
+    library_address = StringField(
+        'Library Address', validators=[Optional(), Length(max=300)]
+    )
+    submit = SubmitField('Save settings')
 
 
 class NotificationSettingsForm(FlaskForm):
     email_notifications = BooleanField('Email me notifications')
-    submit = SubmitField('Save Preferences')
+    submit = SubmitField('Save preferences')
 
 
 class ThemeForm(FlaskForm):
     dark_mode = BooleanField('Dark Mode')
-    submit = SubmitField('Save Appearance')
+    submit = SubmitField('Save appearance')
 
 
 class LanguageForm(FlaskForm):
-    language_preference = SelectField('Language', choices=[('en', 'English'), ('fr', 'Français')], validators=[DataRequired()])
-    submit = SubmitField('Save Language')
-
-
-class ProfilePhotoForm(FlaskForm):
-    profile_photo = FileField('Profile Photo', validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Images only')])
-    submit = SubmitField('Upload Photo')
+    language_preference = SelectField(
+        'Language',
+        choices=[('en', 'English'), ('fr', 'Français')],
+        validators=[DataRequired()],
+    )
+    submit = SubmitField('Save language')
 
 
 class SupportRequestForm(FlaskForm):
     subject = StringField('Subject', validators=[DataRequired(), Length(max=200)])
     description = TextAreaField('Describe the problem', validators=[DataRequired()])
     submit = SubmitField('Submit')
-
-
-class StudentEditForm(FlaskForm):
-    department = StringField('Department', validators=[DataRequired(), Length(max=100), validate_department_format])
-    year_of_study = IntegerField('Year of Study', validators=[DataRequired(), NumberRange(min=1, max=6)])
-    is_active = BooleanField('Active', default=True)
-    submit = SubmitField('Save Changes')
 
 
 class ReportForm(FlaskForm):
@@ -219,25 +373,24 @@ class ReportForm(FlaskForm):
         ('student_incident', 'Student Incident / Complaint'),
         ('inventory', 'Inventory / Stock Issue'),
         ('general', 'General Custom Report'),
+        ('support', 'Support Request'),
     ], validators=[DataRequired()])
-    title = StringField('Title / Subject', validators=[DataRequired(), Length(max=200)])
-    student_id = SelectField('Student Involved', coerce=_coerce_optional_int, validators=[Optional()])
+    title = StringField('Title / Subject', validators=[
+        DataRequired(), Length(max=200),
+    ])
+    student_id = SelectField(
+        'Student Involved', coerce=_coerce_optional_int, validators=[Optional()]
+    )
     book_title = StringField('Book Title', validators=[Optional(), Length(max=200)])
-    description = TextAreaField('Description', validators=[DataRequired(), Length(max=5000)])
+    description = TextAreaField('Description', validators=[
+        DataRequired(), Length(max=5000),
+    ])
     severity = SelectField('Severity', choices=[
         ('low', 'Low'),
         ('medium', 'Medium'),
         ('high', 'High'),
     ], default='medium', validators=[DataRequired()])
-    submit = SubmitField('Submit Report')
-
-
-class ContactForm(FlaskForm):
-    name = StringField('Your Name', validators=[DataRequired(), Length(max=150)])
-    email = StringField('Email', validators=[DataRequired(), Email(), Length(max=150)])
-    subject = StringField('Subject', validators=[DataRequired(), Length(max=200)])
-    message = TextAreaField('Message', validators=[DataRequired(), Length(max=3000)])
-    submit = SubmitField('Send Message')
+    submit = SubmitField('Submit report')
 
 
 class CatalogSearchForm(FlaskForm):
@@ -248,4 +401,11 @@ class CatalogSearchForm(FlaskForm):
         ('physical', 'Physical Available'),
         ('digital', 'Digital Available'),
     ], validators=[Optional()])
+    sort = SelectField('Sort', choices=[
+        ('title', 'Title (A–Z)'),
+        ('title_desc', 'Title (Z–A)'),
+        ('author', 'Author'),
+        ('year', 'Year published'),
+        ('recent', 'Recently added'),
+    ], default='title', validators=[Optional()])
     submit = SubmitField('Search')

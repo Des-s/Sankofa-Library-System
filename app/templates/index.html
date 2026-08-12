@@ -1,138 +1,464 @@
 {% extends 'base.html' %}
-{% block title %}Sankofa Library System{% endblock %}
+{% block title %}Sankofa Library System — Modern Academic Library Management{% endblock %}
+{% block og_title %}Sankofa Library System{% endblock %}
+
 {% block content %}
-<section class="hero">
-    <div class="hero-text reveal">
-        <h1>SANKOFA <span>LIBRARY</span></h1>
-        <p>Digitizing academic library operations for the whole campus — browse the catalog, read online, and manage your borrowings, all in one place.</p>
-        <div class="hero-actions">
-            <a href="{{ url_for('auth.register') }}" class="btn-pill btn-pill-solid btn-lg">Get Started</a>
-            <a href="{{ url_for('auth.login') }}" class="btn-pill btn-pill-outline-light btn-lg">Log In</a>
+
+<!-- ===== Kente accent bar ===== -->
+<div class="kente-bar w-full" style="height:4px;"></div>
+
+<!-- ===== HERO (light zone) ===== -->
+<section class="hero hero-integrated">
+    <!-- Library background image -->
+    <div class="hero-bg-image" style="background-image: url('https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=1200&q=80');"></div>
+    <div class="hero-bg-overlay"></div>
+    <div class="hero-glow-gold"></div>
+    <div class="hero-glow-green"></div>
+
+    <div class="hero-container">
+        <div class="hero-grid">
+            <div class="hero-text-content reveal">
+                <div class="hero-badge">
+                    <i class="fa-solid fa-sparkles"></i>
+                    Built for African academic libraries
+                </div>
+                <h1 class="hero-headline">
+                    Reclaim your <span class="text-primary">knowledge.</span>
+                    <br>
+                    <span class="text-gold">Sankofa.</span>
+                </h1>
+                <p class="hero-description">
+                    A modern library management system for the next generation of readers —
+                    combining circulation, catalogue, fines, and digital reading in one
+                    elegant platform. Rooted in heritage, built for today.
+                </p>
+                <div class="hero-actions">
+                    <a href="{{ url_for('auth.register') }}" class="btn-pill btn-pill-solid btn-lg btn-gradient">
+                        Open an account
+                        <i class="fa-solid fa-arrow-right ml-2"></i>
+                    </a>
+                    <a href="{{ url_for('auth.login') }}" class="btn-pill btn-pill-outline-light btn-lg">Sign in</a>
+                </div>
+                <div class="hero-features">
+                    <span class="hero-feature"><i class="fa-solid fa-circle-check text-success"></i> No setup fees</span>
+                    <span class="hero-feature"><i class="fa-solid fa-circle-check text-success"></i> Student-friendly</span>
+                </div>
+            </div>
+
+            <!-- Hero visual: library card + floating elements -->
+            <div class="hero-visual reveal">
+                <div class="hero-card-stack">
+                    <!-- Library card visual -->
+                    <div class="library-card-visual hero-library-card">
+                        <div class="hero-card-top">
+                            <div>
+                                <p class="hero-card-label">Sankofa Library</p>
+                                <p class="hero-card-title">Reader Card</p>
+                            </div>
+                            <div class="kente-bar hero-card-kente"></div>
+                        </div>
+                        <div class="hero-card-field">
+                            <p class="hero-card-field-label">Card Number</p>
+                            <p class="hero-card-number">LIB-2025-STU2024001</p>
+                        </div>
+                        <div class="hero-card-bottom">
+                            <div>
+                                <p class="hero-card-field-label">Holder</p>
+                                <p class="hero-card-holder">Kwame Mensah</p>
+                            </div>
+                            <p class="hero-card-valid">Valid through 2026</p>
+                        </div>
+                    </div>
+
+                    <!-- Floating book cover -->
+                    <div class="hero-floating-book">
+                        <div class="hero-book-inner">
+                            Things Fall Apart
+                        </div>
+                    </div>
+
+                    <!-- Floating stat -->
+                    <div class="hero-floating-stat">
+                        <div class="hero-stat-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                        <div>
+                            <p class="hero-stat-label">Books available</p>
+                            <p class="hero-stat-value">{{ total_copies if total_copies is defined else 48 }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    <a href="#why-heading" class="hero-scroll-cue" aria-label="Scroll down"><i class="fa-solid fa-arrow-down"></i></a>
 </section>
 
-<div class="book-scroll">
-    <div class="book-spine" aria-hidden="true"></div>
+<!-- ===== STATS BAND (light zone) ===== -->
+<section id="stats" class="stats-band">
+    <div class="stats-band-bg"></div>
+    <div class="stats-container">
+        <div class="stat-block reveal">
+            <div class="stat-icon stat-icon-forest"><i class="fa-solid fa-book-open"></i></div>
+            <div>
+                <p class="stat-value">{{ book_count }}</p>
+                <p class="stat-label">Active titles</p>
+            </div>
+        </div>
+        <div class="stat-block reveal">
+            <div class="stat-icon stat-icon-gold"><i class="fa-solid fa-library"></i></div>
+            <div>
+                <p class="stat-value">{{ total_copies if total_copies is defined else 48 }}</p>
+                <p class="stat-label">Physical copies</p>
+            </div>
+        </div>
+        <div class="stat-block reveal">
+            <div class="stat-icon stat-icon-kente"><i class="fa-solid fa-users"></i></div>
+            <div>
+                <p class="stat-value">{{ student_count }}</p>
+                <p class="stat-label">Registered students</p>
+            </div>
+        </div>
+        <div class="stat-block reveal">
+            <div class="stat-icon stat-icon-success"><i class="fa-solid fa-graduation-cap"></i></div>
+            <div>
+                <p class="stat-value">{{ category_count }}</p>
+                <p class="stat-label">Subject categories</p>
+            </div>
+        </div>
+    </div>
+</section>
 
-    <div class="book-page-frame">
-        <section class="book-page reveal" id="why-section">
-            <div class="why-section">
-                <div class="why-text">
-                    <span class="book-page-kicker">Page 01 &mdash; Why Sankofa</span>
-                    <h2 id="why-heading">Why Thousands of Students Choose Sankofa Library</h2>
-                    <p>From physical stacks to a full digital reader, we make campus research and reading easier, safer, and more convenient with expert-curated collections and round-the-clock account access.</p>
+<!-- ===== DARK ZONE: scroll-linked theme transition ===== -->
+<!-- The laser beam sweeps from here (features/news) through the footer -->
+<div class="dark-zone">
+    <div class="theme-sentinel"></div>
+    <div class="light-beam-scanner"></div>
 
-                    <div class="why-stats">
-                        <div class="why-stat">
-                            <span class="why-stat-value">{{ book_count }}+</span>
-                            <span class="why-stat-label">Books in Catalog</span>
-                        </div>
-                        <div class="why-stat">
-                            <span class="why-stat-value">{{ student_count }}+</span>
-                            <span class="why-stat-label">Active Students</span>
-                        </div>
-                        <div class="why-stat">
-                            <span class="why-stat-value">{{ category_count }}+</span>
-                            <span class="why-stat-label">Subject Categories</span>
-                        </div>
-                    </div>
-                </div>
+<!-- ===== FEATURES (dark zone) ===== -->
+<section id="features" class="features-section beam-reveal">
+    <div class="section-container">
+        <div class="section-header reveal">
+            <p class="section-kicker">Everything you need</p>
+            <h2 class="section-title">
+                A complete library, <span class="gradient-sankofa-text">reimagined</span> for the digital age.
+            </h2>
+            <p class="section-description">
+                From circulation to digital reading, Sankofa unifies every workflow in one beautiful, audited system.
+            </p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card-integrated reveal">
+                <div class="feature-icon feature-icon-forest"><i class="fa-solid fa-magnifying-glass"></i></div>
+                <h3>Smart Catalogue</h3>
+                <p>Search by title, author, ISBN, or category. Filter by availability — physical or digital — with real-time copy counts.</p>
+            </div>
+            <div class="feature-card-integrated reveal">
+                <div class="feature-icon feature-icon-gold"><i class="fa-solid fa-id-card"></i></div>
+                <h3>Digital Library Cards</h3>
+                <p>Every registered student receives a unique library card number — verifiable online and at the circulation desk.</p>
+            </div>
+            <div class="feature-card-integrated reveal">
+                <div class="feature-icon feature-icon-kente"><i class="fa-solid fa-book-bookmark"></i></div>
+                <h3>Streamlined Circulation</h3>
+                <p>Fast checkout and return workflow with automatic copy tracking, due-date calculation, and fine accrual.</p>
+            </div>
+            <div class="feature-card-integrated reveal">
+                <div class="feature-icon feature-icon-adinkra"><i class="fa-solid fa-bell"></i></div>
+                <h3>Proactive Reminders</h3>
+                <p>Automated due-soon and overdue notifications keep borrowers informed and reduce late returns.</p>
+            </div>
+            <div class="feature-card-integrated reveal">
+                <div class="feature-icon feature-icon-success"><i class="fa-solid fa-shield-halved"></i></div>
+                <h3>Role-Based Access</h3>
+                <p>Granular permissions for students, librarians, and administrators — every action audited for accountability.</p>
+            </div>
+            <div class="feature-card-integrated reveal">
+                <div class="feature-icon feature-icon-muted"><i class="fa-solid fa-moon"></i></div>
+                <h3>Dark Mode &amp; i18n</h3>
+                <p>A comfortable reading experience day or night, with English and Français language preferences.</p>
+            </div>
+        </div>
+    </div>
+</section>
 
-                <div class="why-cards">
-                    <div class="feature-card">
-                        <h3><i class="fa-solid fa-book-open"></i> Online Reading</h3>
-                        <p class="feature-preview">Access digital books securely with your library card verification.</p>
-                        <div class="feature-detail">
-                            <p>With your registered library card, you can access hundreds of digital books directly in your browser — no downloads needed. Simply browse the catalog, verify your card, and start reading instantly. Your reading progress is saved automatically, and you can return to any book at any time during your borrowing period.</p>
-                        </div>
-                    </div>
+<!-- ===== HOW IT WORKS (dark zone) ===== -->
+<section id="how-it-works" class="how-section beam-reveal">
+    <div class="how-bg-texture"></div>
+    <div class="section-container how-container">
+        <div class="section-header reveal">
+            <p class="section-kicker">Getting started</p>
+            <h2 class="section-title">Three steps to your next book.</h2>
+        </div>
+        <div class="steps-grid">
+            <div class="step-card reveal">
+                <span class="step-number">01</span>
+                <h3>Register</h3>
+                <p>Sign up with your @st.knust.edu.gh email and your library card is issued instantly.</p>
+            </div>
+            <div class="step-card reveal">
+                <span class="step-number">02</span>
+                <h3>Get Approved</h3>
+                <p>A librarian reviews and approves your account — usually within one business day.</p>
+            </div>
+            <div class="step-card reveal">
+                <span class="step-number">03</span>
+                <h3>Borrow &amp; Read</h3>
+                <p>Browse the catalogue, borrow physical copies, or read digital books online.</p>
+            </div>
+        </div>
+    </div>
+</section>
 
-                    <div class="feature-card">
-                        <h3><i class="fa-solid fa-book"></i> Hard-Copy Borrowing</h3>
-                        <p class="feature-preview">Visit the library in person to borrow physical books from our catalog.</p>
-                        <div class="feature-detail">
-                            <p>Browse our full physical catalog online and reserve a book before you arrive. Present your library card at the desk to collect your reservation. Each member can borrow up to 3 books at a time for a 14-day period. Renewals can be requested online if no other member has reserved the same title.</p>
-                        </div>
-                    </div>
-
-                    <div class="feature-card">
-                        <h3><i class="fa-solid fa-exclamation-triangle"></i> Automated Fines</h3>
-                        <p class="feature-preview">Transparent overdue fine tracking with configurable rates and waiver support.</p>
-                        <div class="feature-detail">
-                            <p>Fines are calculated automatically based on the number of days a book is overdue. You can view your current fine balance anytime from your dashboard. Librarians can apply waivers for exceptional circumstances. All fine history is logged transparently so you always know what you owe and why.</p>
-                        </div>
+<!-- ===== FEATURED BOOKS (dark zone — from old Flask) ===== -->
+{% if featured_books %}
+<section id="featured" class="featured-section beam-reveal">
+    <div class="section-container">
+        <div class="section-header reveal">
+            <p class="section-kicker">From the catalogue</p>
+            <h2 class="section-title">Recently Added Books</h2>
+            <p class="section-description">A look at some of the latest titles — sign in to borrow or read online.</p>
+        </div>
+        <div class="featured-grid">
+            {% for book in featured_books %}
+            <div class="featured-card reveal">
+                {% if book.cover_image %}
+                <img src="{{ url_for('static', filename='covers/' + book.cover_image) }}" alt="{{ book.title }}" class="featured-cover" loading="lazy">
+                {% else %}
+                <div class="featured-cover-placeholder"><i class="fa-solid fa-book"></i></div>
+                {% endif %}
+                {% if book.category %}<span class="featured-badge">{{ book.category }}</span>{% endif %}
+                <div class="featured-card-body">
+                    <h3>{{ book.title }}</h3>
+                    <p class="featured-author">{{ book.author }}</p>
+                    <div class="featured-tags">
+                        {% if book.available_physical_copies > 0 %}<span class="tag tag-physical">Physical Available</span>{% endif %}
+                        {% if book.has_digital %}<span class="tag tag-digital">Digital Available</span>{% endif %}
                     </div>
                 </div>
             </div>
-        </section>
+            {% endfor %}
+        </div>
+        <div class="featured-footer">
+            <a href="{{ url_for('auth.login') }}" class="btn-pill btn-pill-outline">View Full Catalog</a>
+        </div>
     </div>
+</section>
+{% endif %}
 
-    {% if featured_books %}
-    <div class="book-page-frame">
-        <section class="book-page reveal" id="featured-section">
-            <div class="featured-section">
-                <div class="featured-header">
+<!-- ===== TESTIMONIALS (dark zone) ===== -->
+<section id="testimonials" class="testimonials-section beam-reveal">
+    <div class="section-container">
+        <div class="section-header reveal">
+            <p class="section-kicker">From our community</p>
+            <h2 class="section-title">Trusted by readers and staff.</h2>
+        </div>
+        <div class="testimonials-grid">
+            <div class="testimonial-card reveal">
+                <i class="fa-solid fa-quote-left testimonial-quote"></i>
+                <p class="testimonial-text">Sankofa has transformed how our students discover African literature. The digital reader is a game-changer.</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">AM</div>
                     <div>
-                        <span class="book-page-kicker">Page 02 &mdash; Catalog</span>
-                        <h2>Recently Added Books</h2>
+                        <p class="testimonial-name">Dr. Abena Mensah</p>
+                        <p class="testimonial-role">Head Librarian, KNUST</p>
                     </div>
-                    <p>A look at some of the latest titles added to the catalog — sign in to borrow or read online.</p>
-                </div>
-                <div class="featured-grid">
-                    {% for book in featured_books %}
-                    <div class="featured-card">
-                        {% if book.cover_image %}
-                        <img src="{{ url_for('static', filename='covers/' + book.cover_image) }}" alt="{{ book.title }}" class="featured-cover">
-                        {% else %}
-                        <div class="featured-cover-placeholder"><i class="fa-solid fa-book"></i></div>
-                        {% endif %}
-                        {% if book.category %}<span class="featured-badge">{{ book.category }}</span>{% endif %}
-                        <div class="featured-card-body">
-                            <h3>{{ book.title }}</h3>
-                            <p class="featured-author">{{ book.author }}</p>
-                            <div class="featured-tags">
-                                {% if book.available_physical_copies > 0 %}<span class="tag">Physical Available</span>{% endif %}
-                                {% if book.has_digital %}<span class="tag">Digital Available</span>{% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                <div class="featured-footer">
-                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline">View Full Catalog</a>
                 </div>
             </div>
-        </section>
+            <div class="testimonial-card reveal">
+                <i class="fa-solid fa-quote-left testimonial-quote"></i>
+                <p class="testimonial-text">I borrowed three books for my thesis without queuing once. The reminders saved me from late fines twice.</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">YB</div>
+                    <div>
+                        <p class="testimonial-name">Yaw Boateng</p>
+                        <p class="testimonial-role">Final-year Student, Computer Science</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    {% endif %}
+</section>
 
-    <div class="book-page-frame">
-        <section class="book-page reveal" id="steps-section">
-            <div class="steps-section">
-                <span class="book-page-kicker">Page 03 &mdash; Get Started</span>
-                <h2>Getting Started Is Easy As 1-2-3</h2>
-                <div class="steps-grid">
-                    <div class="step">
-                        <div class="step-number">1</div>
-                        <h3>Register</h3>
-                        <p>Sign up with your student ID and school email — it only takes a minute.</p>
+<!-- ===== NEWS (dark zone) ===== -->
+<section id="news" class="news-section beam-reveal">
+    <div class="section-container">
+        <div class="section-header reveal">
+            <p class="section-kicker">Library News</p>
+            <h2 class="section-title">Stay up to date.</h2>
+            <p class="section-description">Announcements, events, and updates from Sankofa Library.</p>
+        </div>
+        <div class="news-grid">
+            <div class="news-card-integrated reveal">
+                <div class="news-card-icon"><i class="fa-solid fa-clock"></i></div>
+                <div class="news-card-body">
+                    <div class="news-card-meta">
+                        <span class="news-card-date">Aug 2026</span>
+                        <span>·</span>
+                        <span>Library Staff</span>
                     </div>
-                    <div class="step">
-                        <div class="step-number">2</div>
-                        <h3>Get Approved</h3>
-                        <p>Library staff review and approve your account, then issue your digital library card.</p>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">3</div>
-                        <h3>Borrow &amp; Read</h3>
-                        <p>Reserve physical books or read digital titles online, and track it all from your dashboard.</p>
-                    </div>
+                    <h3>Extended Reading Room Hours for Exam Season</h3>
+                    <p>The reading room will remain open until midnight on weekdays throughout the exam period to support student preparation.</p>
                 </div>
             </div>
-        </section>
+            <div class="news-card-integrated reveal">
+                <div class="news-card-icon"><i class="fa-solid fa-book-bookmark"></i></div>
+                <div class="news-card-body">
+                    <div class="news-card-meta">
+                        <span class="news-card-date">Jul 2026</span>
+                        <span>·</span>
+                        <span>Acquisitions</span>
+                    </div>
+                    <h3>New African Literature Collection Arrives</h3>
+                    <p>Over 50 new titles from African authors have been added to the catalogue, including works by Chimamanda Adichie and Yaa Gyasi.</p>
+                </div>
+            </div>
+            <div class="news-card-integrated reveal">
+                <div class="news-card-icon"><i class="fa-solid fa-bullhorn"></i></div>
+                <div class="news-card-body">
+                    <div class="news-card-meta">
+                        <span class="news-card-date">Jul 2026</span>
+                        <span>·</span>
+                        <span>Administration</span>
+                    </div>
+                    <h3>Digital Reader Now Available for Select Titles</h3>
+                    <p>Students can now read selected digital books online directly from their dashboard with library card verification.</p>
+                </div>
+            </div>
+        </div>
     </div>
+</section>
+
+<!-- ===== FAQ (dark zone) ===== -->
+<section id="faq" class="faq-section beam-reveal">
+    <div class="faq-container">
+        <div class="section-header reveal" style="text-align:center;margin-left:auto;margin-right:auto;">
+            <p class="section-kicker">Frequently Asked Questions</p>
+            <h2 class="section-title">Questions? We have answers.</h2>
+        </div>
+        <div class="faq-list">
+            <details class="faq-item reveal">
+                <summary>How do I register for a library account?</summary>
+                <p>Click "Get started" on the homepage and fill in your details using your @st.knust.edu.gh email. A librarian will review and approve your account, usually within one business day. Your library card number is issued immediately upon registration.</p>
+            </details>
+            <details class="faq-item reveal">
+                <summary>How many books can I borrow at once?</summary>
+                <p>Students may borrow up to 5 physical books at a time for a 14-day loan period. Renewals can be requested if no other student has reserved the same title.</p>
+            </details>
+            <details class="faq-item reveal">
+                <summary>What happens if I return a book late?</summary>
+                <p>Overdue fines are calculated at GHS 1.00 per day. You can view your current fine balance anytime from your dashboard. Librarians can apply waivers for exceptional circumstances.</p>
+            </details>
+            <details class="faq-item reveal">
+                <summary>Can I read digital books online?</summary>
+                <p>Yes — books marked as "Digital Available" can be read online through our digital reader. You'll need to verify your library card number to start a reading session.</p>
+            </details>
+            <details class="faq-item reveal">
+                <summary>How do I get a library card?</summary>
+                <p>Your library card is issued automatically when you register. The card number appears on your dashboard once your account is approved. Physical cards can be collected from the circulation desk.</p>
+            </details>
+            <details class="faq-item reveal">
+                <summary>What if I lose a book?</summary>
+                <p>Please report lost books immediately to the library staff. A replacement fee will be assessed based on the book's value. Reports can be filed from the librarian dashboard under "Reports".</p>
+            </details>
+        </div>
+    </div>
+</section>
+
+<!-- ===== CONTACT (dark zone) ===== -->
+<section id="contact" class="contact-section beam-reveal">
+    <div class="section-container contact-grid">
+        <div class="contact-info reveal">
+            <p class="section-kicker">Get in touch</p>
+            <h2 class="section-title">Questions? We're here to help.</h2>
+            <p class="contact-description">
+                Reach out about memberships, lost items, digital access, or partnerships. Our librarians respond within two business days.
+            </p>
+            <div class="contact-details">
+                <div class="contact-detail-item">
+                    <div class="contact-detail-icon"><i class="fa-solid fa-library"></i></div>
+                    <span>Sankofa Academic Library, Kumasi, Ghana</span>
+                </div>
+                <div class="contact-detail-item">
+                    <div class="contact-detail-icon"><i class="fa-solid fa-book-open"></i></div>
+                    <span>Mon–Fri, 8:00 AM – 8:00 PM GMT</span>
+                </div>
+            </div>
+        </div>
+        <div class="contact-form-card reveal">
+            <form method="POST" action="{{ url_for('auth.contact') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name">Full name</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="subject">Subject</label>
+                    <input type="text" id="subject" name="subject">
+                </div>
+                <div class="form-group">
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" rows="4" required></textarea>
+                </div>
+                <button type="submit" class="btn-pill btn-pill-solid btn-gradient w-full">Send message</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- ===== FOOTER (dark zone) ===== -->
+<footer class="site-footer-integrated">
+    <div class="section-container">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <a href="{{ url_for('auth.index') }}" class="footer-logo">
+                    <div class="footer-logo-icon">
+                        <i class="fa-solid fa-book-open"></i>
+                    </div>
+                    <div>
+                        <span class="footer-logo-text">Sankofa</span>
+                        <span class="footer-logo-sub">Library System</span>
+                    </div>
+                </a>
+                <p class="footer-description">
+                    A modern library management system inspired by the Akan Sankofa symbol —
+                    "go back and fetch what is at risk of being left behind."
+                    Knowledge preserved, knowledge shared.
+                </p>
+            </div>
+            <div class="footer-col">
+                <p class="footer-col-title">Platform</p>
+                <ul>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#how-it-works">How it works</a></li>
+                    <li><a href="#news">News</a></li>
+                    <li><a href="#faq">FAQs</a></li>
+                    <li><a href="{{ url_for('auth.login') }}">Sign in</a></li>
+                    <li><a href="{{ url_for('auth.register') }}">Register</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <p class="footer-col-title">Library</p>
+                <ul>
+                    <li><a href="#contact">Contact us</a></li>
+                    <li><a href="#stats">Catalogue</a></li>
+                    <li><span class="footer-i18n"><i class="fa-solid fa-globe"></i> English · Français</span></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; {{ now.year if now else 2026 }} Sankofa Library System. Built with care in Kumasi.</p>
+            <p class="footer-heart">Made with <i class="fa-solid fa-heart text-adinkra"></i> for African scholarship</p>
+        </div>
+    </div>
+</footer>
+
 </div>
+<!-- ===== End Dark Zone ===== -->
 
 {% endblock %}
+
+{% block footer %}{% endblock %}

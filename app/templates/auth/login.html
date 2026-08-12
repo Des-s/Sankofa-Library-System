@@ -1,85 +1,134 @@
-{% extends "base.html" %}
-{% block content %}
+{% extends 'base.html' %}
+{% block title %}Sign In &mdash; Sankofa Library{% endblock %}
+{% block og_title %}Sign In &mdash; Sankofa Library{% endblock %}
 
+{% block content %}
 <div class="auth-wrapper">
   <div class="auth-card">
 
     <!-- LEFT: Sign In Form -->
     <div class="auth-form-side">
-      <h2>Sign In</h2>
+      <h2>Sign in to Sankofa</h2>
+      <p class="lead">Welcome back. Enter your credentials to continue.</p>
 
-      <!-- Social buttons -->
-      <div class="social-buttons">
-        <button class="social-btn" title="Google">G</button>
-        <button class="social-btn" title="Facebook">f</button>
-        <button class="social-btn" title="Twitter">𝕏</button>
-        <button class="social-btn" title="LinkedIn">in</button>
-      </div>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          {% if category in ['danger', 'warning'] %}
+          <div class="alert alert-{{ category }}" style="margin-bottom:1rem;display:flex;gap:0.5rem;align-items:flex-start;">
+            <i class="fa-solid fa-{% if category == 'danger' %}circle-exclamation{% else %}triangle-exclamation{% endif %}" aria-hidden="true" style="margin-top:0.15rem;"></i>
+            <span>{{ message }}</span>
+          </div>
+          {% endif %}
+        {% endfor %}
+      {% endwith %}
 
-      <p class="divider-text">or sign in with email &amp; password</p>
-
-      <form method="POST" action="{{ url_for('auth.login') }}">
+      <form method="POST" action="{{ url_for('auth.login') }}" id="loginForm" novalidate>
         {{ form.hidden_tag() }}
 
         <div class="form-group">
-          {{ form.email(placeholder="Enter e-mail", class="form-input") }}
+          <label for="email">Email address</label>
+          <div class="auth-input-wrap">
+            <i class="fa-solid fa-envelope input-icon" aria-hidden="true"></i>
+            {{ form.email(id='email', placeholder='you@example.com', autocomplete='email', required=True) }}
+          </div>
           {% for error in form.email.errors %}
             <span class="form-error">{{ error }}</span>
           {% endfor %}
         </div>
 
         <div class="form-group">
-          {{ form.password(placeholder="Enter password", class="form-input") }}
+          <label for="password">Password</label>
+          <div class="auth-input-wrap">
+            <i class="fa-solid fa-lock input-icon" aria-hidden="true"></i>
+            {{ form.password(id='password', placeholder='Enter your password', autocomplete='current-password', required=True) }}
+            <button type="button" class="toggle-pwd" title="Show or hide password" aria-label="Show or hide password" onclick="
+              var i = this.parentElement.querySelector('input');
+              var ic = this.querySelector('i');
+              if (i.type === 'password') { i.type = 'text'; ic.classList.replace('fa-eye','fa-eye-slash'); }
+              else { i.type = 'password'; ic.classList.replace('fa-eye-slash','fa-eye'); }
+            "><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
+          </div>
           {% for error in form.password.errors %}
             <span class="form-error">{{ error }}</span>
           {% endfor %}
         </div>
-         <a href="{{ url_for('auth.forgot_password') }}" class="forgot-link">Forgot password?</a>
 
-        <button type="submit" class="btn-primary">SIGN IN</button>
+        <a href="{{ url_for('auth.forgot_password') }}" class="forgot-link">Forgot password?</a>
+
+        <button type="submit" class="btn-submit" title="Sign in to your Sankofa Library account">
+          <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Sign In
+        </button>
       </form>
 
-      <div class="demo-credentials">
-        <p class="demo-credentials-title">Default Login Credentials (after seeding)</p>
-        <table class="demo-credentials-table">
-          <thead>
-            <tr>
-              <th>Role</th>
-              <th>Email</th>
-              <th>Password</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Admin</td>
-              <td>admin@sankofa.edu</td>
-              <td>admin12345</td>
-            </tr>
-            <tr>
-              <td>Librarian</td>
-              <td>librarian@sankofa.edu</td>
-              <td>librarian123</td>
-            </tr>
-            <tr>
-              <td>Student</td>
-              <td>student1@sankofa.edu</td>
-              <td>student123</td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- Demo accounts quick-fill card -->
+      <div class="demo-accounts-card">
+        <div class="demo-accounts-title">Demo accounts — click to autofill</div>
+        <div class="demo-account-row">
+          <span class="demo-account-label">Admin <span class="role">admin@sankofa.edu</span></span>
+          <button type="button" class="demo-account-fill" data-email="admin@sankofa.edu" data-password="admin12345">Fill</button>
+        </div>
+        <div class="demo-account-row">
+          <span class="demo-account-label">Librarian <span class="role">librarian@sankofa.edu</span></span>
+          <button type="button" class="demo-account-fill" data-email="librarian@sankofa.edu" data-password="librarian123">Fill</button>
+        </div>
+        <div class="demo-account-row">
+          <span class="demo-account-label">Student <span class="role">kwame.mensah@st.knust.edu.gh</span></span>
+          <button type="button" class="demo-account-fill" data-email="kwame.mensah@st.knust.edu.gh" data-password="student123">Fill</button>
+        </div>
       </div>
+
+      <a href="{{ url_for('auth.register') }}" class="auth-back-link">
+        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> New here? Create an account
+      </a>
     </div>
 
-    <!-- RIGHT: Book photo panel -->
+    <!-- RIGHT: Library photo panel -->
     <div class="auth-image-side">
       <div class="image-overlay">
-        <h2>Hello, Reader!</h2>
-        <p>New here? Join us and explore a world of books.</p>
-        <a href="{{ url_for('auth.register') }}" class="btn-outline">SIGN UP</a>
+        <span class="badge-line">
+          <span class="dot" aria-hidden="true"></span>
+          Trusted by KNUST and partner institutions
+        </span>
+        <h2>
+          <span class="quote">&ldquo;San ko fa&rdquo;</span><br>
+          <span class="gradient-gold-text">&mdash; return and fetch it.</span>
+        </h2>
+        <p>
+          The Akan Adinkra symbol reminds us that true progress knows where it
+          comes from. Sankofa Library preserves and shares knowledge for
+          generations of scholars.
+        </p>
+        <div class="image-stats">
+          <div class="image-stat">
+            <div class="num">15+</div>
+            <div class="label">Curated titles</div>
+          </div>
+          <div class="image-stat">
+            <div class="num">6</div>
+            <div class="label">Categories</div>
+          </div>
+          <div class="image-stat">
+            <div class="num">24/7</div>
+            <div class="label">Digital access</div>
+          </div>
+        </div>
       </div>
     </div>
 
   </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var emailEl = document.getElementById('email');
+  var pwdEl = document.getElementById('password');
+  document.querySelectorAll('.demo-account-fill').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      if (emailEl) { emailEl.value = btn.dataset.email; emailEl.dispatchEvent(new Event('input', {bubbles:true})); }
+      if (pwdEl) { pwdEl.value = btn.dataset.password; }
+      if (emailEl) emailEl.focus();
+    });
+  });
+});
+</script>
 {% endblock %}

@@ -1,7 +1,11 @@
 {% extends 'base.html' %}
-{% block title %}Settings — Sankofa Library{% endblock %}
+{% block title %}Librarian Settings — Sankofa Library{% endblock %}
+{% block breadcrumb_extra %}<a href="{{ url_for('librarian.dashboard') }}">Dashboard</a><span>Settings</span>{% endblock %}
 {% block content %}
-<div class="page-header"><h1>{{ t('page.settings') }}</h1></div>
+<div class="page-header">
+    <h1>Settings</h1>
+    <p class="page-subtitle">Personalize your notifications, theme, and language preferences.</p>
+</div>
 {% set role = 'librarian' %}
 {% include '_settings_rows.html' %}
 {% endblock %}
