@@ -205,8 +205,8 @@
         var observer = new IntersectionObserver(function(entries) {
           entries.forEach(function(entry) {
             if (entry.isIntersecting) {
-              entry.target.classList.add('in-view');
-              observer.unobserve(entry.target);
+              entryarchiveget.classList.add('in-view');
+              observer.unobserve(entryarchiveget);
             }
           });
         }, { threshold: 0.15 });
@@ -229,7 +229,7 @@
     // Close user-menu on outside click
     document.addEventListener('click', function(e) {
       var menu = document.getElementById('userMenu');
-      if (menu && !menu.contains(e.target)) menu.classList.remove('open');
+      if (menu && !menu.contains(earchiveget)) menu.classList.remove('open');
     });
 
     // ---- Toast notification system ----
@@ -259,7 +259,7 @@
     // ---- Confirmation dialogs for destructive actions ----
     // Any element with data-confirm="Are you sure?" gets a confirm() prompt before its action.
     document.body.addEventListener('click', function(e) {
-      var trigger = e.target.closest('[data-confirm]');
+      var trigger = earchiveget.closest('[data-confirm]');
       if (!trigger) return;
       if (!window.confirm(trigger.getAttribute('data-confirm') || 'Are you sure?')) {
         e.preventDefault();

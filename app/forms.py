@@ -1,4 +1,4 @@
-"""All WTForms used across the app — faithful port of the Next.js form
+"""All WTForms used across the app — Sankofa Library System form
 schemas (zod in src/lib/validators.ts).
 
 Every form is CSRF-protected via Flask-WTF (globally enabled in
@@ -45,7 +45,7 @@ ISBN_RE = re.compile(r'^(?:\d{9}[\dXx]|\d{13})$')
 # Field validators
 # ---------------------------------------------------------------------------
 def validate_password_strength(form, field):
-    """Mirror Next.js password schema: at least one letter AND one digit."""
+    """Mirror the design system password schema: at least one letter AND one digit."""
     if field.data and not (
         re.search(r'[A-Za-z]', field.data) and re.search(r'\d', field.data)
     ):
@@ -233,7 +233,7 @@ class FineActionForm(FlaskForm):
     submit = SubmitField('Submit')
 
     def validate_waiver_reason(self, field):
-        """Waiver requires a reason — mirrors Next.js waive endpoint check."""
+        """Waiver requires a reason — implements the design system.
         if self.action.data == 'waived' and not (field.data and field.data.strip()):
             raise ValidationError('A reason is required to waive a fine.')
 

@@ -4,7 +4,7 @@ All routes require @login_required + @librarian_required (admits admin).
 before_request calls update_overdue_statuses() so the dashboard always
 shows fresh overdue state.
 
-Faithful port of the Next.js librarian area (src/app/(app)/librarian/...).
+Sankofa Library System librarian area (src/app/(app)/librarian/...).
 
 Routes:
 - `/dashboard` — today's checkouts, active loans, overdue count,
@@ -177,7 +177,7 @@ def reject_student(user_id):
 
 @librarian_bp.route('/approvals')
 def approvals():
-    """Dedicated approvals page — matches Next.js admin/approvals."""
+    """Dedicated approvals page — matches the design system admin/approvals."""
     pending_students = (
         User.query
         .filter_by(role='student', approval_status='pending')

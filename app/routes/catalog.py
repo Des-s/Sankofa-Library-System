@@ -1,7 +1,7 @@
 """Catalog blueprint — public-ish catalog browse + book detail.
 
-Faithful port of the Next.js catalog area (src/app/(app)/catalog/...).
-Both routes require @login_required (matches the Next.js middleware
+Sankofa Library System catalog area (src/app/(app)/catalog/...).
+Both routes require @login_required (matches the the design system middleware
 gate that redirects unauthenticated users to /login for any /catalog
 route).
 

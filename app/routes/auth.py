@@ -1,6 +1,6 @@
 """Auth blueprint — public routes + login/logout/register/forgot-password.
 
-Faithful port of the Next.js auth API routes under src/app/api/auth/.
+Sankofa Library System auth API routes under src/app/api/auth/.
 Routes:
 - `/` (index) — public landing page. Passes real DB stats (book_count,
   student_count, category_count, total_copies, featured_books) to

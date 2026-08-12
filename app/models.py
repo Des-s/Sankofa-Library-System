@@ -1,4 +1,4 @@
-"""SQLAlchemy models — faithful port of the Next.js Prisma schema.
+"""SQLAlchemy models — Sankofa Library System Prisma schema.
 
 Every model maps to the corresponding Prisma model in prisma/schema.prisma.
 Composite indexes match the @@index directives. Enums are mirrored as
@@ -109,7 +109,7 @@ class User(UserMixin, db.Model):
             return False
         return bcrypt.check_password_hash(self.password_hash, password)
 
-    # ---- Role helpers (mirror Next.js role checks) -------------------
+
     @property
     def is_student(self):
         return self.role == 'student'

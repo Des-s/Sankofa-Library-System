@@ -1,6 +1,6 @@
 /* ============================================================
    SANKOFA LIBRARY SYSTEM — DESIGN SYSTEM (FLASK-TEMPLATES)
-   Faithful port of the Next.js design tokens (globals.css).
+   Sankofa Library System design tokens (globals.css).
    Warm Afrocentric academic palette: deep forest green,
    warm gold, kente orange, adinkra red, warm off-white.
    Headings: Outfit. Body: Inter.
@@ -9,7 +9,7 @@
 
 /* ============================================================
    DESIGN TOKENS — :root (light) and [data-theme="dark"]
-   Matches Next.js globals.css exactly.
+   Matches the design system globals.css exactly.
    ============================================================ */
 :root {
     /* Brand palette */
@@ -39,7 +39,7 @@
     --color-warning: var(--warning);
     --color-success: var(--success);
 
-    /* Chart palette (matches Next.js chart-1..5) */
+
     --chart-1: #1B4332;
     --chart-2: #D4A574;
     --chart-3: #C04E2C;
@@ -178,7 +178,7 @@ input[type=number]::-webkit-outer-spin-button {
 
 /* ============================================================
    SIGNATURE SANKOFA GRADIENTS & COMPONENTS
-   Matches Next.js globals.css @layer components.
+   Matches the design system globals.css @layer components.
    ============================================================ */
 
 /* Kente-inspired accent bar */
@@ -461,7 +461,7 @@ input[type=number]::-webkit-outer-spin-button {
 .animate-float          { animation: float 4s ease-in-out infinite; }
 .animate-pulse-soft     { animation: pulse-soft 2.5s ease-in-out infinite; }
 
-/* Stagger delays (1-8 matching Next.js) */
+
 .stagger-1 { animation-delay: 0.05s; opacity: 0; }
 .stagger-2 { animation-delay: 0.10s; opacity: 0; }
 .stagger-3 { animation-delay: 0.15s; opacity: 0; }
@@ -481,7 +481,7 @@ input[type=number]::-webkit-outer-spin-button {
 
 /* ============================================================
    LAYOUT — AUTHENTICATED HEADER (top bar, dark forest green)
-   Mirrors Next.js DashboardShell sidebar but rendered as a
+   implements the design system.
    horizontal nav for the Flask version.
    ============================================================ */
 .site-header {
@@ -974,7 +974,7 @@ main { flex: 1; max-width: 1400px; margin: 0 auto; padding: 2rem 1.5rem; width: 
 .chart-box { position: relative; width: 100%; height: 260px; }
 .chart-box.chart-box-sm { height: 220px; max-width: 360px; margin: 0 auto; }
 
-/* Stat cards — Next.js accent variants (forest/gold/kente/adinkra/success/muted) */
+
 .stat-card {
     position: relative;
     overflow: hidden;
@@ -1176,7 +1176,7 @@ tbody tr:hover { background: var(--color-surface-alt); }
 }
 
 /* ============================================================
-   BADGES & STATUS PILLS (Next.js StatusBadge variants)
+   BADGES & STATUS PILLS (the design system StatusBadge variants)
    ============================================================ */
 .badge {
     display: inline-flex;
@@ -1213,7 +1213,7 @@ tbody tr:hover { background: var(--color-surface-alt); }
 .badge-medium { background: rgba(184, 134, 11, 0.12); color: var(--gold); }
 .badge-high { background: rgba(185, 28, 28, 0.12); color: var(--color-danger); }
 
-/* Status badge alias (Next.js StatusBadge class) */
+
 .status-badge {
     display: inline-flex;
     align-items: center;
@@ -1709,7 +1709,7 @@ tbody tr:hover { background: var(--color-surface-alt); }
 
 /* ============================================================
    AUTH PAGES (split layout — form on left, photo on right)
-   Mirrors Next.js AuthShell.
+   implements the design system.
    ============================================================ */
 .auth-wrapper {
     min-height: 100vh;
@@ -2072,7 +2072,7 @@ tbody tr:hover { background: var(--color-surface-alt); }
 .filter-panel.open { display: block; }
 
 /* ============================================================
-   SETTINGS — grouped list rows (Next.js settings cards)
+   SETTINGS — grouped list rows (the design system settings cards)
    ============================================================ */
 .settings-section-label {
     margin: 1.5rem 0 0.5rem;

@@ -68,8 +68,8 @@
                 </td>
                 <td><span class="badge badge-active" style="font-family:monospace;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;">{{ log.action_type }}</span></td>
                 <td>
-                    {% if log.target_table %}
-                    <code style="font-size:0.75rem;">{{ log.target_table }}{% if log.target_id %}#{{ log.target_id }}{% endif %}</code>
+                    {% if logarchiveget_table %}
+                    <code style="font-size:0.75rem;">{{ logarchiveget_table }}{% if logarchiveget_id %}#{{ logarchiveget_id }}{% endif %}</code>
                     {% else %}—{% endif %}
                 </td>
                 <td>{{ log.description }}</td>

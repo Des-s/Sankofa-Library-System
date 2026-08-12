@@ -319,7 +319,7 @@ def seed():
         db.session.flush()
 
         # ---- Digital content for books that have has_digital=True ------
-        # Mirror the Next.js seed: write a small sample .txt file to
+
         # uploads/books/ so the in-browser reader has something to serve.
         uploads_dir = app.config['UPLOAD_FOLDER']
         os.makedirs(uploads_dir, exist_ok=True)

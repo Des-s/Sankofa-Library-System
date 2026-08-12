@@ -1,6 +1,6 @@
 """Flask extension singletons — created once, bound to the app in create_app.
 
-Faithful port of the Next.js dependency graph: SQLAlchemy (Prisma),
+Sankofa Library System dependency graph: SQLAlchemy (Prisma),
 Flask-Login (JWT sessions), Flask-WTF (CSRF), Flask-Bcrypt (bcryptjs),
 Flask-Mail (nodemailer), Flask-Migrate (Prisma migrate).
 """
@@ -17,14 +17,14 @@ db = SQLAlchemy()
 bcrypt = Bcrypt()
 # Session management (mirrors jose JWT cookies in src/lib/auth.ts)
 login_manager = LoginManager()
-# CSRF protection on every form / POST route (mirrors Next.js CSRF token check)
+
 csrf = CSRFProtect()
 # Outbound email (mirrors nodemailer in src/lib/notifications.ts)
 mail = Mail()
 # Database migrations (mirrors `prisma migrate`)
 migrate = Migrate()
 
-# Login flow defaults — match the Next.js /login redirect.
+
 login_manager.login_view = 'auth.login'
 login_manager.login_message = 'Please log in to access this page.'
 login_manager.login_message_category = 'warning'

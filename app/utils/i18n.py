@@ -4,7 +4,7 @@ Scope: covers the app's persistent chrome (nav, common buttons, page
 headers). Full-content translation of book data, flash messages, etc.
 is out of scope.
 
-Mirrors the Next.js i18n approach (next-intl in src/components/...).
+Mirrors the the design system i18n approach (next-intl in src/components/...).
 """
 from flask_login import current_user
 

@@ -1,7 +1,7 @@
-"""Application configuration — faithful port of the Next.js design system
+"""Application configuration — Sankofa Library System design system
 and security model.
 
-Environment variables mirror the Next.js .env exactly where possible.
+Environment variables mirror the the design system .env exactly where possible.
 All defaults match the seed-time SystemSetting values seeded by
 scripts/seed.ts so the app is consistent out of the box.
 """
@@ -38,7 +38,7 @@ class Config:
         'png': b'\x89PNG\r\n\x1a\n',
     }
 
-    # ---- Session / cookie security (mirrors Next.js jose cookie) -----
+
     PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
@@ -64,7 +64,7 @@ class Config:
         'MAIL_SUPPRESS_SEND', 'true'
     ).lower() == 'true'
 
-    # ---- Default system settings (mirror Next.js defaults) ---------
+
     DEFAULT_FINE_RATE = 1.00
     DEFAULT_LOAN_PERIOD_DAYS = 14
     DEFAULT_CARD_FORMAT = 'LIB-{year}-{student_id}'
@@ -78,7 +78,7 @@ class Config:
     COVER_REQUEST_TIMEOUT = 10
     MAX_COVER_BYTES = 5 * 1024 * 1024  # 5 MB
 
-    # ---- Scheduler (mirrors Next.js cron) ----------------------------
+
     SCHEDULER_OVERDUE_INTERVAL_HOURS = 1
     SCHEDULER_REMINDER_INTERVAL_HOURS = 24
 
@@ -93,7 +93,7 @@ class Config:
 def _validate_secret_key():
     """Refuse to start in production with the default SECRET_KEY, warn in dev.
 
-    Mirrors the Next.js requirement that AUTH_SECRET is set to a strong value.
+    Mirrors the the design system requirement that AUTH_SECRET is set to a strong value.
     """
     key = os.environ.get('SECRET_KEY', _DEFAULT_SECRET_KEY)
     if key == _DEFAULT_SECRET_KEY:

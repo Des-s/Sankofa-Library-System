@@ -6,7 +6,7 @@ Notable rules:
   + 403 if the role doesn't match. Logs ACCESS_DENIED.
 - student_required: only 'student'.
 - librarian_required: 'librarian' OR 'admin' (admin is admitted to all
-  librarian routes — mirrors Next.js src/middleware.ts).
+  librarian routes — implements the design system.
 - admin_required: only 'admin'.
 """
 from functools import wraps

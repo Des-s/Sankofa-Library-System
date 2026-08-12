@@ -1,7 +1,7 @@
 """Admin blueprint — /admin/* routes.
 
 All routes require @login_required + @admin_required via before_request.
-Faithful port of the Next.js admin area (src/app/(app)/admin/...).
+Sankofa Library System admin area (src/app/(app)/admin/...).
 
 Routes:
 - `/dashboard` — 6 stat cards, Chart.js data (user growth, checkout
@@ -353,7 +353,7 @@ def audit():
     if action_type:
         query = query.filter(AuditLog.action_type == action_type)
     if target_table:
-        query = query.filter(AuditLog.target_table == target_table)
+        query = query.filter(AuditLogarchiveget_table == target_table)
 
     # Distinct action types and target tables for the filter dropdowns.
     action_types = [
@@ -364,9 +364,9 @@ def audit():
     ]
     target_tables = [
         row[0] for row in
-        db.session.query(AuditLog.target_table)
-        .filter(AuditLog.target_table.isnot(None))
-        .distinct().order_by(AuditLog.target_table).all()
+        db.session.query(AuditLogarchiveget_table)
+        .filter(AuditLogarchiveget_table.isnot(None))
+        .distinct().order_by(AuditLogarchiveget_table).all()
         if row[0]
     ]
 
