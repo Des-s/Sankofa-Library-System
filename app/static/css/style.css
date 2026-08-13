@@ -515,7 +515,7 @@ input[type=number]::-webkit-outer-spin-button {
     align-items: center;
     justify-content: space-between;
     min-height: 64px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 1rem;
 }
 
@@ -542,8 +542,16 @@ input[type=number]::-webkit-outer-spin-button {
 }
 .logo span { color: var(--color-accent); }
 
-.main-nav { display: flex; gap: 0.25rem; flex-wrap: wrap; }
-.main-nav a {
+.main-nav {
+     display: flex;
+     gap: 0.25rem;
+     flex-wrap: wrap;
+     overflow-x: auto;
+     scrollbar-width: none;
+     }
+     .main-nav::-webkit-scrollbar { display: none; }
+     .main-nav a { white-space: nowrap; padding: 0.5rem 0.6rem; font-size: 0.85rem; }
+     .main-nav a {
     color: rgba(255,255,255,0.85);
     padding: 0.5rem 0.75rem;
     border-radius: var(--radius);
