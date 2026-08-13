@@ -60,23 +60,6 @@
         </button>
       </form>
 
-      <!-- Demo accounts quick-fill card -->
-      <div class="demo-accounts-card">
-        <div class="demo-accounts-title">Demo accounts — click to autofill</div>
-        <div class="demo-account-row">
-          <span class="demo-account-label">Admin <span class="role">admin@sankofa.edu</span></span>
-          <button type="button" class="demo-account-fill" data-email="admin@sankofa.edu" data-password="admin12345">Fill</button>
-        </div>
-        <div class="demo-account-row">
-          <span class="demo-account-label">Librarian <span class="role">librarian@sankofa.edu</span></span>
-          <button type="button" class="demo-account-fill" data-email="librarian@sankofa.edu" data-password="librarian123">Fill</button>
-        </div>
-        <div class="demo-account-row">
-          <span class="demo-account-label">Student <span class="role">kwame.mensah@st.knust.edu.gh</span></span>
-          <button type="button" class="demo-account-fill" data-email="kwame.mensah@st.knust.edu.gh" data-password="student123">Fill</button>
-        </div>
-      </div>
-
       <a href="{{ url_for('auth.register') }}" class="auth-back-link">
         <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> New here? Create an account
       </a>
@@ -117,18 +100,4 @@
 
   </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  var emailEl = document.getElementById('email');
-  var pwdEl = document.getElementById('password');
-  document.querySelectorAll('.demo-account-fill').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      if (emailEl) { emailEl.value = btn.dataset.email; emailEl.dispatchEvent(new Event('input', {bubbles:true})); }
-      if (pwdEl) { pwdEl.value = btn.dataset.password; }
-      if (emailEl) emailEl.focus();
-    });
-  });
-});
-</script>
 {% endblock %}
