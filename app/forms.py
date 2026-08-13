@@ -233,7 +233,7 @@ class FineActionForm(FlaskForm):
     submit = SubmitField('Submit')
 
     def validate_waiver_reason(self, field):
-        """Waiver requires a reason — implements the design system.
+        """Waiver requires a reason — implements the design system."""
         if self.action.data == 'waived' and not (field.data and field.data.strip()):
             raise ValidationError('A reason is required to waive a fine.')
 
