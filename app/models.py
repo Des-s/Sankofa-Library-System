@@ -1,13 +1,9 @@
-"""SQLAlchemy models — Sankofa Library System Prisma schema.
+"""SQLAlchemy models — Sankofa Library System database schema.
 
-Every model maps to the corresponding Prisma model in prisma/schema.prisma.
-Composite indexes match the @@index directives. Enums are mirrored as
-SQLAlchemy db.Enum columns with the same names and values as the Prisma
-enums (UserRole, ApprovalStatus, CheckoutStatus, FineStatus, ReportType).
-
-The Prisma schema uses String IDs (cuids); we use Integer PKs for parity
-with Flask-SQLAlchemy conventions. All other field names and semantics
-match exactly.
+Composite indexes are defined for common query patterns. Enums are
+SQLAlchemy db.Enum columns (UserRole, ApprovalStatus, CheckoutStatus,
+FineStatus, ReportType). Integer primary keys follow Flask-SQLAlchemy
+conventions.
 """
 from datetime import date, datetime
 
@@ -18,7 +14,7 @@ from app.extensions import bcrypt, db
 
 
 # ---------------------------------------------------------------------------
-# User — mirrors Prisma `User`
+# User
 # ---------------------------------------------------------------------------
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -59,7 +55,7 @@ class User(UserMixin, db.Model):
         db.Index('ix_users_approval_status', 'approval_status'),
     )
 
-    # ---- Relationships (mirror Prisma relation fields) ---------------
+    # ---- Relationships -------------------------------------------------
     library_card = db.relationship(
         'LibraryCard', backref='user', uselist=False,
         cascade='all, delete-orphan',
@@ -100,7 +96,7 @@ class User(UserMixin, db.Model):
     def get_id(self):
         return str(self.user_id)
 
-    # ---- Password helpers (mirror src/lib/auth.ts hashPassword) ------
+    # ---- Password helpers (password hashing) ------
     def set_password(self, password):
         self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
 
@@ -133,7 +129,7 @@ class User(UserMixin, db.Model):
 
 
 # ---------------------------------------------------------------------------
-# LibraryCard — mirrors Prisma `LibraryCard`
+# LibraryCard
 # ---------------------------------------------------------------------------
 class LibraryCard(db.Model):
     __tablename__ = 'library_cards'
@@ -154,7 +150,7 @@ class LibraryCard(db.Model):
 
 
 # ---------------------------------------------------------------------------
-# Book — mirrors Prisma `Book`
+# Book
 # ---------------------------------------------------------------------------
 class Book(db.Model):
     __tablename__ = 'books'
@@ -194,7 +190,7 @@ class Book(db.Model):
 
 
 # ---------------------------------------------------------------------------
-# Checkout — mirrors Prisma `Checkout`
+# Checkout
 # ---------------------------------------------------------------------------
 class Checkout(db.Model):
     __tablename__ = 'checkouts'
@@ -242,7 +238,7 @@ class Checkout(db.Model):
 
 
 # ---------------------------------------------------------------------------
-# Fine — mirrors Prisma `Fine`
+# Fine
 # ---------------------------------------------------------------------------
 class Fine(db.Model):
     __tablename__ = 'fines'
@@ -275,7 +271,7 @@ class Fine(db.Model):
 
 
 # ---------------------------------------------------------------------------
-# ReadingSession — mirrors Prisma `ReadingSession`
+# ReadingSession
 # ---------------------------------------------------------------------------
 class ReadingSession(db.Model):
     __tablename__ = 'reading_sessions'
@@ -298,7 +294,7 @@ class ReadingSession(db.Model):
 
 
 # ---------------------------------------------------------------------------
-# AuditLog — mirrors Prisma `AuditLog`
+# AuditLog
 # ---------------------------------------------------------------------------
 class AuditLog(db.Model):
     __tablename__ = 'audit_logs'
@@ -322,7 +318,7 @@ class AuditLog(db.Model):
 
 
 # ---------------------------------------------------------------------------
-# SystemSetting — mirrors Prisma `SystemSetting`
+# SystemSetting
 # ---------------------------------------------------------------------------
 class SystemSetting(db.Model):
     __tablename__ = 'system_settings'
@@ -338,7 +334,7 @@ class SystemSetting(db.Model):
 
 
 # ---------------------------------------------------------------------------
-# Report — mirrors Prisma `Report`
+# Report
 # ---------------------------------------------------------------------------
 class Report(db.Model):
     __tablename__ = 'reports'

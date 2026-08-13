@@ -1,8 +1,8 @@
-"""Helper utilities — faithful port of src/lib/library.ts plus the analytics
+"""Helper utilities — library utilities plus the analytics
 helpers used by both the admin and librarian dashboards.
 
 Notable helpers:
-- generate_library_card_number: try/except wrapped (FLASK-ADAPT).
+- generate_library_card_number: try/except wrapped
 - get_setting / get_fine_rate / get_loan_period_days / etc.: read
   from SystemSetting with config-default fallback.
 - validate_image_upload: extension + magic-byte (JPEG FF D8 FF, PNG 89 50
@@ -29,7 +29,7 @@ from app.models import AuditLog, SystemSetting
 
 
 # ---------------------------------------------------------------------------
-# Audit logging (mirror src/lib/audit.ts logAction)
+# Audit logging (audit logging)
 # ---------------------------------------------------------------------------
 def log_action(action_type, description, target_table=None, target_id=None, actor_id=None):
     actor = (
@@ -57,7 +57,7 @@ def log_action(action_type, description, target_table=None, target_id=None, acto
 
 
 # ---------------------------------------------------------------------------
-# System settings (mirror src/lib/library.ts getSetting helpers)
+# System settings (system settings helpers)
 # ---------------------------------------------------------------------------
 def get_setting(key, default=None):
     setting = SystemSetting.query.filter_by(setting_key=key).first()
@@ -122,14 +122,13 @@ def get_currency_symbol():
 
 
 # ---------------------------------------------------------------------------
-# Library card generation (mirror src/lib/library.ts generateLibraryCardNumber)
+# Library card generation (library card generation)
 # ---------------------------------------------------------------------------
 def generate_library_card_number(student_id):
     """Generate a card number from the configured format.
 
     Wrapped in try/except so a malformed admin setting never crashes the
     registration flow — falls back to the canonical `LIB-{year}-{student_id}`.
-    (FLASK-ADAPT)
     """
     card_format = get_card_format()
     try:
@@ -253,13 +252,12 @@ def get_fine_collection_rate():
 
 
 # ---------------------------------------------------------------------------
-# File upload validation (FLASK-ADAPT)
+# File upload validation
 # ---------------------------------------------------------------------------
 def validate_image_upload(file_storage):
     """Validate an uploaded image by extension, MIME type, and magic bytes.
 
     Returns ``(True, None)`` on success, ``(False, reason)`` otherwise.
-    (FLASK-ADAPT)
     """
     filename = file_storage.filename or ''
     # Avoid IndexError when the file has no extension.
@@ -288,7 +286,6 @@ def validate_book_file_upload(file_storage):
     """Validate a digital-book file (PDF/TXT/HTML) by extension + MIME sniff.
 
     Returns ``(True, None)`` on success, ``(False, reason)`` otherwise.
-    (FLASK-ADAPT)
     """
     filename = file_storage.filename or ''
     if '.' not in filename:
@@ -326,12 +323,12 @@ def save_profile_photo(user, photo):
 
 
 # ---------------------------------------------------------------------------
-# Email (mirror src/lib/notifications.ts sendNotificationEmail)
+# Email notification helper
 # ---------------------------------------------------------------------------
 def send_notification_email(message, *, suppress_errors=False):
     """Send an email via Flask-Mail, swallowing SMTP errors and logging them.
 
-    Returns ``True`` on success, ``False`` on failure. (FLASK-ADAPT)
+    Returns ``True`` on success, ``False`` on failure.
     """
     from smtplib import SMTPException
     try:
@@ -356,7 +353,7 @@ def send_notification_email(message, *, suppress_errors=False):
 
 
 # ---------------------------------------------------------------------------
-# Default settings seeder (mirror scripts/seed.ts systemSetting.createMany)
+# Default settings seeder (sample seed data systemSetting.createMany)
 # ---------------------------------------------------------------------------
 def init_default_settings():
     """Seed the SystemSetting table with config defaults if missing."""

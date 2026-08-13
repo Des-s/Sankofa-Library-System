@@ -1,9 +1,9 @@
 """Fine calculation + checkout lifecycle helpers.
 
-Faithful port of src/lib/library.ts (calculateFine, processReturn,
+Fine calculation and return processing utilities (calculateFine, processReturn,
 updateOverdueStatuses, getAccruedFine).
 
-Notable features (FLASK-ADAPT):
+Notable features:
 - calculate_fine: returns None if not overdue.
 - process_return: double-return guard — no-op if already returned;
   never increments available_physical_copies above total_physical_copies.
@@ -43,7 +43,7 @@ def process_return(checkout, librarian, return_date=None):
 
     Includes a double-return guard: if the book has already been returned
     (or its availability count is already at the cap), no increment
-    happens and the call is a no-op. (FLASK-ADAPT)
+    happens and the call is a no-op.
     """
     return_date = return_date or date.today()
 
@@ -93,7 +93,7 @@ def update_overdue_statuses():
 
     Also refreshes stale fines: any Fine tied to an active/overdue
     checkout is updated so its `days_overdue` and `total_amount`
-    reflect the current date. (FLASK-ADAPT)
+    reflect the current date.
     """
     today = date.today()
     overdue = Checkout.query.filter(

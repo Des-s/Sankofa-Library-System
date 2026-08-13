@@ -1,6 +1,6 @@
 """Auth blueprint — public routes + login/logout/register/forgot-password.
 
-Sankofa Library System auth API routes under src/app/api/auth/.
+Sankofa Library System authentication routes.
 Routes:
 - `/` (index) — public landing page. Passes real DB stats (book_count,
   student_count, category_count, total_copies, featured_books) to
@@ -56,7 +56,7 @@ def index():
             return redirect(url_for('librarian.dashboard'))
         return redirect(url_for('student.dashboard'))
 
-    # Real DB-driven stats — no hardcoded marketing numbers (FLASK-ADAPT).
+    # Real DB-driven stats — no hardcoded marketing numbers
     book_count = Book.query.filter_by(is_active=True).count()
     student_count = User.query.filter_by(
         role='student', approval_status='approved'
@@ -134,7 +134,7 @@ def contact():
 
 
 # ---------------------------------------------------------------------------
-# /register — student self-registration (mirror src/app/api/auth/register)
+# /register — student self-registration (student self-registration)
 # ---------------------------------------------------------------------------
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -184,7 +184,7 @@ def register():
 
 
 # ---------------------------------------------------------------------------
-# /login — rate-limited login (mirror src/app/api/auth/login)
+# /login — rate-limited login (rate-limited login)
 # ---------------------------------------------------------------------------
 def _is_locked(user):
     """Return (locked, remaining_minutes) for an account under lockout."""
@@ -293,7 +293,7 @@ def login():
 
 
 # ---------------------------------------------------------------------------
-# /logout — POST only, CSRF-protected (FLASK-ADAPT)
+# /logout — POST only, CSRF-protected
 # ---------------------------------------------------------------------------
 @auth_bp.route('/logout', methods=['POST'])
 @login_required
@@ -306,7 +306,7 @@ def logout():
 
 
 # ---------------------------------------------------------------------------
-# /forgot-password — secure temp password (FLASK-ADAPT)
+# /forgot-password — secure temp password
 # ---------------------------------------------------------------------------
 def generate_temp_password(length=20):
     """Generate a cryptographically secure temp password.

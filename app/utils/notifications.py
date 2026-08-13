@@ -1,9 +1,8 @@
-"""Email notification helpers (FLASK-ADAPT).
+"""Email notification helpers.
 
-Faithful port of src/lib/notifications.ts. Every mail.send() is wrapped
-in _safe_send() catching SMTPException / OSError. Uses app.logger
-instead of print(). Null-checks for orphaned Checkout → Student / Book
-records.
+Every mail.send() is wrapped in _safe_send() catching SMTPException /
+OSError. Uses app.logger instead of print(). Null-checks for orphaned
+Checkout → Student / Book records.
 
 Functions:
 - send_due_soon_reminders: emails students whose active checkouts are
@@ -28,7 +27,7 @@ REMINDER_DAYS_BEFORE_DUE = 2
 
 
 def _safe_send(message):
-    """Send an email, log on failure, never raise. (FLASK-ADAPT)"""
+    """Send an email, log on failure, never raise."""
     try:
         mail.send(message)
         return True

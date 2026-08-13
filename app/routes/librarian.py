@@ -4,7 +4,7 @@ All routes require @login_required + @librarian_required (admits admin).
 before_request calls update_overdue_statuses() so the dashboard always
 shows fresh overdue state.
 
-Sankofa Library System librarian area (src/app/(app)/librarian/...).
+Sankofa Library System librarian routes.
 
 Routes:
 - `/dashboard` — today's checkouts, active loans, overdue count,
@@ -177,7 +177,7 @@ def reject_student(user_id):
 
 @librarian_bp.route('/approvals')
 def approvals():
-    """Dedicated approvals page — matches the design system admin/approvals."""
+    """Dedicated approvals page — dedicated approvals page."""
     pending_students = (
         User.query
         .filter_by(role='student', approval_status='pending')
@@ -402,7 +402,7 @@ def fines():
         if not fine:
             flash('Fine not found.', 'danger')
         elif form.action.data == 'waived':
-            # waiver_reason validation is enforced in the form (FLASK-ADAPT).
+            # waiver_reason validation is enforced in the form
             fine.status = 'waived'
             fine.waiver_reason = form.waiver_reason.data
             fine.processed_by = current_user.user_id

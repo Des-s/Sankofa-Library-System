@@ -23,3 +23,9 @@ Thumbs.db
 # IDE folders
 .vscode/
 .idea/
+
+# Agent working directories
+.agents/
+
+# Log files
+*.log

@@ -1,13 +1,13 @@
 """Application factory — wires up extensions, blueprints, security headers,
 error handlers, scheduler, and default settings.
 
-Faithful Flask port of the the design system app at the reference implementation
+Sankofa Library System application factory
 - 5 blueprints (auth, admin, librarian, student, catalog) with the same
-  role gating as src/middleware.ts.
+  role-based access control.
 - Security headers via @app.after_request (CSP, X-Content-Type-Options,
   X-Frame-Options, HSTS, Referrer-Policy, Permissions-Policy).
 - Background scheduler: update_overdue_statuses hourly,
-  send_due_soon_reminders daily — implements the design system.
+  send_due_soon_reminders daily .
 - init_default_settings() seeds the SystemSetting table on boot.
 """
 import logging
@@ -147,9 +147,9 @@ def create_app(config_class='app.config.Config'):
 
 
 def _start_scheduler(app):
-    """Hourly overdue refresh + daily due-soon reminders (FLASK-ADAPT).
+    """Hourly overdue refresh + daily due-soon reminders
 
-    Mirrors the the design system scheduled jobs — keeps the DB consistent even
+    Background scheduled jobs — keeps the DB consistent even
     when nobody is hitting the app.
     """
     from apscheduler.schedulers.background import BackgroundScheduler

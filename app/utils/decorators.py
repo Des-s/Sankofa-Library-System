@@ -1,12 +1,11 @@
-"""Role-based access decorators — faithful port of src/middleware.ts +
-src/lib/api-auth.ts requireUser(req, [...roles]).
+"""Role-based access decorators — Role-based access control decorators.
 
 Notable rules:
 - role_required(*roles): redirects to /login if unauthenticated, flashes
   + 403 if the role doesn't match. Logs ACCESS_DENIED.
 - student_required: only 'student'.
 - librarian_required: 'librarian' OR 'admin' (admin is admitted to all
-  librarian routes — implements the design system.
+  librarian routes .
 - admin_required: only 'admin'.
 """
 from functools import wraps

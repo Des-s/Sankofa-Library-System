@@ -1,7 +1,7 @@
 """Admin blueprint — /admin/* routes.
 
 All routes require @login_required + @admin_required via before_request.
-Sankofa Library System admin area (src/app/(app)/admin/...).
+Sankofa Library System admin routes.
 
 Routes:
 - `/dashboard` — 6 stat cards, Chart.js data (user growth, checkout
@@ -56,7 +56,7 @@ def before_request():
 
 
 # ---------------------------------------------------------------------------
-# /dashboard — admin overview (mirror src/app/(app)/admin/dashboard/page.tsx)
+# /dashboard — admin overview (admin overview)
 # ---------------------------------------------------------------------------
 @admin_bp.route('/dashboard')
 def dashboard():
@@ -104,7 +104,7 @@ def dashboard():
     department_breakdown = get_checkouts_by_department()
     signups_by_month = get_user_signups_by_month()
 
-    # ---- Chart.js data (FLASK-ADAPT) ----
+    # ---- Chart.js data ----
     checkout_volume = _get_checkout_volume_by_month(months=6)
     category_distribution = _get_category_distribution()
 

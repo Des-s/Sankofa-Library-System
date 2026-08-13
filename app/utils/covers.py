@@ -1,10 +1,10 @@
-"""Cover image fetcher (FLASK-ADAPT).
+"""Cover image fetcher
 
 Hardened with a 10s request timeout, Content-Type validation, a 5 MB
 response size cap, and specific exception handling. Uses the `requests`
 library so callers can rely on consistent timeout/size semantics.
 
-Mirrors src/app/api/librarian/books/route.ts which defaults the cover to
+Defaults the cover to
 the Open Library covers endpoint when the librarian does not upload one.
 """
 import os
@@ -24,7 +24,6 @@ def fetch_cover_by_isbn(isbn):
 
     Returns the saved filename, or ``None`` if the fetch failed for any
     reason (network error, non-image response, oversized response, etc.).
-    (FLASK-ADAPT)
     """
     if not isbn:
         return None
