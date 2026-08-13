@@ -134,14 +134,7 @@ def create_app(config_class='app.config.Config'):
             return render_template('errors/404.html'), 404
         return render_template('errors/404.html'), e.code
 
-    # ---- DB bootstrap + default settings -------------------------------
-    with app.app_context():
-        from sqlalchemy import inspect
-        inspector = inspect(db.engine)
-        if not inspector.has_table('users'):
-            db.create_all()
-        from app.utils.helpers import init_default_settings
-        init_default_settings()
+     
 
     # ---- Background scheduler ------------------------------------------
     if not app.config.get('TESTING'):
