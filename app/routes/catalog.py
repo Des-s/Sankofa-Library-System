@@ -1,7 +1,7 @@
 """Catalog blueprint — public-ish catalog browse + book detail.
 
-Sankofa Library System catalog area (src/app/(app)/catalog/...).
-Both routes require @login_required (matches the the design system middleware
+Sankofa Library System catalog routes.
+Both routes require @login_required (enforces role-based access
 gate that redirects unauthenticated users to /login for any /catalog
 route).
 
@@ -97,7 +97,7 @@ def catalog():
 @login_required
 def book_detail(book_id):
     """Full book detail page with metadata, availability, cover, and related
-    books by category. (FLASK-ADAPT)
+    books by category.
     """
     book = Book.query.filter_by(book_id=book_id, is_active=True).first_or_404()
 

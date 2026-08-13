@@ -1,5 +1,5 @@
 """All WTForms used across the app — Sankofa Library System form
-schemas (zod in src/lib/validators.ts).
+schemas (WTForms validators).
 
 Every form is CSRF-protected via Flask-WTF (globally enabled in
 app/__init__.py via csrf.init_app(app)).
@@ -33,7 +33,7 @@ from app.models import User
 from app.utils.helpers import get_student_email_domain
 
 
-# ---- Validation regexes (mirror zod schemas in src/lib/validators.ts) ----
+# ---- Validation regexes (validation patterns) ----
 NAME_RE = re.compile(r"^[A-Za-z][A-Za-z '.-]*$")
 DEPARTMENT_RE = re.compile(r"^[A-Za-z][A-Za-z &/.,-]*$")
 STUDENT_ID_RE = re.compile(r'^[A-Za-z0-9]+$')
@@ -81,7 +81,7 @@ def _coerce_optional_int(value):
 
 
 # ---------------------------------------------------------------------------
-# Auth forms (mirror src/app/api/auth/*/route.ts zod schemas)
+# Auth forms (authentication form schemas)
 # ---------------------------------------------------------------------------
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email(), Length(max=150)])
@@ -139,7 +139,7 @@ class RegistrationForm(FlaskForm):
     def validate_email(self, field):
         email = field.data.strip().lower()
         domain = get_student_email_domain()
-        # Mirror src/lib/library.ts student email domain check.
+        # Student email domain check.
         if not email.endswith('@' + domain):
             raise ValidationError(
                 f'You must register with your student email address (@{domain}).'
@@ -157,7 +157,7 @@ class ContactForm(FlaskForm):
 
 
 # ---------------------------------------------------------------------------
-# Book / circulation forms (mirror src/app/api/librarian/books/route.ts)
+# Book / circulation forms (librarian book management)
 # ---------------------------------------------------------------------------
 class BookForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired(), Length(max=255)])
@@ -233,7 +233,7 @@ class FineActionForm(FlaskForm):
     submit = SubmitField('Submit')
 
     def validate_waiver_reason(self, field):
-        """Waiver requires a reason — implements the design system."""
+        """Waiver requires a reason ."""
         if self.action.data == 'waived' and not (field.data and field.data.strip()):
             raise ValidationError('A reason is required to waive a fine.')
 

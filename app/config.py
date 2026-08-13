@@ -1,9 +1,9 @@
 """Application configuration — Sankofa Library System design system
 and security model.
 
-Environment variables mirror the the design system .env exactly where possible.
+Environment variables mirror standard Flask conventions.
 All defaults match the seed-time SystemSetting values seeded by
-scripts/seed.ts so the app is consistent out of the box.
+seed.py so the app is consistent out of the box.
 """
 import os
 import warnings
@@ -31,7 +31,7 @@ class Config:
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50 MB
     ALLOWED_BOOK_EXTENSIONS = {'pdf', 'txt', 'html', 'htm'}
     ALLOWED_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png'}
-    # Magic-byte signatures for image validation (FLASK-ADAPT)
+    # Magic-byte signatures for image validation
     IMAGE_MAGIC_BYTES = {
         'jpg': b'\xff\xd8\xff',
         'jpeg': b'\xff\xd8\xff',
@@ -47,11 +47,11 @@ class Config:
     ).lower() == 'true'
     SESSION_PERMANENT = True
 
-    # ---- Auth lockout policy (mirrors src/lib/auth.ts lockout) -------
+    # ---- Auth lockout policy -------------------------------------------
     MAX_LOGIN_ATTEMPTS = 5
     LOCKOUT_MINUTES = 15
 
-    # ---- Mail server (mirrors nodemailer config) --------------------
+    # ---- Mail server (mail server configuration) --------------------
     MAIL_SERVER = os.environ.get('MAIL_SERVER', 'localhost')
     MAIL_PORT = int(os.environ.get('MAIL_PORT', 587))
     MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() == 'true'
@@ -74,7 +74,7 @@ class Config:
     DEFAULT_LIBRARY_NAME = 'Sankofa Academic Library'
     DEFAULT_LIBRARY_ADDRESS = 'Kumasi, Ghana'
 
-    # ---- Cover fetcher safety (FLASK-ADAPT) -------------------------
+    # ---- Cover fetcher safety -------------------------
     COVER_REQUEST_TIMEOUT = 10
     MAX_COVER_BYTES = 5 * 1024 * 1024  # 5 MB
 
@@ -93,7 +93,7 @@ class Config:
 def _validate_secret_key():
     """Refuse to start in production with the default SECRET_KEY, warn in dev.
 
-    Mirrors the the design system requirement that AUTH_SECRET is set to a strong value.
+    Mirrors the requirement that SECRET_KEY is set to a strong value.
     """
     key = os.environ.get('SECRET_KEY', _DEFAULT_SECRET_KEY)
     if key == _DEFAULT_SECRET_KEY:

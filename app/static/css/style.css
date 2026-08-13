@@ -1,6 +1,6 @@
 /* ============================================================
    SANKOFA LIBRARY SYSTEM — DESIGN SYSTEM (FLASK-TEMPLATES)
-   Sankofa Library System design tokens (globals.css).
+   Sankofa Library System design tokens.
    Warm Afrocentric academic palette: deep forest green,
    warm gold, kente orange, adinkra red, warm off-white.
    Headings: Outfit. Body: Inter.
@@ -9,7 +9,7 @@
 
 /* ============================================================
    DESIGN TOKENS — :root (light) and [data-theme="dark"]
-   Matches the design system globals.css exactly.
+   Core design tokens.
    ============================================================ */
 :root {
     /* Brand palette */
@@ -178,7 +178,7 @@ input[type=number]::-webkit-outer-spin-button {
 
 /* ============================================================
    SIGNATURE SANKOFA GRADIENTS & COMPONENTS
-   Matches the design system globals.css @layer components.
+   Reusable component styles.
    ============================================================ */
 
 /* Kente-inspired accent bar */

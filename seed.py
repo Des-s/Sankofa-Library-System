@@ -1,4 +1,4 @@
-"""Seed the database with sample data — faithful port of scripts/seed.ts.
+"""Seed the database with sample data — populates the database with sample data.
 
 Seeds:
 - 6 users: admin (Adwoa Boateng), librarian (Kwabena Owusu), 3 approved
@@ -36,7 +36,7 @@ from app.utils.helpers import (
 )
 
 
-# ---- Books (mirror scripts/seed.ts books array) -------------------------
+# ---- Books (sample book data) -------------------------
 BOOKS_DATA = [
     {
         'title': 'Introduction to Python Programming',
@@ -263,7 +263,7 @@ def seed():
         db.create_all()
         init_default_settings()
 
-        # ---- Users (mirror scripts/seed.ts) ----------------------------
+        # ---- Users (sample seed data) ----------------------------
         admin = _make_user(
             'Adwoa Boateng', 'admin@sankofa.edu', 'admin', 'admin12345',
             username='admin',

@@ -4,7 +4,7 @@ All routes require @login_required + @student_required.
 before_request calls update_overdue_statuses() so the dashboard always
 shows fresh overdue state.
 
-Sankofa Library System student area (src/app/(app)/student/...).
+Sankofa Library System student routes.
 
 Routes:
 - `/dashboard` — library card, active checkouts, outstanding fines,
